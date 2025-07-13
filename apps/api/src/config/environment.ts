@@ -13,6 +13,12 @@ const envSchema = z.object({
   // Database
   DATABASE_URL: z.string().min(1, 'Database URL is required'),
   
+  // Redis Configuration
+  REDIS_HOST: z.string().default('localhost'),
+  REDIS_PORT: z.coerce.number().default(6379),
+  REDIS_PASSWORD: z.string().optional(),
+  REDIS_DB: z.coerce.number().default(0),
+  
   // JWT Configuration
   JWT_SECRET: z.string().min(8, 'JWT secret must be at least 8 characters'),
   JWT_REFRESH_SECRET: z.string().min(8, 'JWT refresh secret must be at least 8 characters'),

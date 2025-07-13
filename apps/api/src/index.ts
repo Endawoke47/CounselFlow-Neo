@@ -31,6 +31,7 @@ import legalResearchRoutes from './routes/legal-research.routes';
 import { contractIntelligenceRoutes } from './routes/contract-intelligence.routes';
 import legalIntelligenceRoutes from './routes/legal-intelligence.routes';
 import documentAutomationRoutes from './routes/document-automation.routes';
+import resilienceRoutes from './routes/resilience.routes';
 
 const app = express();
 const PORT = process.env.PORT || 3005;
@@ -92,6 +93,9 @@ app.use('/api/v1/legal-research', legalResearchRoutes);
 app.use('/api/v1/contract-intelligence', contractIntelligenceRoutes);
 app.use('/api/v1/legal-intelligence', legalIntelligenceRoutes);
 app.use('/api/v1/document-automation', documentAutomationRoutes);
+
+// Data Management & Resilience
+app.use('/api/v1/resilience', resilienceRoutes);
 
 // Error handling middleware
 app.use(notFoundHandler);

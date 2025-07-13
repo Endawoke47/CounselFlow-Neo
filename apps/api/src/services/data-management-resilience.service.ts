@@ -8,7 +8,11 @@
  * Created: 2025-07-13
  */
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import Redis from 'ioredis';
 import { DataManagementHubService } from './data-management-hub.service';
 import { DataContextProviderService } from './data-context-provider.service';
 
@@ -36,7 +40,7 @@ interface FallbackConfig {
 }
 
 @Injectable()
-export class DataManagementResilienceService {
+export class DataManagementResilienceService implements OnModuleInit {
   private readonly logger = new Logger(DataManagementResilienceService.name);
   
   // Circuit breaker state
@@ -65,8 +69,12 @@ export class DataManagementResilienceService {
 
   constructor(
     private dataHub: DataManagementHubService,
-    private contextProvider: DataContextProviderService
-  ) {
+    private contextProvider: DataContextProviderService,
+    @InjectDataSource() private dataSource: DataSource,
+    @InjectRedis() private redis: Redis,
+  ) {}
+
+  async onModuleInit() {
     this.startHealthMonitoring();
     this.logger.log('🛡️ Data Management Resilience Service initialized');
   }
@@ -397,32 +405,65 @@ export class DataManagementResilienceService {
   }
 
   private async testCacheConnection(): Promise<void> {
-    // Test Redis/cache connection
+    // Test Redis connection
     try {
-      // This would ping the Redis server
-      // For now, simulate a cache test
-      await this.delay(10); // Simulate cache ping
+      const startTime = Date.now();
+      await this.redis.ping();
+      const responseTime = Date.now() - startTime;
+      
+      if (responseTime > 1000) {
+        this.logger.warn('Redis ping response time is high', { responseTime });
+      }
+      
+      this.logger.debug('Redis health check passed', { responseTime });
     } catch (error) {
-      throw new Error('Cache connection health check failed');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Redis connection health check failed: ${errorMessage}`);
     }
   }
 
   private async testDatabaseConnection(): Promise<void> {
-    // Test database connection
+    // Test PostgreSQL database connection
     try {
-      // This would execute a simple database query
-      // For now, simulate a database test
-      await this.delay(20); // Simulate database ping
+      const startTime = Date.now();
+      await this.dataSource.query('SELECT 1');
+      const responseTime = Date.now() - startTime;
+      
+      if (responseTime > 2000) {
+        this.logger.warn('Database query response time is high', { responseTime });
+      }
+      
+      this.logger.debug('Database health check passed', { responseTime });
     } catch (error) {
-      throw new Error('Database connection health check failed');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Database connection health check failed: ${errorMessage}`);
     }
   }
 
   private async executeDirectDatabaseQuery(query: any): Promise<any> {
-    // Implementation would execute query directly against database
-    // This is the ultimate fallback when centralized system fails
-    this.logger.warn('Executing direct database query as fallback');
-    return { fallback: true, query };
+    // Ultimate fallback: Execute query directly against database
+    // This bypasses the centralized data management system entirely
+    this.logger.warn('🔄 Executing direct database query as fallback', {
+      query: query?.operation || 'unknown',
+      timestamp: new Date()
+    });
+    
+    try {
+      // For different query types, we'd implement specific fallback logic
+      if (query?.operation === 'find') {
+        return await this.dataSource.getRepository(query.entity).find(query.options);
+      } else if (query?.operation === 'findOne') {
+        return await this.dataSource.getRepository(query.entity).findOne(query.options);
+      } else if (query?.operation === 'save') {
+        return await this.dataSource.getRepository(query.entity).save(query.data);
+      }
+      
+      // Generic query execution
+      return await this.dataSource.query(query.sql, query.parameters);
+    } catch (error) {
+      this.logger.error('❌ Direct database fallback also failed', { error });
+      throw new Error('All fallback mechanisms exhausted');
+    }
   }
 
   private delay(ms: number): Promise<void> {
