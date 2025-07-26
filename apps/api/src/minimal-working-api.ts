@@ -28,6 +28,73 @@ app.post('/api/auth/test', (req, res) => {
   });
 });
 
+// Auth verify endpoint (for token verification)
+app.get('/api/auth/verify', (req, res) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: 'No token provided',
+    });
+  }
+
+  // For development, just return a mock user
+  return res.status(200).json({
+    success: true,
+    message: 'Token verified',
+    data: {
+      user: {
+        id: '1',
+        email: 'demo@counselflow.com',
+        firstName: 'Demo',
+        lastName: 'User',
+        role: 'admin',
+        status: 'active',
+      }
+    },
+  });
+});
+
+// Login endpoint
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  
+  // Basic validation
+  if (!email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: 'Email and password are required',
+    });
+  }
+
+  // For development, accept any valid-looking credentials
+  return res.status(200).json({
+    success: true,
+    message: 'Login successful',
+    data: {
+      token: 'demo-token-12345',
+      user: {
+        id: '1',
+        email: email,
+        firstName: 'Demo',
+        lastName: 'User',
+        role: 'admin',
+        status: 'active',
+      }
+    },
+  });
+});
+
+// Logout endpoint
+app.post('/api/auth/logout', (req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: 'Logout successful',
+  });
+});
+
 // Test clients endpoint
 app.get('/api/clients/test', (req, res) => {
   return res.status(200).json({

@@ -25,8 +25,8 @@ import {
   User,
   Bot
 } from 'lucide-react';
-import { aiLegalService, type AIMessage, type DocumentAnalysis, type LegalResearchQuery } from '../lib/ai-service';
-import { workflowEngine, type WorkflowExecution, type WorkflowTemplate } from '../lib/workflow-engine';
+import { aiLegalService, type AIMessage, type DocumentAnalysis, type LegalResearchQuery } from '@/lib/ai-service';
+import { workflowEngine, type WorkflowExecution, type WorkflowTemplate } from '@/lib/workflow-engine';
 
 export function AiLegalAssistant() {
   // Tab state
@@ -708,6 +708,15 @@ export function AiLegalAssistant() {
                             <span>{workflow.nodes.length} nodes</span>
                             <span className="capitalize">{workflow.category}</span>
                             <span>v{workflow.version}</span>
+                          </div>
+                          
+                          {/* AI Capabilities Indicator */}
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {workflow.nodes.filter(node => node.type === 'ai-analysis').map((node, index) => (
+                              <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                {node.config.analysisTypes?.[0] || 'AI Analysis'}
+                              </span>
+                            ))}
                           </div>
                         </div>
                         <Button

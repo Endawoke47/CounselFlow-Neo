@@ -4,6 +4,9 @@ const crypto = require('crypto');
 const nextConfig = {
   transpilePackages: ["@counselflow/ui", "@counselflow/shared"],
   
+  // Enable standalone output for Docker deployment
+  output: 'standalone',
+  
   // Basic experimental features only
   experimental: {
     optimizeCss: true,

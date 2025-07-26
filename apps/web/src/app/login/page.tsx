@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Brain, Scale, Shield, Loader2, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '../../providers/auth-provider';
+import { useAuth } from '../auth-wrapper';
 
 // Custom UI Components
 const Card = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (

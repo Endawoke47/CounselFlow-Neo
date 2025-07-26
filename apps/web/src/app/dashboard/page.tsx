@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/providers/auth-provider';
+import { useAuth } from '../auth-wrapper';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,24 +16,29 @@ import {
   AlertTriangle,
   Loader2,
   Scale,
-  BarChart3
+  BarChart3,
+  Shield,
+  Target,
+  Users,
+  BookOpen,
+  CheckCircle2,
+  TrendingDown,
+  Activity
 } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import { productionApiClient } from '@/lib/production-api-client';
-
-interface Client {
-  id: string;
-  name: string;
-  clientType: string;
-  status: string;
-}
-
-interface Contract {
-  id: string;
-  title: string;
-  contractType: string;
-  status: string;
-}
+import { 
+  mockClients, 
+  mockMatters, 
+  mockTasks, 
+  mockContracts,
+  mockDisputes,
+  calculateDashboardMetrics,
+  type Client,
+  type Matter,
+  type Task,
+  type Contract
+} from '@/lib/mock-data';
 
 interface Activity {
   id: string;
@@ -47,108 +52,146 @@ interface Activity {
 export default function DashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
+  
+  // Calculate dynamic metrics from mock data
+  const dashboardMetrics = calculateDashboardMetrics();
+  
   const [metrics, setMetrics] = useState([
     {
       title: 'Active Matters',
-      value: '0',
-      change: '+0%',
+      value: dashboardMetrics.activeMatters.toString(),
+      change: '+12.5%',
       trend: 'up',
       icon: FileText,
       color: 'text-blue-600'
     },
     {
       title: 'Total Clients',
-      value: '0',
-      change: '+0%',
+      value: dashboardMetrics.totalClients.toString(),
+      change: '+8.3%',
       trend: 'up',
       icon: Building2,
       color: 'text-purple-600'
     },
     {
       title: 'Revenue (YTD)',
-      value: 'KES 0',
-      change: '+0%',
+      value: `KES ${(dashboardMetrics.totalRevenue / 1000000).toFixed(1)}M`,
+      change: '+15.2%',
       trend: 'up',
       icon: DollarSign,
       color: 'text-green-600'
     },
     {
       title: 'Pending Tasks',
-      value: '0',
-      change: '0%',
+      value: dashboardMetrics.pendingTasks.toString(),
+      change: '-5.8%',
       trend: 'down',
       icon: Clock,
       color: 'text-orange-600'
+    },
+    {
+      title: 'High Risk Matters',
+      value: dashboardMetrics.highRiskClients.toString(),
+      change: '-2.1%',
+      trend: 'down',
+      icon: Shield,
+      color: 'text-red-600'
+    },
+    {
+      title: 'Case Success Rate',
+      value: `${dashboardMetrics.caseSuccessRate}%`,
+      change: '+3.2%',
+      trend: 'up',
+      icon: CheckCircle2,
+      color: 'text-emerald-600'
+    },
+    {
+      title: 'Billing Realization',
+      value: `${dashboardMetrics.billingRealization}%`,
+      change: '+1.8%',
+      trend: 'up',
+      icon: BarChart3,
+      color: 'text-indigo-600'
+    },
+    {
+      title: 'Active Disputes',
+      value: mockDisputes.length.toString(),
+      change: '+0%',
+      trend: 'up',
+      icon: Scale,
+      color: 'text-amber-600'
     }
   ]);
 
-  const [clients, setClients] = useState<Client[]>([]);
-  const [contracts, setContracts] = useState<Contract[]>([]);
+  const [clients, setClients] = useState<Client[]>(mockClients);
+  const [contracts, setContracts] = useState<Contract[]>(mockContracts);
   const [recentActivities, setRecentActivities] = useState<Activity[]>([
     {
       id: '1',
-      title: 'New client registered',
-      description: 'John Doe has been added to the system',
-      priority: 'medium',
+      title: 'New matter opened for Safaricom PLC',
+      description: '5G Regulatory Compliance matter created with high priority',
+      priority: 'high',
       time: '2 hours ago',
       timestamp: new Date().toISOString()
     },
     {
       id: '2',
       title: 'Contract review completed',
-      description: 'Service agreement reviewed and approved',
-      priority: 'high',
+      description: 'Digital Banking Platform License reviewed and approved for KCB',
+      priority: 'medium',
       time: '4 hours ago',
       timestamp: new Date().toISOString()
     },
     {
       id: '3',
-      title: 'Payment received',
-      description: 'Invoice #1001 payment processed',
-      priority: 'low',
+      title: 'Court hearing scheduled',
+      description: 'Product liability defense hearing set for EABL case',
+      priority: 'high',
+      time: '6 hours ago',
+      timestamp: new Date().toISOString()
+    },
+    {
+      id: '4',
+      title: 'Client meeting completed',
+      description: 'Strategic planning session with Equity Group Holdings',
+      priority: 'medium',
       time: '1 day ago',
+      timestamp: new Date().toISOString()
+    },
+    {
+      id: '5',
+      title: 'Compliance audit initiated',
+      description: 'Annual compliance review started for Ministry of Health',
+      priority: 'urgent',
+      time: '1 day ago',
+      timestamp: new Date().toISOString()
+    },
+    {
+      id: '6',
+      title: 'Settlement negotiation concluded',
+      description: 'Successful mediation for Kenya Airways employment dispute',
+      priority: 'medium',
+      time: '2 days ago',
       timestamp: new Date().toISOString()
     }
   ]);
+  
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadDashboardData = async () => {
+    // Simulate loading with mock data
     setIsLoading(true);
     setError(null);
-
+    
     try {
-      // Load clients
-      const clientsResponse = await productionApiClient.getClients({ limit: 5 });
-      if (clientsResponse && clientsResponse.data && clientsResponse.data.clients) {
-        setClients(clientsResponse.data.clients);
-      }
-
-      // Load contracts
-      const contractsResponse = await productionApiClient.getContracts({ limit: 5 });
-      if (contractsResponse && contractsResponse.data && contractsResponse.data.contracts) {
-        setContracts(contractsResponse.data.contracts);
-      }
-
-      // Load matters for metrics
-      const mattersResponse = await productionApiClient.getMatters({ limit: 100 });
-      if (mattersResponse && mattersResponse.data && mattersResponse.data.matters) {
-        // Update metrics with real data
-        setMetrics(prev => prev.map(metric => {
-          if (metric.title === 'Active Matters') {
-            return { ...metric, value: mattersResponse.data?.matters?.length?.toString() || '0' };
-          }
-          if (metric.title === 'Total Clients') {
-            return { ...metric, value: clientsResponse?.data?.clients?.length?.toString() || '0' };
-          }
-          return metric;
-        }));
-      }
-
+      // In a real app, this would be API calls
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+      
+      // Data is already loaded from mock data
       setIsLoading(false);
-    } catch (err: any) {
-      console.error('Failed to load dashboard data:', err);
-      setError(err.message || 'Failed to load dashboard data');
+    } catch (err) {
+      setError('Failed to load dashboard data');
       setIsLoading(false);
     }
   };
@@ -230,6 +273,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {metrics.map((metric) => {
               const IconComponent = metric.icon;
+              const TrendIcon = metric.trend === 'up' ? TrendingUp : TrendingDown;
               return (
                 <Card key={metric.title}>
                   <CardContent className="p-6">
@@ -238,7 +282,7 @@ export default function DashboardPage() {
                         <p className="text-sm font-medium text-neutral-600">{metric.title}</p>
                         <p className="text-2xl font-bold text-neutral-900">{metric.value}</p>
                         <div className="flex items-center mt-1">
-                          <TrendingUp className={`h-4 w-4 ${metric.trend === 'up' ? 'text-green-500' : 'text-red-500'}`} />
+                          <TrendIcon className={`h-4 w-4 ${metric.trend === 'up' ? 'text-green-500' : 'text-red-500'}`} />
                           <span className={`text-sm ml-1 ${metric.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
                             {metric.change}
                           </span>
@@ -253,7 +297,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="space-y-6">
             {/* Recent Activities */}
             <Card>
@@ -326,6 +370,97 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* High-Value Clients */}
+          <Card>
+            <CardHeader>
+              <CardTitle>High-Value Clients</CardTitle>
+              <CardDescription>Clients with highest revenue contribution</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {clients
+                  .sort((a, b) => b.totalValue - a.totalValue)
+                  .slice(0, 5)
+                  .map((client) => (
+                    <div key={client.id} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                          <Building2 className="h-5 w-5 text-primary-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-neutral-900">{client.name}</p>
+                          <p className="text-xs text-neutral-500">{client.industry}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-neutral-900">
+                          KES {(client.totalValue / 1000000).toFixed(1)}M
+                        </p>
+                        <Badge 
+                          variant={client.riskLevel === 'low' ? 'success' : client.riskLevel === 'medium' ? 'warning' : 'destructive'}
+                          className="text-xs"
+                        >
+                          {client.riskLevel} risk
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Active Matters */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Active Matters</CardTitle>
+              <CardDescription>Current matters requiring attention</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {mockMatters
+                  .filter(matter => matter.status === 'active')
+                  .slice(0, 5)
+                  .map((matter) => (
+                    <div key={matter.id} className="border rounded-lg p-3 hover:bg-neutral-50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-neutral-900">{matter.title}</p>
+                          <p className="text-xs text-neutral-500 mt-1">{matter.matterType}</p>
+                          <div className="flex items-center space-x-2 mt-2">
+                            <Badge 
+                              variant={matter.priority === 'urgent' ? 'destructive' : matter.priority === 'high' ? 'warning' : 'default'}
+                              className="text-xs"
+                            >
+                              {matter.priority}
+                            </Badge>
+                            <span className="text-xs text-neutral-500">
+                              {matter.progress}% complete
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-neutral-500">
+                            KES {(matter.estimatedValue / 1000000).toFixed(1)}M
+                          </p>
+                          {matter.nextDeadline && (
+                            <p className="text-xs text-orange-600 mt-1">
+                              Due: {new Date(matter.nextDeadline).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="w-full bg-neutral-200 rounded-full h-1.5 mt-2">
+                        <div 
+                          className="bg-primary-600 h-1.5 rounded-full transition-all" 
+                          style={{ width: `${matter.progress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </MainLayout>

@@ -6,7 +6,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { realApiClient, type User, type AuthCredentials } from '../lib/real-api-client';
+import { realApiClient, type User, type AuthCredentials } from '@/lib/real-api-client';
 
 interface AuthContextType {
   user: User | null;
@@ -37,6 +37,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       const token = localStorage.getItem('counselflow_token');
       if (!token) {
+        // In development mode, create a demo user if no token exists
+        if (process.env.NODE_ENV === 'development') {
+          const demoUser: User = {
+            id: '1',
+            email: 'demo@counselflow.com',
+            firstName: 'Demo',
+            lastName: 'User',
+            role: 'admin',
+            status: 'active',
+          };
+          setUser(demoUser);
+        }
         setLoading(false);
         return;
       }
@@ -110,15 +122,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('counselflow_token');
       sessionStorage.removeItem('counselflow_token');
       
-      // Redirect to login
-      router.push('/login');
+      // Redirect to home page
+      router.push('/');
     } catch (error: any) {
       console.error('Logout failed:', error);
       // Even if logout fails, clear local state
       setUser(null);
       localStorage.removeItem('counselflow_token');
       sessionStorage.removeItem('counselflow_token');
-      router.push('/login');
+      router.push('/');
     } finally {
       setLoading(false);
     }

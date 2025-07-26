@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/layout/MainLayout';
-import { useAuth } from '../../providers/auth-provider';
+import { useAuth } from '../auth-wrapper';
 import { Building2, Plus, Search, Edit3, Trash2, Eye, Mail, Phone, MapPin, User, TrendingUp } from 'lucide-react';
 import { productionApiClient } from '@/lib/production-api-client';
 

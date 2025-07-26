@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/layout/MainLayout';
+import { mockEntities, Entity } from '../../lib/mock-data';
 import { Building2, Plus, Search, Download, Upload, Edit3, Trash2, Eye, CheckCircle, AlertTriangle, BarChart3, Calendar, FileText, Users, TrendingUp, Clock } from 'lucide-react';
 
-interface Entity {
+interface EntityDisplay {
   id: string;
   name: string;
   type: string;
@@ -20,68 +21,39 @@ interface Entity {
 export default function EntityManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
-  
-  const [entities, setEntities] = useState<Entity[]>([
-    {
-      id: 'ENT001',
-      name: 'TechCorp Holdings Ltd',
-      type: 'Holding Company',
-      jurisdiction: 'Kenya',
-      status: 'Active',
-      incorporationDate: '2020-03-15',
-      lastFiling: '2024-12-01',
-      compliance: 95,
-      subsidiaries: 5,
-      riskLevel: 'Low'
-    },
-    {
-      id: 'ENT002',
-      name: 'African Innovations SA',
-      type: 'Private Limited Company',
-      jurisdiction: 'South Africa',
-      status: 'Active',
-      incorporationDate: '2019-08-22',
-      lastFiling: '2024-11-15',
-      compliance: 88,
-      subsidiaries: 3,
-      riskLevel: 'Medium'
-    },
-    {
-      id: 'ENT003',
-      name: 'Digital Solutions Uganda Ltd',
-      type: 'Private Limited Company',
-      jurisdiction: 'Uganda',
-      status: 'Pending',
-      incorporationDate: '2024-01-10',
-      lastFiling: '2024-10-30',
-      compliance: 72,
-      subsidiaries: 1,
-      riskLevel: 'High'
-    },
-    {
-      id: 'ENT004',
-      name: 'East Africa Ventures',
-      type: 'Partnership',
-      jurisdiction: 'Tanzania',
-      status: 'Active',
-      incorporationDate: '2021-06-30',
-      lastFiling: '2024-12-05',
-      compliance: 92,
-      subsidiaries: 2,
-      riskLevel: 'Low'
-    }
-  ]);
+  const [entities, setEntities] = useState<EntityDisplay[]>([]);
+
+  useEffect(() => {
+    // Transform mock entities to display format
+    const transformedEntities: EntityDisplay[] = mockEntities.map(entity => {
+      return {
+        id: entity.id,
+        name: entity.name,
+        type: entity.entityType,
+        jurisdiction: entity.jurisdiction,
+        status: entity.status,
+        incorporationDate: entity.incorporationDate,
+        lastFiling: '2024-12-01', // Mock last filing date
+        compliance: entity.complianceStatus === 'current' ? 95 : 
+                   entity.complianceStatus === 'pending' ? 75 : 45,
+        subsidiaries: entity.subsidiaries.length,
+        riskLevel: entity.complianceStatus === 'current' ? 'Low' : 
+                  entity.complianceStatus === 'pending' ? 'Medium' : 'High'
+      };
+    });
+    setEntities(transformedEntities);
+  }, []);
 
   const [isAddingEntity, setIsAddingEntity] = useState(false);
-  const [editingEntity, setEditingEntity] = useState<Entity | null>(null);
-  const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null);
+  const [editingEntity, setEditingEntity] = useState<EntityDisplay | null>(null);
+  const [selectedEntity, setSelectedEntity] = useState<EntityDisplay | null>(null);
 
   // Handlers for functionality
   const handleAddEntity = () => {
     setIsAddingEntity(true);
   };
 
-  const handleEditEntity = (entity: Entity) => {
+  const handleEditEntity = (entity: EntityDisplay) => {
     setEditingEntity(entity);
     setIsAddingEntity(true);
   };
@@ -92,7 +64,7 @@ export default function EntityManagementPage() {
     }
   };
 
-  const handleViewEntity = (entity: Entity) => {
+  const handleViewEntity = (entity: EntityDisplay) => {
     setSelectedEntity(entity);
   };
 
@@ -124,18 +96,18 @@ export default function EntityManagementPage() {
     input.click();
   };
 
-  const handleSaveEntity = (entityData: Partial<Entity>) => {
+  const handleSaveEntity = (entityData: Partial<EntityDisplay>) => {
     if (editingEntity) {
       // Update existing entity
       setEntities(entities.map(e => e.id === editingEntity.id ? { ...e, ...entityData } : e));
     } else {
       // Add new entity
-      const newEntity: Entity = {
+      const newEntity: EntityDisplay = {
         id: `ENT${String(entities.length + 1).padStart(3, '0')}`,
         name: entityData.name || '',
         type: entityData.type || '',
         jurisdiction: entityData.jurisdiction || '',
-        status: entityData.status || 'Pending',
+        status: entityData.status || 'active',
         incorporationDate: entityData.incorporationDate || new Date().toISOString().split('T')[0],
         lastFiling: entityData.lastFiling || '',
         compliance: entityData.compliance || 0,

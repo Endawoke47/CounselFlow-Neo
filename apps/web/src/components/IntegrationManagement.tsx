@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '../components/ui/button';
-import { Card } from '../components/ui/card';
-import { Input } from '../components/ui/input';
-import { Select } from '../components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Alert } from '../components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert } from '@/components/ui/alert';
 
 // Integration Service Interface
 interface IntegrationService {
@@ -292,20 +292,17 @@ export function IntegrationManagement() {
         <p className="text-gray-600">Connect and manage third-party services and integrations</p>
       </div>
 
-      <Tabs
-        tabs={[
-          { id: 'overview', label: 'Overview' },
-          { id: 'integrations', label: 'Integrations' },
-          { id: 'api-management', label: 'API Management' },
-          { id: 'webhooks', label: 'Webhooks' },
-          { id: 'logs', label: 'Activity Logs' }
-        ]}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="integrations">Integrations</TabsTrigger>
+          <TabsTrigger value="api-management">API Management</TabsTrigger>
+          <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
+          <TabsTrigger value="logs">Activity Logs</TabsTrigger>
+        </TabsList>
 
-      {activeTab === 'overview' && (
-        <div className="mt-6 space-y-6">
+        <TabsContent value="overview" className="mt-6">
+          <div className="space-y-6">
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="p-6">
@@ -407,11 +404,10 @@ export function IntegrationManagement() {
               })}
             </div>
           </Card>
-        </div>
-      )}
+          </div>
+        </TabsContent>
 
-      {activeTab === 'integrations' && (
-        <div className="mt-6">
+        <TabsContent value="integrations" className="mt-6">
           {/* Filters */}
           <div className="mb-6 flex flex-wrap gap-4">
             <Input
@@ -422,26 +418,23 @@ export function IntegrationManagement() {
             />
             <Select
               value={filterCategory}
-              onChange={setFilterCategory}
-              options={[
-                { value: 'all', label: 'All Categories' },
-                ...Object.entries(CATEGORY_CONFIG).map(([key, config]) => ({
-                  value: key,
-                  label: config.label
-                }))
-              ]}
-            />
+              onValueChange={setFilterCategory}
+            >
+              <option value="all">All Categories</option>
+              {Object.entries(CATEGORY_CONFIG).map(([key, config]) => (
+                <option key={key} value={key}>{config.label}</option>
+              ))}
+            </Select>
             <Select
               value={filterStatus}
-              onChange={setFilterStatus}
-              options={[
-                { value: 'all', label: 'All Status' },
-                { value: 'connected', label: 'Connected' },
-                { value: 'disconnected', label: 'Disconnected' },
-                { value: 'pending', label: 'Pending' },
-                { value: 'error', label: 'Error' }
-              ]}
-            />
+              onValueChange={setFilterStatus}
+            >
+              <option value="all">All Status</option>
+              <option value="connected">Connected</option>
+              <option value="disconnected">Disconnected</option>
+              <option value="pending">Pending</option>
+              <option value="error">Error</option>
+            </Select>
           </div>
 
           {/* Integration Cards */}
@@ -559,11 +552,9 @@ export function IntegrationManagement() {
               <p className="text-gray-600">Try adjusting your search or filter criteria</p>
             </div>
           )}
-        </div>
-      )}
+        </TabsContent>
 
-      {activeTab === 'api-management' && (
-        <div className="mt-6">
+        <TabsContent value="api-management" className="mt-6">
           <Card className="p-6">
             <h3 className="text-xl font-semibold mb-4">API Management</h3>
             <div className="space-y-6">
@@ -622,11 +613,9 @@ export function IntegrationManagement() {
               </div>
             </div>
           </Card>
-        </div>
-      )}
+        </TabsContent>
 
-      {activeTab === 'webhooks' && (
-        <div className="mt-6">
+        <TabsContent value="webhooks" className="mt-6">
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold">Webhook Configuration</h3>
@@ -671,11 +660,9 @@ export function IntegrationManagement() {
               </div>
             </div>
           </Card>
-        </div>
-      )}
+        </TabsContent>
 
-      {activeTab === 'logs' && (
-        <div className="mt-6">
+        <TabsContent value="logs" className="mt-6">
           <Card className="p-6">
             <h3 className="text-xl font-semibold mb-4">Integration Activity Logs</h3>
             <div className="space-y-3">
@@ -703,8 +690,8 @@ export function IntegrationManagement() {
               ))}
             </div>
           </Card>
-        </div>
-      )}
+        </TabsContent>
+      </Tabs>
 
       {/* Configuration Modal */}
       {isConfiguring && selectedIntegration && (

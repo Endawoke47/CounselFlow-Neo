@@ -3,8 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/layout/MainLayout';
 import { SimpleAIContractAnalysis } from '../../components/SimpleAIContractAnalysis';
-import { productionApiClient, type Contract } from '@/lib/production-api-client';
-import { useAuth } from '../../providers/auth-provider';
+import { useAuth } from '../auth-wrapper';
+import { 
+  mockContracts, 
+  mockClients, 
+  type Contract, 
+  type Client 
+} from '@/lib/mock-data';
 import { FileText, Plus, Search, Download, Upload, Edit3, Trash2, Eye, CheckCircle, AlertTriangle, BarChart3, Calendar, Brain, TrendingUp, Clock, DollarSign, Zap } from 'lucide-react';
 
 // Frontend display interface for contracts
@@ -47,16 +52,11 @@ export default function ContractManagementPage() {
 
   const loadClients = async () => {
     try {
-      const response = await productionApiClient.getClients();
-      setClients(response.data?.clients || []);
+      // Use mock data directly
+      setClients(mockClients);
     } catch (err: any) {
       console.error('Failed to load clients:', err);
-      // Fallback clients for development
-      setClients([
-        { id: 'CLT001', name: 'TechCorp Ltd' },
-        { id: 'CLT002', name: 'Jane Doe' },
-        { id: 'CLT003', name: 'ABC Corporation' }
-      ]);
+      setClients([]);
     }
   };
 
@@ -64,25 +64,27 @@ export default function ContractManagementPage() {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await productionApiClient.getContracts();
-      const data = response.data?.contracts || [];
       
-      // Transform API data to match frontend interface
-      const transformedContracts: ContractDisplay[] = data.map((contract: Contract) => ({
-        id: contract.id,
-        title: contract.title || '',
-        counterparty: contract.client?.name || contract.clientId || 'Unknown',
-        type: contract.contractType || 'General',
-        status: contract.status || 'Draft',
-        value: contract.value || 0,
-        startDate: contract.startDate ? new Date(contract.startDate).toISOString().split('T')[0] : '',
-        endDate: contract.endDate ? new Date(contract.endDate).toISOString().split('T')[0] : '',
-        renewalDate: undefined, // Map from contract data if available
-        riskScore: contract.riskLevel === 'high' ? 80 : contract.riskLevel === 'medium' ? 60 : 40,
-        compliance: 85, // Default compliance score
-        autoRenewal: false, // Map from contract data if available
-        priority: contract.priority || 'medium'
-      }));
+      // Transform mock contract data to match frontend interface
+      const transformedContracts: ContractDisplay[] = mockContracts.map((contract: Contract) => {
+        const client = mockClients.find(c => c.id === contract.clientId);
+        return {
+          id: contract.id,
+          title: contract.title,
+          counterparty: client?.name || 'Unknown Client',
+          type: contract.contractType,
+          status: contract.status,
+          value: contract.value,
+          startDate: contract.startDate,
+          endDate: contract.endDate,
+          renewalDate: contract.renewalDate,
+          riskScore: contract.riskScore,
+          compliance: contract.complianceStatus === 'compliant' ? 95 : 
+                     contract.complianceStatus === 'under-review' ? 75 : 45,
+          autoRenewal: !!contract.renewalDate,
+          priority: contract.riskScore > 60 ? 'high' : contract.riskScore > 40 ? 'medium' : 'low'
+        };
+      });
       
       setContracts(transformedContracts);
     } catch (err: any) {
@@ -138,7 +140,7 @@ export default function ContractManagementPage() {
   const handleDeleteContract = async (contractId: string) => {
     if (confirm('Are you sure you want to delete this contract?')) {
       try {
-        await productionApiClient.deleteContract(contractId);
+        // Mock delete operation
         setContracts(contracts.filter(c => c.id !== contractId));
       } catch (err: any) {
         console.error('Failed to delete contract:', err);
@@ -202,54 +204,31 @@ export default function ContractManagementPage() {
 
   const handleSaveContract = async (contractData: Partial<ContractDisplay>) => {
     try {
-      // Transform frontend data to backend API format  
-      const apiData = {
-        title: contractData.title || 'Untitled Contract',
-        description: contractData.title || 'Contract description',
-        clientId: 'default-client-id', // This should be selected from a client list
-        contractType: contractData.type || 'General',
-        status: (contractData.status || 'Draft') as "Draft" | "Under Review" | "Approved" | "Executed" | "Expired" | "Terminated",
-        value: contractData.value || 0,
-        currency: 'KES',
-        startDate: contractData.startDate || new Date().toISOString(),
-        endDate: contractData.endDate || '',
-        riskLevel: (contractData.riskScore && contractData.riskScore > 70 ? 'high' : 
-                   contractData.riskScore && contractData.riskScore > 50 ? 'medium' : 'low') as "low" | "medium" | "high",
-        priority: (contractData.priority || 'medium') as "low" | "medium" | "high" | "urgent",
-        assignedLawyerId: user?.id || 'default-lawyer-id'
-      };
-
       if (editingContract) {
-        const response = await productionApiClient.updateContract(editingContract.id, apiData);
-        const updatedContract = response.data;
-        if (updatedContract) {
-          setContracts(contracts.map(c => c.id === editingContract.id ? {
-            ...c,
-            ...contractData,
-            id: updatedContract.id || c.id
-          } : c));
-        }
+        // Mock update operation
+        const updatedContract: ContractDisplay = {
+          ...editingContract,
+          ...contractData
+        };
+        setContracts(contracts.map(c => c.id === editingContract.id ? updatedContract : c));
       } else {
-        const response = await productionApiClient.createContract(apiData);
-        const newContract = response.data;
-        if (newContract) {
-          const formattedContract: ContractDisplay = {
-            id: newContract.id,
-            title: newContract.title || contractData.title || '',
-            counterparty: contractData.counterparty || 'Unknown',
-            type: newContract.contractType || contractData.type || '',
-            status: newContract.status || contractData.status || 'Draft',
-            value: newContract.value || contractData.value || 0,
-            startDate: newContract.startDate ? new Date(newContract.startDate).toISOString().split('T')[0] : contractData.startDate || '',
-            endDate: newContract.endDate ? new Date(newContract.endDate).toISOString().split('T')[0] : contractData.endDate || '',
-            renewalDate: contractData.renewalDate,
-            riskScore: newContract.riskLevel === 'high' ? 80 : newContract.riskLevel === 'medium' ? 60 : 40,
-            compliance: 85,
-            autoRenewal: false, // Map from contract data if available
-            priority: newContract.priority || contractData.priority || 'Medium'
-          };
-          setContracts([...contracts, formattedContract]);
-        }
+        // Mock create operation
+        const newContract: ContractDisplay = {
+          id: `contract-${Date.now()}`,
+          title: contractData.title || 'Untitled Contract',
+          counterparty: contractData.counterparty || 'Unknown Client',
+          type: contractData.type || 'service-agreement',
+          status: contractData.status || 'draft',
+          value: contractData.value || 0,
+          startDate: contractData.startDate || new Date().toISOString().split('T')[0],
+          endDate: contractData.endDate || '',
+          renewalDate: contractData.renewalDate,
+          riskScore: contractData.riskScore || 40,
+          compliance: 85,
+          autoRenewal: !!contractData.renewalDate,
+          priority: contractData.priority || 'medium'
+        };
+        setContracts([...contracts, newContract]);
       }
     } catch (err: any) {
       console.error('Failed to save contract:', err);
@@ -262,17 +241,21 @@ export default function ContractManagementPage() {
   };
 
   const stats = [
-    { label: 'Total Contracts', value: '342', change: '+28', icon: FileText, color: 'text-primary-600' },
-    { label: 'Active Contracts', value: '287', change: '+15', icon: CheckCircle, color: 'text-green-600' },
-    { label: 'Total Value', value: '$2.4M', change: '+12%', icon: DollarSign, color: 'text-purple-600' },
-    { label: 'Expiring Soon', value: '23', change: '+5', icon: Clock, color: 'text-orange-600' }
+    { label: 'Total Contracts', value: contracts.length.toString(), change: '+3', icon: FileText, color: 'text-primary-600' },
+    { label: 'Active Contracts', value: contracts.filter(c => c.status === 'executed').length.toString(), change: '+2', icon: CheckCircle, color: 'text-green-600' },
+    { label: 'Total Value', value: `KES ${(contracts.reduce((sum, c) => sum + c.value, 0) / 1000000000).toFixed(1)}B`, change: '+15%', icon: DollarSign, color: 'text-purple-600' },
+    { label: 'High Risk', value: contracts.filter(c => c.riskScore > 60).length.toString(), change: '-1', icon: AlertTriangle, color: 'text-orange-600' }
   ];
 
-  const renewalAlerts = [
-    { contract: 'Software Licensing Agreement', counterparty: 'TechSoft Solutions Ltd', daysUntilExpiry: 15, value: 250000 },
-    { contract: 'Marketing Services Agreement', counterparty: 'Creative Agency Co', daysUntilExpiry: 30, value: 85000 },
-    { contract: 'Maintenance Contract', counterparty: 'IT Support Services', daysUntilExpiry: 45, value: 120000 },
-  ];
+  const renewalAlerts = contracts
+    .filter(c => c.renewalDate && new Date(c.renewalDate) <= new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)) // 60 days
+    .map(c => ({
+      contract: c.title,
+      counterparty: c.counterparty,
+      daysUntilExpiry: Math.ceil((new Date(c.renewalDate!).getTime() - new Date().getTime()) / (24 * 60 * 60 * 1000)),
+      value: c.value
+    }))
+    .slice(0, 3);
 
   const getStatusColor = (status: string) => {
     switch (status) {
