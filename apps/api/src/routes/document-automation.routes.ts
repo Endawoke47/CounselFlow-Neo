@@ -9,7 +9,7 @@ import {
   GenerationMethod,
   OutputFormat,
   DocumentComplexity,
-  TemplateFilters
+  TemplateFilters,
 } from '../types/document-automation.types';
 import { LegalJurisdiction, SupportedLanguage } from '../types/ai.types';
 import { LegalArea } from '../types/legal-research.types';
@@ -28,11 +28,11 @@ const rateLimit = (req: Request, res: Response, next: Function) => {
   const maxRequests = 10; // 10 requests per 10 minutes (document generation is resource-intensive)
 
   const clientData = rateLimitMap.get(clientId);
-  
+
   if (!clientData || now > clientData.resetTime) {
     rateLimitMap.set(clientId, {
       count: 1,
-      resetTime: now + windowMs
+      resetTime: now + windowMs,
     });
     next();
   } else if (clientData.count < maxRequests) {
@@ -42,7 +42,7 @@ const rateLimit = (req: Request, res: Response, next: Function) => {
     res.status(429).json({
       success: false,
       error: 'Too many document generation requests. Please try again later.',
-      retryAfter: Math.ceil((clientData.resetTime - now) / 1000)
+      retryAfter: Math.ceil((clientData.resetTime - now) / 1000),
     });
   }
 };
@@ -58,7 +58,7 @@ const validateGenerationRequest = (req: Request, res: Response, next: Function) 
       parties,
       outputFormat,
       variables,
-      features
+      features,
     } = req.body;
 
     // Required fields validation
@@ -66,7 +66,7 @@ const validateGenerationRequest = (req: Request, res: Response, next: Function) 
       return res.status(400).json({
         success: false,
         error: 'Valid documentType is required',
-        validValues: Object.values(DocumentType)
+        validValues: Object.values(DocumentType),
       });
     }
 
@@ -74,7 +74,7 @@ const validateGenerationRequest = (req: Request, res: Response, next: Function) 
       return res.status(400).json({
         success: false,
         error: 'Valid generationMethod is required',
-        validValues: Object.values(GenerationMethod)
+        validValues: Object.values(GenerationMethod),
       });
     }
 
@@ -82,7 +82,7 @@ const validateGenerationRequest = (req: Request, res: Response, next: Function) 
       return res.status(400).json({
         success: false,
         error: 'Valid jurisdiction is required',
-        validValues: Object.values(LegalJurisdiction)
+        validValues: Object.values(LegalJurisdiction),
       });
     }
 
@@ -90,14 +90,14 @@ const validateGenerationRequest = (req: Request, res: Response, next: Function) 
       return res.status(400).json({
         success: false,
         error: 'Valid legalArea is required',
-        validValues: Object.values(LegalArea)
+        validValues: Object.values(LegalArea),
       });
     }
 
     if (!parties || !Array.isArray(parties) || parties.length === 0) {
       return res.status(400).json({
         success: false,
-        error: 'At least one party is required'
+        error: 'At least one party is required',
       });
     }
 
@@ -105,17 +105,19 @@ const validateGenerationRequest = (req: Request, res: Response, next: Function) 
       return res.status(400).json({
         success: false,
         error: 'At least one output format is required',
-        validValues: Object.values(OutputFormat)
+        validValues: Object.values(OutputFormat),
       });
     }
 
     // Validate output formats
-    const invalidFormats = outputFormat.filter(format => !Object.values(OutputFormat).includes(format));
+    const invalidFormats = outputFormat.filter(
+      format => !Object.values(OutputFormat).includes(format)
+    );
     if (invalidFormats.length > 0) {
       return res.status(400).json({
         success: false,
         error: `Invalid output formats: ${invalidFormats.join(', ')}`,
-        validValues: Object.values(OutputFormat)
+        validValues: Object.values(OutputFormat),
       });
     }
 
@@ -125,7 +127,7 @@ const validateGenerationRequest = (req: Request, res: Response, next: Function) 
       if (!party.name || !party.type || !party.role) {
         return res.status(400).json({
           success: false,
-          error: `Party ${i + 1} missing required fields: name, type, role`
+          error: `Party ${i + 1} missing required fields: name, type, role`,
         });
       }
     }
@@ -134,7 +136,7 @@ const validateGenerationRequest = (req: Request, res: Response, next: Function) 
     if (variables && typeof variables !== 'object') {
       return res.status(400).json({
         success: false,
-        error: 'variables must be an object'
+        error: 'variables must be an object',
       });
     }
 
@@ -142,7 +144,7 @@ const validateGenerationRequest = (req: Request, res: Response, next: Function) 
     if (features && typeof features !== 'object') {
       return res.status(400).json({
         success: false,
-        error: 'features must be an object'
+        error: 'features must be an object',
       });
     }
 
@@ -150,76 +152,81 @@ const validateGenerationRequest = (req: Request, res: Response, next: Function) 
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: 'Invalid request format'
+      error: 'Invalid request format',
     });
   }
 };
 
 // POST /generate - Generate legal document
-router.post('/generate', rateLimit, validateGenerationRequest, async (req: Request, res: Response) => {
-  try {
-    const request: DocumentGenerationRequest = {
-      templateId: req.body.templateId,
-      documentType: req.body.documentType,
-      generationMethod: req.body.generationMethod,
-      jurisdiction: req.body.jurisdiction,
-      legalArea: req.body.legalArea,
-      language: req.body.language || SupportedLanguage.ENGLISH,
-      complexity: req.body.complexity || DocumentComplexity.STANDARD,
-      
-      // Input data
-      variables: req.body.variables || {},
-      parties: req.body.parties,
-      customClauses: req.body.customClauses || [],
-      
-      // Configuration
-      outputFormat: req.body.outputFormat,
-      styling: req.body.styling,
-      features: {
-        includeTableOfContents: req.body.features?.includeTableOfContents || false,
-        includeExecutionPage: req.body.features?.includeExecutionPage || true,
-        includeExhibits: req.body.features?.includeExhibits || false,
-        includeDefinitions: req.body.features?.includeDefinitions || true,
-        enableTracking: req.body.features?.enableTracking || false,
-        enableComments: req.body.features?.enableComments || false,
-        enableReview: req.body.features?.enableReview || false,
-        generateAlternatives: req.body.features?.generateAlternatives || false,
-        riskAnalysis: req.body.features?.riskAnalysis || true,
-        complianceCheck: req.body.features?.complianceCheck || true,
-        qualityAssurance: req.body.features?.qualityAssurance || true
-      },
-      
-      // Context
-      existingDocuments: req.body.existingDocuments || [],
-      complianceRequirements: req.body.complianceRequirements || [],
-      specialInstructions: req.body.specialInstructions,
-      confidentialityLevel: req.body.confidentialityLevel || 'PUBLIC'
-    };
+router.post(
+  '/generate',
+  rateLimit,
+  validateGenerationRequest,
+  async (req: Request, res: Response) => {
+    try {
+      const request: DocumentGenerationRequest = {
+        templateId: req.body.templateId,
+        documentType: req.body.documentType,
+        generationMethod: req.body.generationMethod,
+        jurisdiction: req.body.jurisdiction,
+        legalArea: req.body.legalArea,
+        language: req.body.language || SupportedLanguage.ENGLISH,
+        complexity: req.body.complexity || DocumentComplexity.STANDARD,
 
-    const result = await documentService.generateDocument(request);
-    
-    res.json({
-      success: true,
-      data: result,
-      metadata: {
-        requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        generationTime: result.metadata.duration,
-        documentsGenerated: result.documents.length,
-        complexity: result.summary.complexity,
-        qualityScore: result.quality.overall,
-        complianceScore: result.compliance.overallCompliance,
-        timestamp: new Date().toISOString()
-      }
-    });
-  } catch (error: any) {
-    console.error('Document generation error:', error);
-    res.status(500).json({
-      success: false,
-      error: error?.message || 'Failed to generate document',
-      details: process.env.NODE_ENV === 'development' ? error?.stack : undefined
-    });
+        // Input data
+        variables: req.body.variables || {},
+        parties: req.body.parties,
+        customClauses: req.body.customClauses || [],
+
+        // Configuration
+        outputFormat: req.body.outputFormat,
+        styling: req.body.styling,
+        features: {
+          includeTableOfContents: req.body.features?.includeTableOfContents || false,
+          includeExecutionPage: req.body.features?.includeExecutionPage || true,
+          includeExhibits: req.body.features?.includeExhibits || false,
+          includeDefinitions: req.body.features?.includeDefinitions || true,
+          enableTracking: req.body.features?.enableTracking || false,
+          enableComments: req.body.features?.enableComments || false,
+          enableReview: req.body.features?.enableReview || false,
+          generateAlternatives: req.body.features?.generateAlternatives || false,
+          riskAnalysis: req.body.features?.riskAnalysis || true,
+          complianceCheck: req.body.features?.complianceCheck || true,
+          qualityAssurance: req.body.features?.qualityAssurance || true,
+        },
+
+        // Context
+        existingDocuments: req.body.existingDocuments || [],
+        complianceRequirements: req.body.complianceRequirements || [],
+        specialInstructions: req.body.specialInstructions,
+        confidentialityLevel: req.body.confidentialityLevel || 'PUBLIC',
+      };
+
+      const result = await documentService.generateDocument(request);
+
+      res.json({
+        success: true,
+        data: result,
+        metadata: {
+          requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          generationTime: result.metadata.duration,
+          documentsGenerated: result.documents.length,
+          complexity: result.summary.complexity,
+          qualityScore: result.quality.overall,
+          complianceScore: result.compliance.overallCompliance,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (error: any) {
+      console.error('Document generation error:', error);
+      res.status(500).json({
+        success: false,
+        error: error?.message || 'Failed to generate document',
+        details: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+      });
+    }
   }
-});
+);
 
 // POST /analyze-complexity - Analyze document generation complexity
 router.post('/analyze-complexity', rateLimit, async (req: Request, res: Response) => {
@@ -235,23 +242,23 @@ router.post('/analyze-complexity', rateLimit, async (req: Request, res: Response
       parties: req.body.parties || [],
       outputFormat: req.body.outputFormat || [OutputFormat.PDF],
       features: req.body.features || {},
-      confidentialityLevel: req.body.confidentialityLevel || 'PUBLIC'
+      confidentialityLevel: req.body.confidentialityLevel || 'PUBLIC',
     };
 
     const analysis = await documentService.analyzeComplexity(request);
-    
+
     res.json({
       success: true,
       data: analysis,
       metadata: {
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   } catch (error: any) {
     console.error('Complexity analysis error:', error);
     res.status(500).json({
       success: false,
-      error: error?.message || 'Failed to analyze complexity'
+      error: error?.message || 'Failed to analyze complexity',
     });
   }
 });
@@ -270,23 +277,23 @@ router.post('/estimate-generation', rateLimit, async (req: Request, res: Respons
       parties: req.body.parties || [],
       outputFormat: req.body.outputFormat || [OutputFormat.PDF],
       features: req.body.features || {},
-      confidentialityLevel: req.body.confidentialityLevel || 'PUBLIC'
+      confidentialityLevel: req.body.confidentialityLevel || 'PUBLIC',
     };
 
     const estimate = await documentService.estimateGeneration(request);
-    
+
     res.json({
       success: true,
       data: estimate,
       metadata: {
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   } catch (error: any) {
     console.error('Generation estimation error:', error);
     res.status(500).json({
       success: false,
-      error: error?.message || 'Failed to estimate generation'
+      error: error?.message || 'Failed to estimate generation',
     });
   }
 });
@@ -295,7 +302,7 @@ router.post('/estimate-generation', rateLimit, async (req: Request, res: Respons
 router.get('/templates', async (req: Request, res: Response) => {
   try {
     const filters: TemplateFilters = {};
-    
+
     if (req.query.type) {
       filters.type = req.query.type as DocumentType;
     }
@@ -313,21 +320,21 @@ router.get('/templates', async (req: Request, res: Response) => {
     }
 
     const templates = await documentService.getTemplates(filters);
-    
+
     res.json({
       success: true,
       data: templates,
       metadata: {
         count: templates.length,
         filters: filters,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   } catch (error: any) {
     console.error('Template retrieval error:', error);
     res.status(500).json({
       success: false,
-      error: error?.message || 'Failed to retrieve templates'
+      error: error?.message || 'Failed to retrieve templates',
     });
   }
 });
@@ -336,28 +343,28 @@ router.get('/templates', async (req: Request, res: Response) => {
 router.post('/templates/validate', async (req: Request, res: Response) => {
   try {
     const template = req.body.template;
-    
+
     if (!template) {
       return res.status(400).json({
         success: false,
-        error: 'Template is required'
+        error: 'Template is required',
       });
     }
 
     const validation = await documentService.validateTemplate(template);
-    
+
     res.json({
       success: true,
       data: validation,
       metadata: {
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   } catch (error: any) {
     console.error('Template validation error:', error);
     res.status(500).json({
       success: false,
-      error: error?.message || 'Failed to validate template'
+      error: error?.message || 'Failed to validate template',
     });
   }
 });
@@ -373,7 +380,7 @@ router.get('/capabilities', (req: Request, res: Response) => {
       supportedLegalAreas: Object.values(LegalArea),
       supportedLanguages: Object.values(SupportedLanguage),
       complexityLevels: Object.values(DocumentComplexity),
-      
+
       features: {
         templateBasedGeneration: true,
         aiGeneration: true,
@@ -388,24 +395,24 @@ router.get('/capabilities', (req: Request, res: Response) => {
         riskAnalysis: true,
         alternativeGeneration: true,
         multiLanguageSupport: true,
-        jurisdictionSpecific: true
+        jurisdictionSpecific: true,
       },
-      
+
       rateLimits: {
         requestsPerHour: 60,
         requestsPerDay: 200,
         windowMinutes: 10,
-        maxPerWindow: 10
+        maxPerWindow: 10,
       },
-      
+
       qualityMetrics: {
         averageAccuracy: 0.92,
         averageCompleteness: 0.89,
         averageCompliance: 0.94,
         averageGenerationTime: 45000, // ms
-        successRate: 0.97
+        successRate: 0.97,
       },
-      
+
       supportedPartyTypes: [
         'INDIVIDUAL',
         'CORPORATION',
@@ -414,9 +421,9 @@ router.get('/capabilities', (req: Request, res: Response) => {
         'TRUST',
         'GOVERNMENT',
         'NON_PROFIT',
-        'FOREIGN_ENTITY'
+        'FOREIGN_ENTITY',
       ],
-      
+
       supportedPartyRoles: [
         'CLIENT',
         'COUNTERPARTY',
@@ -433,8 +440,8 @@ router.get('/capabilities', (req: Request, res: Response) => {
         'BUYER',
         'SELLER',
         'LICENSOR',
-        'LICENSEE'
-      ]
+        'LICENSEE',
+      ],
     };
 
     res.json({
@@ -442,14 +449,14 @@ router.get('/capabilities', (req: Request, res: Response) => {
       data: capabilities,
       metadata: {
         version: '1.0.0',
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   } catch (error: any) {
     console.error('Capabilities error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to retrieve system capabilities'
+      error: 'Failed to retrieve system capabilities',
     });
   }
 });
@@ -465,7 +472,7 @@ router.get('/document-types', (req: Request, res: Response) => {
         category: 'Commercial Contracts',
         complexity: DocumentComplexity.STANDARD,
         estimatedTime: 45,
-        commonSections: ['Parties', 'Scope of Services', 'Payment Terms', 'Termination']
+        commonSections: ['Parties', 'Scope of Services', 'Payment Terms', 'Termination'],
       },
       {
         type: DocumentType.EMPLOYMENT_CONTRACT,
@@ -474,7 +481,7 @@ router.get('/document-types', (req: Request, res: Response) => {
         category: 'Employment',
         complexity: DocumentComplexity.STANDARD,
         estimatedTime: 60,
-        commonSections: ['Employee Information', 'Job Description', 'Compensation', 'Benefits']
+        commonSections: ['Employee Information', 'Job Description', 'Compensation', 'Benefits'],
       },
       {
         type: DocumentType.NON_DISCLOSURE_AGREEMENT,
@@ -483,7 +490,7 @@ router.get('/document-types', (req: Request, res: Response) => {
         category: 'Confidentiality',
         complexity: DocumentComplexity.SIMPLE,
         estimatedTime: 30,
-        commonSections: ['Parties', 'Confidential Information', 'Obligations', 'Term']
+        commonSections: ['Parties', 'Confidential Information', 'Obligations', 'Term'],
       },
       {
         type: DocumentType.PARTNERSHIP_AGREEMENT,
@@ -492,7 +499,7 @@ router.get('/document-types', (req: Request, res: Response) => {
         category: 'Corporate',
         complexity: DocumentComplexity.COMPLEX,
         estimatedTime: 120,
-        commonSections: ['Partners', 'Capital Contributions', 'Profit Sharing', 'Management']
+        commonSections: ['Partners', 'Capital Contributions', 'Profit Sharing', 'Management'],
       },
       {
         type: DocumentType.LEASE_AGREEMENT,
@@ -501,8 +508,13 @@ router.get('/document-types', (req: Request, res: Response) => {
         category: 'Real Estate',
         complexity: DocumentComplexity.STANDARD,
         estimatedTime: 50,
-        commonSections: ['Property Description', 'Rent Terms', 'Lease Duration', 'Responsibilities']
-      }
+        commonSections: [
+          'Property Description',
+          'Rent Terms',
+          'Lease Duration',
+          'Responsibilities',
+        ],
+      },
     ];
 
     res.json({
@@ -510,15 +522,21 @@ router.get('/document-types', (req: Request, res: Response) => {
       data: documentTypes,
       metadata: {
         count: documentTypes.length,
-        categories: ['Commercial Contracts', 'Employment', 'Confidentiality', 'Corporate', 'Real Estate'],
-        timestamp: new Date().toISOString()
-      }
+        categories: [
+          'Commercial Contracts',
+          'Employment',
+          'Confidentiality',
+          'Corporate',
+          'Real Estate',
+        ],
+        timestamp: new Date().toISOString(),
+      },
     });
   } catch (error: any) {
     console.error('Document types error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to retrieve document types'
+      error: 'Failed to retrieve document types',
     });
   }
 });
@@ -529,7 +547,7 @@ router.use((error: any, req: Request, res: Response, next: Function) => {
   res.status(500).json({
     success: false,
     error: 'Internal server error in document automation',
-    details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    details: process.env.NODE_ENV === 'development' ? error.message : undefined,
   });
 });
 

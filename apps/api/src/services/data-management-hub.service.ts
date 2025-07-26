@@ -1,9 +1,9 @@
 /**
  * 🏛️ CENTRALIZED DATA MANAGEMENT HUB
- * 
+ *
  * This service acts as the single source of truth for all data operations across the platform.
  * It provides a unified interface for data access, manipulation, caching, and analytics.
- * 
+ *
  * Features:
  * - Centralized data access layer
  * - Intelligent caching with Redis
@@ -13,7 +13,7 @@
  * - Performance optimization
  * - Data analytics and insights
  * - Audit trail and versioning
- * 
+ *
  * Author: Endawoke47
  * Created: 2025-07-13
  */
@@ -86,17 +86,17 @@ export class DataManagementHubService {
   private readonly logger = new Logger(DataManagementHubService.name);
   private readonly redis: Redis;
   private readonly cacheConfig: CacheConfig;
-  
+
   // Repository Registry - Dynamic repository access
   private readonly repositories = new Map<string, Repository<any>>();
-  
+
   // Performance Metrics
   private metrics = {
     queryCount: 0,
     cacheHits: 0,
     cacheMisses: 0,
     avgQueryTime: 0,
-    totalQueries: 0
+    totalQueries: 0,
   };
 
   constructor(
@@ -109,7 +109,7 @@ export class DataManagementHubService {
     @InjectRepository(Notification) private notificationRepository: Repository<Notification>,
     private dataSource: DataSource,
     private configService: ConfigService,
-    private eventEmitter: EventEmitter2,
+    private eventEmitter: EventEmitter2
   ) {
     // Initialize Redis
     this.redis = new Redis({
@@ -123,12 +123,12 @@ export class DataManagementHubService {
     this.cacheConfig = {
       ttl: 3600, // 1 hour default
       prefix: 'dmh:', // Data Management Hub prefix
-      enableRealTimeSync: true
+      enableRealTimeSync: true,
     };
 
     // Register repositories for dynamic access
     this.registerRepositories();
-    
+
     this.logger.log('🏛️ Data Management Hub initialized');
   }
 
@@ -139,7 +139,7 @@ export class DataManagementHubService {
   async query<T = any>(query: DataQuery): Promise<T[]> {
     const startTime = Date.now();
     this.metrics.queryCount++;
-    
+
     try {
       // Check cache first
       if (query.cache !== false) {
@@ -173,11 +173,18 @@ export class DataManagementHubService {
         Object.entries(query.filters).forEach(([key, value], index) => {
           const paramName = `param_${index}`;
           if (Array.isArray(value)) {
-            queryBuilder = queryBuilder.andWhere(`${query.entity}.${key} IN (:...${paramName})`, { [paramName]: value });
+            queryBuilder = queryBuilder.andWhere(`${query.entity}.${key} IN (:...${paramName})`, {
+              [paramName]: value,
+            });
           } else if (typeof value === 'object' && value.operator) {
-            queryBuilder = queryBuilder.andWhere(`${query.entity}.${key} ${value.operator} :${paramName}`, { [paramName]: value.value });
+            queryBuilder = queryBuilder.andWhere(
+              `${query.entity}.${key} ${value.operator} :${paramName}`,
+              { [paramName]: value.value }
+            );
           } else {
-            queryBuilder = queryBuilder.andWhere(`${query.entity}.${key} = :${paramName}`, { [paramName]: value });
+            queryBuilder = queryBuilder.andWhere(`${query.entity}.${key} = :${paramName}`, {
+              [paramName]: value,
+            });
           }
         });
       }
@@ -217,11 +224,10 @@ export class DataManagementHubService {
         operation: 'query',
         timestamp: new Date(),
         resultCount: results.length,
-        queryTime
+        queryTime,
       });
 
       return results;
-
     } catch (error) {
       this.logger.error('Query execution failed', { error, query });
       throw error;
@@ -250,12 +256,12 @@ export class DataManagementHubService {
       switch (mutation.operation) {
         case 'create':
           const entity = repository.create(mutation.data);
-          result = await repository.save(entity) as T;
+          result = (await repository.save(entity)) as T;
           break;
 
         case 'update':
           await repository.update(mutation.data.id, mutation.data);
-          result = await repository.findOne({ where: { id: mutation.data.id } }) as T;
+          result = (await repository.findOne({ where: { id: mutation.data.id } })) as T;
           break;
 
         case 'delete':
@@ -264,7 +270,7 @@ export class DataManagementHubService {
           break;
 
         case 'upsert':
-          result = await repository.save(mutation.data) as T;
+          result = (await repository.save(mutation.data)) as T;
           break;
 
         default:
@@ -288,7 +294,7 @@ export class DataManagementHubService {
         operation: mutation.operation,
         data: mutation.data,
         result,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
 
       // Real-time sync if enabled
@@ -297,7 +303,6 @@ export class DataManagementHubService {
       }
 
       return result;
-
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.logger.error('Mutation execution failed', { error, mutation });
@@ -320,7 +325,7 @@ export class DataManagementHubService {
 
       // Build analytics query
       const queryBuilder = this.dataSource.createQueryBuilder();
-      
+
       // This would be expanded based on specific analytics needs
       const results = await this.executeAnalyticsQuery(query, queryBuilder);
 
@@ -328,7 +333,6 @@ export class DataManagementHubService {
       await this.setCache(cacheKey, results, 7200); // 2 hours
 
       return results;
-
     } catch (error) {
       this.logger.error('Analytics query failed', { error, query });
       throw error;
@@ -347,7 +351,6 @@ export class DataManagementHubService {
 
       // Emit relationship event
       this.eventEmitter.emit('data.relationship.created', relationship);
-
     } catch (error) {
       this.logger.error('Failed to create relationship', { error, relationship });
       throw error;
@@ -368,13 +371,12 @@ export class DataManagementHubService {
     try {
       // Build contextual query based on module and action
       const contextData = await this.buildContextualQuery(context);
-      
+
       // Cache contextual data
       const cacheKey = this.generateCacheKey('context', context);
       await this.setCache(cacheKey, contextData, 1800); // 30 minutes
 
       return contextData;
-
     } catch (error) {
       this.logger.error('Failed to get contextual data', { error, context });
       throw error;
@@ -388,10 +390,12 @@ export class DataManagementHubService {
   getPerformanceMetrics(): any {
     return {
       ...this.metrics,
-      cacheHitRatio: this.metrics.totalQueries > 0 ? 
-        (this.metrics.cacheHits / this.metrics.totalQueries) * 100 : 0,
+      cacheHitRatio:
+        this.metrics.totalQueries > 0
+          ? (this.metrics.cacheHits / this.metrics.totalQueries) * 100
+          : 0,
       avgQueryTime: this.metrics.avgQueryTime,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
   }
 
@@ -402,7 +406,7 @@ export class DataManagementHubService {
     try {
       const searchPattern = pattern || `${this.cacheConfig.prefix}*`;
       const keys = await this.redis.keys(searchPattern);
-      
+
       if (keys.length > 0) {
         await this.redis.del(...keys);
         this.logger.log(`Cleared ${keys.length} cache entries`);
@@ -452,10 +456,10 @@ export class DataManagementHubService {
   }
 
   private async invalidateEntityCache(entity: string, id?: string): Promise<void> {
-    const pattern = id ? 
-      `${this.cacheConfig.prefix}*${entity}*${id}*` : 
-      `${this.cacheConfig.prefix}*${entity}*`;
-    
+    const pattern = id
+      ? `${this.cacheConfig.prefix}*${entity}*${id}*`
+      : `${this.cacheConfig.prefix}*${entity}*`;
+
     const keys = await this.redis.keys(pattern);
     if (keys.length > 0) {
       await this.redis.del(...keys);
@@ -464,9 +468,9 @@ export class DataManagementHubService {
 
   private updateQueryMetrics(queryTime: number): void {
     this.metrics.totalQueries++;
-    this.metrics.avgQueryTime = (
-      (this.metrics.avgQueryTime * (this.metrics.totalQueries - 1)) + queryTime
-    ) / this.metrics.totalQueries;
+    this.metrics.avgQueryTime =
+      (this.metrics.avgQueryTime * (this.metrics.totalQueries - 1) + queryTime) /
+      this.metrics.totalQueries;
   }
 
   private async validateEntityRelations(data: any, entity: string): Promise<void> {

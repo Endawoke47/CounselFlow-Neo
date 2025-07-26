@@ -1,8 +1,8 @@
 /**
  * 🔗 DATABASE AND REDIS CONNECTION SETUP
- * 
+ *
  * Provides database and Redis connections for the resilience service
- * 
+ *
  * Author: Endawoke47
  * Created: 2025-07-13
  */
@@ -43,7 +43,7 @@ redis.on('connect', () => {
   logger.info('✅ Redis connected successfully');
 });
 
-redis.on('error', (error) => {
+redis.on('error', error => {
   logger.error('❌ Redis connection error:', error);
 });
 
@@ -51,18 +51,18 @@ dbPool.on('connect', () => {
   logger.info('✅ PostgreSQL pool connected');
 });
 
-dbPool.on('error', (error) => {
+dbPool.on('error', error => {
   logger.error('❌ PostgreSQL pool error:', error);
 });
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
   logger.info('🔄 Shutting down database connections...');
-  
+
   await prisma.$disconnect();
   redis.disconnect();
   await dbPool.end();
-  
+
   logger.info('✅ Database connections closed');
   process.exit(0);
 });

@@ -13,16 +13,15 @@ import { jest } from '@jest/globals';
 
 // Mock external dependencies
 jest.mock('@mui/material', () => ({
-  Box: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  Paper: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  Typography: ({ children, ...props }: any) => <span {...props}>{children}</span>,
-  Grid: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  Card: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  CardContent: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  TextField: (props: any) => <input {...props} />,
-  Button: ({ children, onClick, ...props }: any) => 
-    <button onClick={onClick} {...props}>{children}</button>,
-  Chip: ({ label, ...props }: any) => <span {...props}>{label}</span>,
+  Box: (props: any) => React.createElement('div', props, props.children),
+  Paper: (props: any) => React.createElement('div', props, props.children),
+  Typography: (props: any) => React.createElement('span', props, props.children),
+  Grid: (props: any) => React.createElement('div', props, props.children),
+  Card: (props: any) => React.createElement('div', props, props.children),
+  CardContent: (props: any) => React.createElement('div', props, props.children),
+  TextField: (props: any) => React.createElement('input', props),
+  Button: (props: any) => React.createElement('button', { onClick: props.onClick, ...props }, props.children),
+  Chip: (props: any) => React.createElement('span', props, props.label),
   List: ({ children, ...props }: any) => <ul {...props}>{children}</ul>,
   ListItem: ({ children, ...props }: any) => <li {...props}>{children}</li>,
   ListItemText: ({ primary, secondary, ...props }: any) => 

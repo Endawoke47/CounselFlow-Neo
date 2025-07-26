@@ -1,15 +1,15 @@
 // AI Gateway Service - Core Implementation
 // Self-hosted primary with hybrid premium API fallback
 
-import { 
-  AIProvider, 
-  AIResponse, 
-  ProviderConfig, 
+import {
+  AIProvider,
+  AIResponse,
+  ProviderConfig,
   aiRequestSchema,
   ValidatedAIRequest,
   LegalJurisdiction,
   SupportedLanguage,
-  AIAnalysisType 
+  AIAnalysisType,
 } from '../types/ai.types';
 import { OllamaProvider } from './providers/ollama.provider';
 import { OpenAIProvider } from './providers/openai.provider';
@@ -45,8 +45,8 @@ export class AIGatewayService {
       ),
       transports: [
         new winston.transports.File({ filename: 'logs/ai-gateway.log' }),
-        new winston.transports.Console()
-      ]
+        new winston.transports.Console(),
+      ],
     });
   }
 
@@ -54,30 +54,45 @@ export class AIGatewayService {
     try {
       // Default configurations for each provider
       const defaultConfig = { enabled: true, priority: 1 };
-      
+
       // Primary: Self-hosted providers (free, private)
-      this.providers.set(AIProvider.OLLAMA, new OllamaProvider({
-        ...defaultConfig,
-        baseURL: process.env.OLLAMA_BASE_URL || 'http://localhost:11434'
-      }));
-      this.providers.set(AIProvider.LEGAL_BERT, new LegalBertProvider({
-        ...defaultConfig,
-        modelPath: process.env.LEGAL_BERT_MODEL_PATH || './models/legal-bert'
-      }));
-      
+      this.providers.set(
+        AIProvider.OLLAMA,
+        new OllamaProvider({
+          ...defaultConfig,
+          baseURL: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
+        })
+      );
+      this.providers.set(
+        AIProvider.LEGAL_BERT,
+        new LegalBertProvider({
+          ...defaultConfig,
+          modelPath: process.env.LEGAL_BERT_MODEL_PATH || './models/legal-bert',
+        })
+      );
+
       // Hybrid: Premium APIs (when API keys provided)
-      this.providers.set(AIProvider.OPENAI, new OpenAIProvider({
-        ...defaultConfig,
-        apiKey: process.env.OPENAI_API_KEY
-      }));
-      this.providers.set(AIProvider.ANTHROPIC, new AnthropicProvider({
-        ...defaultConfig,
-        apiKey: process.env.ANTHROPIC_API_KEY
-      }));
-      this.providers.set(AIProvider.GOOGLE, new GoogleProvider({
-        ...defaultConfig,
-        apiKey: process.env.GOOGLE_API_KEY
-      }));
+      this.providers.set(
+        AIProvider.OPENAI,
+        new OpenAIProvider({
+          ...defaultConfig,
+          apiKey: process.env.OPENAI_API_KEY,
+        })
+      );
+      this.providers.set(
+        AIProvider.ANTHROPIC,
+        new AnthropicProvider({
+          ...defaultConfig,
+          apiKey: process.env.ANTHROPIC_API_KEY,
+        })
+      );
+      this.providers.set(
+        AIProvider.GOOGLE,
+        new GoogleProvider({
+          ...defaultConfig,
+          apiKey: process.env.GOOGLE_API_KEY,
+        })
+      );
 
       // Enable self-hosted providers by default
       this.enabledProviders.add(AIProvider.OLLAMA);
@@ -104,30 +119,30 @@ export class AIGatewayService {
   // Main request processing method
   async processRequest(request: ValidatedAIRequest, userId: string): Promise<AIResponse> {
     const startTime = Date.now();
-    
+
     try {
       // Validate request
       const validatedRequest = aiRequestSchema.parse(request);
-      
+
       // Check cache first
       const cacheKey = this.generateCacheKey(validatedRequest);
       const cachedResult = await this.cache.get(cacheKey);
-      
+
       if (cachedResult) {
         console.log('📋 Cache hit for request');
         return {
           ...cachedResult,
           cached: true,
-          processingTime: Date.now() - startTime
+          processingTime: Date.now() - startTime,
         };
       }
 
       // Select optimal provider
       const selectedProvider = this.selectProvider(validatedRequest);
-      
+
       // Execute request
       const result = await this.executeRequest(selectedProvider, validatedRequest, userId);
-      
+
       // Cache successful results
       if (result.output) {
         await this.cache.set(cacheKey, result, 3600); // 1 hour cache
@@ -145,15 +160,14 @@ export class AIGatewayService {
         cost: result.cost || 0,
         success: !!result.output,
         processingTime: Date.now() - startTime,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
 
       return {
         ...result,
         cached: false,
-        processingTime: Date.now() - startTime
+        processingTime: Date.now() - startTime,
       };
-
     } catch (error) {
       this.logger.error('AI request processing failed', { error, userId, request });
       throw error;
@@ -203,7 +217,7 @@ export class AIGatewayService {
       AIAnalysisType.COMPLIANCE_CHECK,
       AIAnalysisType.CLAUSE_EXTRACTION,
       AIAnalysisType.LEGAL_RESEARCH,
-      AIAnalysisType.PRECEDENT_MATCHING
+      AIAnalysisType.PRECEDENT_MATCHING,
     ].includes(type);
   }
 
@@ -211,13 +225,13 @@ export class AIGatewayService {
     return [
       AIAnalysisType.RISK_ASSESSMENT,
       AIAnalysisType.CASE_PREDICTION,
-      AIAnalysisType.COMPLIANCE_CHECK
+      AIAnalysisType.COMPLIANCE_CHECK,
     ].includes(type);
   }
 
   private async executeRequest(
-    provider: AIProvider, 
-    request: ValidatedAIRequest, 
+    provider: AIProvider,
+    request: ValidatedAIRequest,
     userId: string
   ): Promise<AIResponse> {
     const providerInstance = this.providers.get(provider);
@@ -228,23 +242,23 @@ export class AIGatewayService {
     try {
       console.log(`🤖 Processing with ${provider}`);
       const result = await providerInstance.processRequest(request);
-      
+
       return {
         ...result,
         provider,
         model: providerInstance.getModel?.() || 'unknown',
-        success: true
+        success: true,
       };
     } catch (error) {
       console.error(`❌ Provider ${provider} failed:`, error);
-      
+
       // Try fallback provider
       const fallbackProvider = this.getFallbackProvider(provider);
       if (fallbackProvider) {
         console.log(`🔄 Trying fallback provider: ${fallbackProvider}`);
         return this.executeRequest(fallbackProvider, request, userId);
       }
-      
+
       throw error;
     }
   }
@@ -256,7 +270,7 @@ export class AIGatewayService {
       [AIProvider.OPENAI]: [AIProvider.ANTHROPIC, AIProvider.GOOGLE],
       [AIProvider.ANTHROPIC]: [AIProvider.OPENAI, AIProvider.GOOGLE],
       [AIProvider.GOOGLE]: [AIProvider.OPENAI, AIProvider.OLLAMA],
-      [AIProvider.HUGGINGFACE]: [AIProvider.LEGAL_BERT, AIProvider.OLLAMA]
+      [AIProvider.HUGGINGFACE]: [AIProvider.LEGAL_BERT, AIProvider.OLLAMA],
     };
 
     const fallbacks = fallbackMap[failedProvider] || [];
@@ -273,10 +287,10 @@ export class AIGatewayService {
         if (!providerInstance) {
           return { available: false };
         }
-        
+
         const available = await providerInstance.isHealthy();
         const latency = Date.now() - startTime;
-        
+
         return { available, latency };
       } catch (error) {
         return { available: false, latency: Date.now() - startTime };
@@ -284,24 +298,24 @@ export class AIGatewayService {
     } else {
       // All providers status
       const status: Record<string, any> = {};
-      
+
       for (const [providerType, providerInstance] of this.providers.entries()) {
         try {
           status[providerType] = {
             enabled: this.enabledProviders.has(providerType),
             healthy: await providerInstance.isHealthy(),
-            name: providerInstance.constructor.name
+            name: providerInstance.constructor.name,
           };
         } catch (error) {
           status[providerType] = {
             enabled: this.enabledProviders.has(providerType),
             healthy: false,
             name: providerInstance.constructor.name,
-            error: error instanceof Error ? error.message : 'Unknown error'
+            error: error instanceof Error ? error.message : 'Unknown error',
           };
         }
       }
-      
+
       return status;
     }
   }
@@ -311,7 +325,7 @@ export class AIGatewayService {
     if (!providerInstance) {
       throw new Error(`Provider ${provider} not found`);
     }
-    
+
     if (apiKey) {
       // Store API key configuration
       const config: ProviderConfig = this.configs.get(provider) || {
@@ -319,19 +333,19 @@ export class AIGatewayService {
         enabled: true,
         priority: 1,
         models: [],
-        rateLimit: { 
+        rateLimit: {
           requestsPerMinute: 60,
-          tokensPerMinute: 10000
+          tokensPerMinute: 10000,
         },
         costs: {
           inputTokenCost: 0.001,
-          outputTokenCost: 0.002
-        }
+          outputTokenCost: 0.002,
+        },
       };
       config.apiKey = apiKey;
       this.configs.set(provider, config);
     }
-    
+
     this.enabledProviders.add(provider);
     console.log(`✅ Provider ${provider} enabled`);
   }
@@ -346,7 +360,7 @@ export class AIGatewayService {
     if (!provider) {
       throw new Error(`Provider ${providerType} not found`);
     }
-    
+
     try {
       return await provider.isHealthy();
     } catch (error) {
@@ -356,7 +370,7 @@ export class AIGatewayService {
 
   async healthCheck(): Promise<Record<string, any>> {
     const health: Record<string, any> = {};
-    
+
     for (const [providerType, provider] of this.providers.entries()) {
       try {
         health[providerType] = await provider.isHealthy();
@@ -364,7 +378,7 @@ export class AIGatewayService {
         health[providerType] = false;
       }
     }
-    
+
     return health;
   }
 
@@ -374,7 +388,7 @@ export class AIGatewayService {
     return Object.values(LegalJurisdiction).includes(jurisdiction);
   }
 
-  // Language support check  
+  // Language support check
   isLanguageSupported(language: SupportedLanguage): boolean {
     return Object.values(SupportedLanguage).includes(language);
   }
@@ -384,7 +398,7 @@ export class AIGatewayService {
     const key = JSON.stringify({
       type: request.type,
       input: request.input,
-      context: request.context
+      context: request.context,
     });
     return Buffer.from(key).toString('base64');
   }

@@ -7,7 +7,7 @@ import {
   LegalIntelligenceRequest,
   IntelligenceType,
   AnalyticsPeriod,
-  VisualizationType
+  VisualizationType,
 } from '../types/legal-intelligence.types';
 import { LegalJurisdiction, SupportedLanguage } from '../types/ai.types';
 import { LegalArea } from '../types/legal-research.types';
@@ -26,11 +26,11 @@ const rateLimit = (req: Request, res: Response, next: Function) => {
   const maxRequests = 20; // 20 requests per 15 minutes
 
   const clientData = rateLimitMap.get(clientId);
-  
+
   if (!clientData || now > clientData.resetTime) {
     rateLimitMap.set(clientId, {
       count: 1,
-      resetTime: now + windowMs
+      resetTime: now + windowMs,
     });
     next();
   } else if (clientData.count < maxRequests) {
@@ -40,7 +40,7 @@ const rateLimit = (req: Request, res: Response, next: Function) => {
     res.status(429).json({
       success: false,
       error: 'Too many requests. Please try again later.',
-      retryAfter: Math.ceil((clientData.resetTime - now) / 1000)
+      retryAfter: Math.ceil((clientData.resetTime - now) / 1000),
     });
   }
 };
@@ -54,21 +54,21 @@ const validateRequest = (req: Request, res: Response, next: Function) => {
     if (!analysisTypes || !Array.isArray(analysisTypes) || analysisTypes.length === 0) {
       return res.status(400).json({
         success: false,
-        error: 'analysisTypes is required and must be a non-empty array'
+        error: 'analysisTypes is required and must be a non-empty array',
       });
     }
 
     if (!jurisdictions || !Array.isArray(jurisdictions) || jurisdictions.length === 0) {
       return res.status(400).json({
         success: false,
-        error: 'jurisdictions is required and must be a non-empty array'
+        error: 'jurisdictions is required and must be a non-empty array',
       });
     }
 
     if (!legalAreas || !Array.isArray(legalAreas) || legalAreas.length === 0) {
       return res.status(400).json({
         success: false,
-        error: 'legalAreas is required and must be a non-empty array'
+        error: 'legalAreas is required and must be a non-empty array',
       });
     }
 
@@ -77,7 +77,8 @@ const validateRequest = (req: Request, res: Response, next: Function) => {
       if (!customDateRange || !customDateRange.startDate || !customDateRange.endDate) {
         return res.status(400).json({
           success: false,
-          error: 'customDateRange with startDate and endDate is required when period is CUSTOM_RANGE'
+          error:
+            'customDateRange with startDate and endDate is required when period is CUSTOM_RANGE',
         });
       }
 
@@ -87,7 +88,7 @@ const validateRequest = (req: Request, res: Response, next: Function) => {
       if (startDate >= endDate) {
         return res.status(400).json({
           success: false,
-          error: 'Invalid date range: startDate must be before endDate'
+          error: 'Invalid date range: startDate must be before endDate',
         });
       }
     }
@@ -96,7 +97,7 @@ const validateRequest = (req: Request, res: Response, next: Function) => {
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: 'Invalid request format'
+      error: 'Invalid request format',
     });
   }
 };
@@ -105,9 +106,9 @@ const validateRequest = (req: Request, res: Response, next: Function) => {
 router.post('/analyze', rateLimit, validateRequest, async (req: Request, res: Response) => {
   try {
     const request: LegalIntelligenceRequest = req.body;
-    
+
     const result = await legalIntelligenceService.analyzeLegalIntelligence(request);
-    
+
     res.json({
       success: true,
       data: result,
@@ -116,14 +117,14 @@ router.post('/analyze', rateLimit, validateRequest, async (req: Request, res: Re
         executionTime: result.metadata.executionTime,
         dataPoints: result.metadata.coverage.sampleSize,
         confidence: result.metadata.accuracy.overall,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   } catch (error) {
     console.error('Legal intelligence analysis error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to perform legal intelligence analysis'
+      error: 'Failed to perform legal intelligence analysis',
     });
   }
 });
@@ -135,7 +136,7 @@ router.post('/trends', rateLimit, async (req: Request, res: Response) => {
       jurisdictions = [LegalJurisdiction.NIGERIA],
       legalAreas = [LegalArea.CORPORATE],
       period = AnalyticsPeriod.LAST_6_MONTHS,
-      language = SupportedLanguage.ENGLISH
+      language = SupportedLanguage.ENGLISH,
     } = req.body;
 
     const request: LegalIntelligenceRequest = {
@@ -151,10 +152,10 @@ router.post('/trends', rateLimit, async (req: Request, res: Response) => {
         includeTrends: true,
         includeAlerts: false,
         detailLevel: 'summary',
-        visualizations: []
+        visualizations: [],
       },
       language,
-      confidentialityLevel: 'public'
+      confidentialityLevel: 'public',
     };
 
     const result = await legalIntelligenceService.analyzeLegalIntelligence(request);
@@ -164,18 +165,18 @@ router.post('/trends', rateLimit, async (req: Request, res: Response) => {
       data: {
         trends: result.trendAnalysis,
         insights: result.keyInsights.filter(insight => insight.category === 'legal_trends'),
-        visualizations: result.visualizations
+        visualizations: result.visualizations,
       },
       metadata: {
         trendsFound: result.trendAnalysis?.length || 0,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   } catch (error) {
     console.error('Trend analysis error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to perform trend analysis'
+      error: 'Failed to perform trend analysis',
     });
   }
 });
@@ -186,7 +187,7 @@ router.post('/predictions', rateLimit, async (req: Request, res: Response) => {
     const {
       jurisdictions = [LegalJurisdiction.NIGERIA],
       legalAreas = [LegalArea.CORPORATE],
-      language = SupportedLanguage.ENGLISH
+      language = SupportedLanguage.ENGLISH,
     } = req.body;
 
     const request: LegalIntelligenceRequest = {
@@ -202,10 +203,10 @@ router.post('/predictions', rateLimit, async (req: Request, res: Response) => {
         includeTrends: false,
         includeAlerts: true,
         detailLevel: 'detailed',
-        visualizations: []
+        visualizations: [],
       },
       language,
-      confidentialityLevel: 'public'
+      confidentialityLevel: 'public',
     };
 
     const result = await legalIntelligenceService.analyzeLegalIntelligence(request);
@@ -216,18 +217,18 @@ router.post('/predictions', rateLimit, async (req: Request, res: Response) => {
         predictions: result.predictiveInsights,
         recommendations: result.recommendations,
         alerts: result.alerts,
-        insights: result.keyInsights.filter(insight => insight.category === 'case_outcomes')
+        insights: result.keyInsights.filter(insight => insight.category === 'case_outcomes'),
       },
       metadata: {
         predictionsGenerated: result.predictiveInsights?.length || 0,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   } catch (error) {
     console.error('Predictive analysis error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to perform predictive analysis'
+      error: 'Failed to perform predictive analysis',
     });
   }
 });
@@ -246,7 +247,7 @@ router.get('/capabilities', (req: Request, res: Response) => {
         requestsPerHour: 80,
         requestsPerDay: 500,
         windowMinutes: 15,
-        maxPerWindow: 20
+        maxPerWindow: 20,
       },
       features: {
         trendAnalysis: true,
@@ -258,8 +259,8 @@ router.get('/capabilities', (req: Request, res: Response) => {
         realTimeAlerts: true,
         customVisualizations: true,
         multiLanguageSupport: true,
-        jurisdictionSpecific: true
-      }
+        jurisdictionSpecific: true,
+      },
     };
 
     res.json({
@@ -267,14 +268,14 @@ router.get('/capabilities', (req: Request, res: Response) => {
       data: capabilities,
       metadata: {
         version: '1.0.0',
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   } catch (error) {
     console.error('Capabilities error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to retrieve system capabilities'
+      error: 'Failed to retrieve system capabilities',
     });
   }
 });

@@ -202,16 +202,9 @@
   position: relative;
 }
 
+/* Removed underline effect for cleaner look */
 .title-emphasis::after {
-  content: '';
-  position: absolute;
-  bottom: -0.1em;
-  left: 0;
-  right: 0;
-  height: 0.1em;
-  background: var(--gradient-gold);
-  transform: scaleX(0);
-  animation: underlineGrow 1s ease-out 0.5s forwards;
+  display: none;
 }
 
 /* Magnetic Button Effect */
@@ -701,4 +694,247 @@ html {
 .focus\:ring-teal-500:focus {
   --tw-ring-color: #14b8a6;
   box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+/* ========================================
+   PERFORMANCE OPTIMIZATION STYLES
+   Ultra-fast animations and optimizations
+   ======================================== */
+
+/* GPU Acceleration Force */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* High Performance Animations */
+.animate-fadeInUp {
+  transform: translateZ(0);
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-slideInLeft {
+  transform: translateZ(0);
+  animation: slideInLeft 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-slideInRight {
+  transform: translateZ(0);
+  animation: slideInRight 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.reduce-motion,
+.reduce-motion-temp {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Data Saver Mode */
+.data-saver-mode .brutal-card::after {
+  display: none;
+}
+
+.data-saver-mode .gradient-mesh {
+  display: none;
+}
+
+.data-saver-mode .parallax-layer {
+  transform: none !important;
+}
+
+.data-saver-mode .hero-background {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+}
+
+/* High Quality Mode */
+.high-quality-mode .brutal-card {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.high-quality-mode .magnetic-button {
+  filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.04)) drop-shadow(0 4px 3px rgba(0, 0, 0, 0.1));
+}
+
+/* Page Hidden Optimizations */
+.page-hidden * {
+  animation-play-state: paused !important;
+}
+
+.page-hidden .gradient-mesh {
+  animation: none !important;
+}
+
+/* Virtual Scrolling Optimizations */
+.legal-list-item {
+  contain: layout style paint;
+  transform: translateZ(0);
+}
+
+.virtual-scroll-container {
+  height: 400px;
+  overflow-y: auto;
+  will-change: scroll-position;
+}
+
+/* Image Loading Optimizations */
+img[data-src] {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+img[data-src].loaded {
+  animation: none;
+  background: none;
+}
+
+/* Critical CSS for Above-the-Fold */
+.critical-content {
+  contain: layout style paint;
+  transform: translateZ(0);
+}
+
+/* Lazy Loading Placeholders */
+.lazy-component {
+  min-height: 200px;
+  background: linear-gradient(90deg, #f8f9fa 25%, #e9ecef 50%, #f8f9fa 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.5rem;
+}
+
+.lazy-component.loaded {
+  background: none;
+  animation: none;
+  min-height: auto;
+}
+
+/* Performance Dashboard Styles */
+#counselflow-performance-dashboard {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  backdrop-filter: blur(10px);
+  background: rgba(17, 24, 39, 0.9);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Connection-Based Optimizations */
+@media (max-width: 768px) {
+  .brutal-card::after {
+    display: none;
+  }
+  
+  .gradient-mesh {
+    opacity: 0.3;
+  }
+  
+  .parallax-layer {
+    transform: none !important;
+  }
+}
+
+/* Hardware Acceleration Classes */
+.hw-accelerated {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+.hw-accelerated-hover:hover {
+  transform: translate3d(-2px, -2px, 0);
+}
+
+/* Memory Optimization */
+.temp-element,
+.cached-element,
+.stale-component {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Critical Path Optimization */
+.above-fold {
+  will-change: transform, opacity;
+  contain: layout style paint;
+}
+
+.below-fold {
+  content-visibility: auto;
+  contain-intrinsic-size: 500px;
+}
+
+/* Smooth Scrolling with Performance */
+@supports (scroll-behavior: smooth) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@supports not (scroll-behavior: smooth) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Optimized Focus States */
+.focus-optimized:focus {
+  outline: 2px solid #14b8a6;
+  outline-offset: 2px;
+  transition: outline-offset 0.2s ease;
+}
+
+/* Container Queries Support */
+@supports (container-type: inline-size) {
+  .responsive-container {
+    container-type: inline-size;
+  }
+  
+  @container (min-width: 320px) {
+    .responsive-content {
+      padding: 1rem;
+    }
+  }
+  
+  @container (min-width: 768px) {
+    .responsive-content {
+      padding: 2rem;
+    }
+  }
+}
+
+/* Performance Grade Indicators */
+.performance-grade-a {
+  border-left: 4px solid #10b981;
+}
+
+.performance-grade-b {
+  border-left: 4px solid #f59e0b;
+}
+
+.performance-grade-c {
+  border-left: 4px solid #ef4444;
+}
+
+/* Network-Aware Styling */
+.connection-slow .high-quality-effects {
+  display: none;
+}
+
+.connection-fast .performance-optimized {
+  animation-duration: 0.8s;
+  transition-duration: 0.3s;
 }

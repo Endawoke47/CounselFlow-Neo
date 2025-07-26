@@ -1,19 +1,19 @@
 /**
  * 🎯 DATA CONTEXT PROVIDER
- * 
+ *
  * This service provides intelligent data context to modules based on:
  * - User preferences and permissions
  * - Module-specific data requirements
  * - Current workflow state
  * - Predictive data needs
- * 
+ *
  * Features:
  * - Smart data prefetching
  * - Module-specific data filtering
  * - Permission-based data access
  * - Predictive data loading
  * - Cross-module data relationships
- * 
+ *
  * Author: Endawoke47
  * Created: 2025-07-13
  */
@@ -24,9 +24,9 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 
 // Module Data Definitions
 interface ModuleDataRequirements {
-  primary: string[];    // Main entities the module works with
-  secondary: string[];  // Supporting entities
-  relations: string[];  // Required relationships
+  primary: string[]; // Main entities the module works with
+  secondary: string[]; // Supporting entities
+  relations: string[]; // Required relationships
   permissions: string[]; // Required permissions
   cacheStrategy: 'aggressive' | 'moderate' | 'minimal';
   realTimeSync: boolean;
@@ -70,16 +70,16 @@ interface ContextualDataResponse {
 @Injectable()
 export class DataContextProviderService {
   private readonly logger = new Logger(DataContextProviderService.name);
-  
+
   // Module Data Requirements Registry
   private readonly moduleRequirements = new Map<string, ModuleDataRequirements>();
-  
+
   // User Context Cache
   private readonly userContextCache = new Map<string, any>();
 
   constructor(
     private dataHub: DataManagementHubService,
-    private eventEmitter: EventEmitter2,
+    private eventEmitter: EventEmitter2
   ) {
     this.initializeModuleRequirements();
     this.logger.log('🎯 Data Context Provider initialized');
@@ -104,10 +104,10 @@ export class DataContextProviderService {
 
       // Build primary data queries
       const primaryData = await this.getPrimaryData(context, requirements, preferences);
-      
+
       // Build secondary data queries
       const secondaryData = await this.getSecondaryData(context, requirements, preferences);
-      
+
       // Get related data based on relationships
       const relatedData = await this.getRelatedData(context, requirements, primaryData);
 
@@ -121,16 +121,15 @@ export class DataContextProviderService {
       this.updateUserContext(context.userId, context.module, {
         lastAccess: new Date(),
         preferences,
-        frequentActions: await this.getFrequentActions(context.userId, context.module)
+        frequentActions: await this.getFrequentActions(context.userId, context.module),
       });
 
       return {
         primary: primaryData,
         secondary: secondaryData,
         related: relatedData,
-        metadata
+        metadata,
       };
-
     } catch (error) {
       this.logger.error('Failed to get module data', { error, context });
       throw error;
@@ -158,8 +157,8 @@ export class DataContextProviderService {
         data,
         options: {
           validateRelations: true,
-          auditTrail: true
-        }
+          auditTrail: true,
+        },
       });
 
       // Update related modules
@@ -169,7 +168,6 @@ export class DataContextProviderService {
       await this.updatePredictiveModels(context, entity, operation, result);
 
       return result;
-
     } catch (error) {
       this.logger.error('Failed to update module data', { error, context, entity, operation });
       throw error;
@@ -209,10 +207,9 @@ export class DataContextProviderService {
         metadata: {
           totalFound: Array.from(searchResults.values()).flat().length,
           searchTerm,
-          timestamp: new Date()
-        }
+          timestamp: new Date(),
+        },
       };
-
     } catch (error) {
       this.logger.error('Cross-module search failed', { error, context, searchTerm });
       throw error;
@@ -223,7 +220,10 @@ export class DataContextProviderService {
    * 📈 GET MODULE ANALYTICS
    * Provide analytics specific to module needs
    */
-  async getModuleAnalytics(context: DataContext, timeRange?: { start: Date; end: Date }): Promise<any> {
+  async getModuleAnalytics(
+    context: DataContext,
+    timeRange?: { start: Date; end: Date }
+  ): Promise<any> {
     try {
       const requirements = this.moduleRequirements.get(context.module);
       if (!requirements) {
@@ -232,7 +232,7 @@ export class DataContextProviderService {
 
       // Build analytics query based on module
       const analyticsQuery = this.buildModuleAnalyticsQuery(context, requirements, timeRange);
-      
+
       // Execute analytics
       const analytics = await this.dataHub.analytics(analyticsQuery);
 
@@ -245,10 +245,9 @@ export class DataContextProviderService {
         metadata: {
           module: context.module,
           timeRange,
-          generatedAt: new Date()
-        }
+          generatedAt: new Date(),
+        },
       };
-
     } catch (error) {
       this.logger.error('Module analytics failed', { error, context });
       throw error;
@@ -259,19 +258,21 @@ export class DataContextProviderService {
    * 🎯 PREDICTIVE DATA LOADING
    * Load data that user is likely to need next
    */
-  private async prefetchPredictiveData(context: DataContext, requirements: ModuleDataRequirements): Promise<void> {
+  private async prefetchPredictiveData(
+    context: DataContext,
+    requirements: ModuleDataRequirements
+  ): Promise<void> {
     try {
       // Get user patterns
       const userPatterns = await this.getUserBehaviorPatterns(context.userId, context.module);
-      
+
       // Predict next actions
       const predictedActions = this.predictNextActions(userPatterns, context);
-      
+
       // Prefetch data for predicted actions
       for (const action of predictedActions) {
         this.prefetchActionData(context, action);
       }
-
     } catch (error) {
       this.logger.warn('Predictive data loading failed', { error, context });
     }
@@ -287,7 +288,7 @@ export class DataContextProviderService {
       relations: ['client.cases', 'case.documents', 'client.payments'],
       permissions: ['client.read', 'case.read', 'document.read'],
       cacheStrategy: 'aggressive',
-      realTimeSync: true
+      realTimeSync: true,
     });
 
     // AI Legal Assistant Module
@@ -297,7 +298,7 @@ export class DataContextProviderService {
       relations: ['case.client', 'document.case'],
       permissions: ['ai.query', 'document.analyze'],
       cacheStrategy: 'moderate',
-      realTimeSync: false
+      realTimeSync: false,
     });
 
     // Document Management Module
@@ -307,7 +308,7 @@ export class DataContextProviderService {
       relations: ['document.case', 'document.versions', 'case.client'],
       permissions: ['document.read', 'document.write'],
       cacheStrategy: 'moderate',
-      realTimeSync: true
+      realTimeSync: true,
     });
 
     // Legal Research Module
@@ -317,7 +318,7 @@ export class DataContextProviderService {
       relations: ['research.citations', 'task.assignee'],
       permissions: ['research.read', 'research.create'],
       cacheStrategy: 'aggressive',
-      realTimeSync: false
+      realTimeSync: false,
     });
 
     // Workflow Automation Module
@@ -327,7 +328,7 @@ export class DataContextProviderService {
       relations: ['workflow.tasks', 'task.case'],
       permissions: ['workflow.read', 'workflow.execute'],
       cacheStrategy: 'minimal',
-      realTimeSync: true
+      realTimeSync: true,
     });
 
     // Integration Management Module
@@ -337,7 +338,7 @@ export class DataContextProviderService {
       relations: ['integration.logs', 'apikey.usage'],
       permissions: ['integration.read', 'api.manage'],
       cacheStrategy: 'moderate',
-      realTimeSync: true
+      realTimeSync: true,
     });
 
     // Entity Management Module
@@ -347,11 +348,14 @@ export class DataContextProviderService {
       relations: ['entity.events', 'entity.compliance'],
       permissions: ['entity.read', 'entity.manage'],
       cacheStrategy: 'moderate',
-      realTimeSync: true
+      realTimeSync: true,
     });
   }
 
-  private async validateUserPermissions(context: DataContext, requirements: ModuleDataRequirements): Promise<void> {
+  private async validateUserPermissions(
+    context: DataContext,
+    requirements: ModuleDataRequirements
+  ): Promise<void> {
     // Implementation would check user permissions against requirements
     // This is a placeholder for permission validation
   }
@@ -368,12 +372,12 @@ export class DataContextProviderService {
       hiddenFields: [],
       favoriteFilters: {},
       autoRefresh: true,
-      realTimeNotifications: true
+      realTimeNotifications: true,
     };
 
     // Cache preferences
     this.userContextCache.set(`preferences:${userId}`, defaultPreferences);
-    
+
     return defaultPreferences;
   }
 
@@ -390,9 +394,9 @@ export class DataContextProviderService {
         filters: context.filters,
         limit: preferences.defaultPageSize,
         orderBy: preferences.preferredOrderBy,
-        cache: requirements.cacheStrategy !== 'minimal'
+        cache: requirements.cacheStrategy !== 'minimal',
       });
-      
+
       allPrimaryData.push(...data);
     }
 
@@ -411,9 +415,9 @@ export class DataContextProviderService {
         entity,
         filters: context.filters,
         limit: Math.min(preferences.defaultPageSize, 10), // Limit secondary data
-        cache: true
+        cache: true,
       });
-      
+
       allSecondaryData.push(...data);
     }
 
@@ -437,13 +441,14 @@ export class DataContextProviderService {
   ): Promise<any> {
     return {
       totalCount: primaryData.length,
-      hasMore: primaryData.length === (await this.getUserPreferences(context.userId)).defaultPageSize,
+      hasMore:
+        primaryData.length === (await this.getUserPreferences(context.userId)).defaultPageSize,
       cacheInfo: {
         cached: requirements.cacheStrategy !== 'minimal',
-        expiry: new Date(Date.now() + 3600000) // 1 hour from now
+        expiry: new Date(Date.now() + 3600000), // 1 hour from now
       },
       permissions: requirements.permissions,
-      suggestedActions: await this.getSuggestedActions(context, primaryData)
+      suggestedActions: await this.getSuggestedActions(context, primaryData),
     };
   }
 
@@ -474,7 +479,7 @@ export class DataContextProviderService {
       entity,
       operation,
       result,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
   }
 
@@ -510,7 +515,7 @@ export class DataContextProviderService {
     return Array.from(searchResults.entries()).map(([entity, results]) => ({
       entity,
       results,
-      count: results.length
+      count: results.length,
     }));
   }
 
@@ -524,7 +529,7 @@ export class DataContextProviderService {
     return {
       metrics: ['count', 'avg', 'trend'],
       dimensions: requirements.primary,
-      timeRange
+      timeRange,
     };
   }
 
@@ -534,7 +539,7 @@ export class DataContextProviderService {
     return {
       trends: [],
       recommendations: [],
-      alerts: []
+      alerts: [],
     };
   }
 
@@ -544,7 +549,7 @@ export class DataContextProviderService {
     return {
       frequentActions: [],
       timePatterns: [],
-      dataAccessPatterns: []
+      dataAccessPatterns: [],
     };
   }
 
@@ -564,7 +569,7 @@ export class DataContextProviderService {
     this.userContextCache.set(key, {
       ...this.userContextCache.get(key),
       ...contextData,
-      lastUpdated: new Date()
+      lastUpdated: new Date(),
     });
   }
 

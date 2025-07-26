@@ -3,7 +3,7 @@
 // Date: 2025-07-12 21:00:00 UTC
 
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '../config/logger';
+import enhancedLogger from '../utils/logger';
 
 export interface CustomError extends Error {
   statusCode?: number;
@@ -19,7 +19,7 @@ export const errorHandler = (
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
 
-  logger.error('Error handled:', {
+    enhancedLogger.error('Error handled:', {
     error: err.message,
     stack: err.stack,
     statusCode,
@@ -44,7 +44,7 @@ export const errorHandler = (
 };
 
 export const notFoundHandler = (req: Request, res: Response) => {
-  logger.warn('Route not found:', {
+  enhancedLogger.warn('Route not found:', {
     url: req.url,
     method: req.method,
     ip: req.ip,

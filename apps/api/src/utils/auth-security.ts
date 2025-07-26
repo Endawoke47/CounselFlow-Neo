@@ -70,7 +70,7 @@ export function generateTokens(user: User): {
 } {
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user.id);
-  
+
   // Calculate expiry in seconds
   const expiresIn = parseExpiry(env.JWT_EXPIRES_IN);
 
@@ -130,19 +130,24 @@ export const LoginSchema = z.object({
   rememberMe: z.boolean().optional().default(false),
 });
 
-export const RegisterSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
-           'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+export const RegisterSchema = z
+  .object({
+    email: z.string().email('Invalid email format'),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+        'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+      ),
+    firstName: z.string().min(1, 'First name is required'),
+    lastName: z.string().min(1, 'Last name is required'),
+    confirmPassword: z.string(),
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
 export const PasswordResetSchema = z.object({
   email: z.string().email('Invalid email format'),
@@ -150,7 +155,8 @@ export const PasswordResetSchema = z.object({
 
 // Login Attempt Tracking
 export class LoginAttemptTracker {
-  private attempts: Map<string, { count: number; lastAttempt: Date; lockedUntil?: Date }> = new Map();
+  private attempts: Map<string, { count: number; lastAttempt: Date; lockedUntil?: Date }> =
+    new Map();
   private readonly maxAttempts = 5;
   private readonly lockoutDuration = 15 * 60 * 1000; // 15 minutes
 
@@ -167,7 +173,7 @@ export class LoginAttemptTracker {
 
   recordFailedAttempt(identifier: string): void {
     const attempt = this.attempts.get(identifier) || { count: 0, lastAttempt: new Date() };
-    
+
     attempt.count++;
     attempt.lastAttempt = new Date();
 
@@ -200,11 +206,16 @@ function parseExpiry(expiry: string): number {
   const unit = match[2];
 
   switch (unit) {
-    case 's': return value;
-    case 'm': return value * 60;
-    case 'h': return value * 60 * 60;
-    case 'd': return value * 60 * 60 * 24;
-    default: return 3600;
+    case 's':
+      return value;
+    case 'm':
+      return value * 60;
+    case 'h':
+      return value * 60 * 60;
+    case 'd':
+      return value * 60 * 60 * 24;
+    default:
+      return 3600;
   }
 }
 

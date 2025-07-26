@@ -12,7 +12,7 @@ import rateLimit from 'express-rate-limit';
 dotenv.config();
 
 import swaggerUi from 'swagger-ui-express';
-import { logger } from './config/logger';
+import enhancedLogger from './utils/logger';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 import { requestLogger } from './middleware/logger.middleware';
 import { swaggerSpec } from './config/swagger';
@@ -31,10 +31,15 @@ import legalResearchRoutes from './routes/legal-research.routes';
 import { contractIntelligenceRoutes } from './routes/contract-intelligence.routes';
 import legalIntelligenceRoutes from './routes/legal-intelligence.routes';
 import documentAutomationRoutes from './routes/document-automation.routes';
+import aiContractAnalysisRoutes from './routes/ai-contract-analysis.routes';
 import resilienceRoutes from './routes/resilience.routes';
+import realServices from './real-services';
 
 const app = express();
 const PORT = process.env.PORT || 3005;
+
+// Add enhanced logging middleware first
+app.use(enhancedLogger.httpLogger());
 
 // Rate limiting
 const limiter = rateLimit({
@@ -45,10 +50,12 @@ const limiter = rateLimit({
 
 // Security middleware
 app.use(helmet());
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+  })
+);
 app.use(limiter);
 
 // Body parsing middleware
@@ -88,11 +95,17 @@ app.use('/api/v1/clients', clientRoutes);
 app.use('/api/v1/reports', reportRoutes);
 app.use('/api/v1/ai', aiRoutes);
 
+// 🔥 REAL SERVICES - Fully functional implementations
+app.use('/api/v2', realServices);
+
 // AI-Powered Legal Services (Phase 2)
 app.use('/api/v1/legal-research', legalResearchRoutes);
 app.use('/api/v1/contract-intelligence', contractIntelligenceRoutes);
 app.use('/api/v1/legal-intelligence', legalIntelligenceRoutes);
 app.use('/api/v1/document-automation', documentAutomationRoutes);
+
+// AI Contract Analysis (Phase 3)
+app.use('/api/v1/ai/contracts', aiContractAnalysisRoutes);
 
 // Data Management & Resilience
 app.use('/api/v1/resilience', resilienceRoutes);
@@ -101,22 +114,26 @@ app.use('/api/v1/resilience', resilienceRoutes);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// Start server
-app.listen(PORT, () => {
-  logger.info(`🚀 CounselFlow API Server running on port ${PORT}`);
-  logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
+// Create server and start listening
+const server = app.listen(PORT, () => {
+  enhancedLogger.info(`🚀 CounselFlow API Server running on port ${PORT}`);
+  enhancedLogger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  enhancedLogger.info(`🔗 Health check: http://localhost:${PORT}/health`);
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  logger.info('SIGTERM received, shutting down gracefully');
-  process.exit(0);
+  enhancedLogger.info('SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    process.exit(0);
+  });
 });
 
 process.on('SIGINT', () => {
-  logger.info('SIGINT received, shutting down gracefully');
-  process.exit(0);
+  enhancedLogger.info('SIGINT received, shutting down gracefully');
+  server.close(() => {
+    process.exit(0);
+  });
 });
 
 export default app;

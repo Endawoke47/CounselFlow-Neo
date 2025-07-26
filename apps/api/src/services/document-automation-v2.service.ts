@@ -27,7 +27,7 @@ import {
   VariableType,
   ResolvedVariable,
   SectionSource,
-  VariableSource
+  VariableSource,
 } from '../types/document-automation.types';
 import { LegalJurisdiction, SupportedLanguage } from '../types/ai.types';
 import { LegalArea } from '../types/legal-research.types';
@@ -47,7 +47,9 @@ export class DocumentAutomationService {
 
   // ================== MAIN GENERATION METHOD ==================
 
-  public async generateDocument(request: DocumentGenerationRequest): Promise<DocumentGenerationResult> {
+  public async generateDocument(
+    request: DocumentGenerationRequest
+  ): Promise<DocumentGenerationResult> {
     const startTime = Date.now();
     const generationId = this.generateId();
 
@@ -85,7 +87,7 @@ export class DocumentAutomationService {
       const compliance = await this.assessCompliance(documents, request);
 
       // 6. Generate additional content
-      const alternatives = request.features.generateAlternatives 
+      const alternatives = request.features.generateAlternatives
         ? await this.generateAlternatives(request, template, context)
         : [];
       const recommendations = await this.generateRecommendations(documents, quality, compliance);
@@ -102,12 +104,11 @@ export class DocumentAutomationService {
         alternatives,
         recommendations,
         warnings,
-        metadata: this.createGenerationMetadata(generationId, request, startTime)
+        metadata: this.createGenerationMetadata(generationId, request, startTime),
       };
 
       this.generationHistory.set(generationId, result);
       return result;
-
     } catch (error: any) {
       throw new Error(`Document generation failed: ${error?.message || 'Unknown error'}`);
     }
@@ -130,7 +131,7 @@ export class DocumentAutomationService {
       jurisdiction: request.jurisdiction,
       legalArea: request.legalArea,
       complexity: request.complexity,
-      language: request.language
+      language: request.language,
     });
 
     if (templates.length === 0) {
@@ -142,7 +143,7 @@ export class DocumentAutomationService {
 
   public async getTemplates(filters: TemplateFilters = {}): Promise<DocumentTemplate[]> {
     const allTemplates = Array.from(this.templateCache.values());
-    
+
     return allTemplates.filter(template => {
       if (filters.type && template.type !== filters.type) return false;
       if (filters.jurisdiction && template.jurisdiction !== filters.jurisdiction) return false;
@@ -167,7 +168,7 @@ export class DocumentAutomationService {
           type: 'SYNTAX_ERROR',
           severity: 'ERROR',
           description: 'Template must have at least one section',
-          location: 'sections'
+          location: 'sections',
         });
         syntaxValid = false;
       }
@@ -179,19 +180,18 @@ export class DocumentAutomationService {
             type: 'VARIABLE_ERROR',
             severity: 'ERROR',
             description: `Invalid variable definition: ${variable.name}`,
-            location: `variables.${variable.name}`
+            location: `variables.${variable.name}`,
           });
           variablesValid = false;
         }
       }
-
     } catch (error: any) {
       syntaxValid = false;
       issues.push({
         type: 'SYNTAX_ERROR',
         severity: 'ERROR',
         description: `Template validation error: ${error?.message || 'Unknown error'}`,
-        location: 'template'
+        location: 'template',
       });
     }
 
@@ -201,7 +201,7 @@ export class DocumentAutomationService {
       variablesValid,
       complianceValid,
       lastValidated: new Date(),
-      issues
+      issues,
     };
   }
 
@@ -245,21 +245,21 @@ export class DocumentAutomationService {
   ): Promise<GeneratedDocument[]> {
     // Start with template-based generation
     const templateDocuments = await this.generateFromTemplate(request, template, context);
-    
+
     // Enhance with basic AI improvements (simplified)
     const enhancedDocuments: GeneratedDocument[] = [];
-    
+
     for (const doc of templateDocuments) {
       const contentStr = typeof doc.content === 'string' ? doc.content : doc.content.toString();
       const enhancedContent = this.enhanceContentBasic(contentStr, request);
-      
+
       enhancedDocuments.push({
         ...doc,
         content: enhancedContent,
         sections: doc.sections.map(section => ({
           ...section,
-          source: this.shouldEnhanceSection(section) ? SectionSource.AI_GENERATED : section.source
-        }))
+          source: this.shouldEnhanceSection(section) ? SectionSource.AI_GENERATED : section.source,
+        })),
       });
     }
 
@@ -272,12 +272,12 @@ export class DocumentAutomationService {
   ): Promise<GeneratedDocument[]> {
     const selectedClauses = request.customClauses || [];
     const additionalClauses = await this.selectRelevantClauses(request);
-    
+
     const allClauses = [...selectedClauses, ...additionalClauses];
     const assembledContent = await this.assembleClauses(allClauses, context);
-    
+
     const documents: GeneratedDocument[] = [];
-    
+
     for (const format of request.outputFormat) {
       const document = await this.formatContent(assembledContent, request, format);
       documents.push(document);
@@ -331,7 +331,7 @@ export class DocumentAutomationService {
       wordCount: this.countWords(content),
       sections,
       variables,
-      checksum: this.calculateChecksum(content)
+      checksum: this.calculateChecksum(content),
     };
   }
 
@@ -362,7 +362,7 @@ export class DocumentAutomationService {
       pageEnd: 1,
       variables: section.variables,
       included: true,
-      source: SectionSource.TEMPLATE
+      source: SectionSource.TEMPLATE,
     };
   }
 
@@ -381,27 +381,30 @@ export class DocumentAutomationService {
     let legalSoundness = 0;
 
     for (const document of documents) {
-      const contentStr = typeof document.content === 'string' ? document.content : document.content.toString();
-      
+      const contentStr =
+        typeof document.content === 'string' ? document.content : document.content.toString();
+
       // Assess completeness (simplified)
       completeness += this.assessCompleteness(document, request);
-      
+
       // Assess consistency
       consistency += this.assessConsistency(contentStr);
-      
+
       // Assess accuracy
       accuracy += this.assessAccuracy(document, request);
-      
+
       // Assess readability
       readability += this.assessReadability(contentStr);
-      
+
       // Basic compliance assessment
       compliance += 0.8; // Default score
       legalSoundness += 0.85; // Default score
     }
 
     const docCount = documents.length;
-    const overall = (completeness + consistency + accuracy + readability + compliance + legalSoundness) / (6 * docCount);
+    const overall =
+      (completeness + consistency + accuracy + readability + compliance + legalSoundness) /
+      (6 * docCount);
 
     return {
       overall,
@@ -411,7 +414,7 @@ export class DocumentAutomationService {
       readability: readability / docCount,
       compliance: compliance / docCount,
       legalSoundness: legalSoundness / docCount,
-      issues
+      issues,
     };
   }
 
@@ -419,10 +422,13 @@ export class DocumentAutomationService {
     documents: GeneratedDocument[],
     request: DocumentGenerationRequest
   ): Promise<ComplianceAssessment> {
-    const requirements: any[] = this.getComplianceRequirements(request.jurisdiction, request.documentType);
+    const requirements: any[] = this.getComplianceRequirements(
+      request.jurisdiction,
+      request.documentType
+    );
     const violations: any[] = [];
     const recommendations: any[] = [];
-    
+
     // Simplified compliance assessment
     const overallCompliance = 0.85;
     const jurisdictionalCompliance = 0.8;
@@ -434,7 +440,7 @@ export class DocumentAutomationService {
       regulatoryCompliance,
       requirements,
       violations,
-      recommendations
+      recommendations,
     };
   }
 
@@ -442,15 +448,43 @@ export class DocumentAutomationService {
 
   public async analyzeComplexity(request: DocumentGenerationRequest): Promise<ComplexityAnalysis> {
     const factors: any[] = [
-      { name: 'Document Type', weight: 0.3, contribution: this.getTypeComplexity(request.documentType), description: 'Complexity based on document type' },
-      { name: 'Jurisdiction', weight: 0.2, contribution: this.getJurisdictionComplexity(request.jurisdiction), description: 'Legal complexity of jurisdiction' },
-      { name: 'Party Count', weight: 0.15, contribution: Math.min(1, request.parties.length * 0.2), description: 'Number of parties involved' },
-      { name: 'Variable Count', weight: 0.15, contribution: Math.min(1, Object.keys(request.variables).length * 0.1), description: 'Number of variables to resolve' },
-      { name: 'Custom Features', weight: 0.2, contribution: this.getFeatureComplexity(request.features), description: 'Complexity of requested features' }
+      {
+        name: 'Document Type',
+        weight: 0.3,
+        contribution: this.getTypeComplexity(request.documentType),
+        description: 'Complexity based on document type',
+      },
+      {
+        name: 'Jurisdiction',
+        weight: 0.2,
+        contribution: this.getJurisdictionComplexity(request.jurisdiction),
+        description: 'Legal complexity of jurisdiction',
+      },
+      {
+        name: 'Party Count',
+        weight: 0.15,
+        contribution: Math.min(1, request.parties.length * 0.2),
+        description: 'Number of parties involved',
+      },
+      {
+        name: 'Variable Count',
+        weight: 0.15,
+        contribution: Math.min(1, Object.keys(request.variables).length * 0.1),
+        description: 'Number of variables to resolve',
+      },
+      {
+        name: 'Custom Features',
+        weight: 0.2,
+        contribution: this.getFeatureComplexity(request.features),
+        description: 'Complexity of requested features',
+      },
     ];
 
-    const totalScore = factors.reduce((sum, factor) => sum + (factor.weight * factor.contribution), 0);
-    
+    const totalScore = factors.reduce(
+      (sum, factor) => sum + factor.weight * factor.contribution,
+      0
+    );
+
     let level: DocumentComplexity;
     let estimatedTime: number;
     let recommendedApproach: GenerationMethod;
@@ -478,42 +512,61 @@ export class DocumentAutomationService {
       factors,
       estimatedTime,
       recommendedApproach,
-      requiredResources: this.getRequiredResources(level)
+      requiredResources: this.getRequiredResources(level),
     };
   }
 
   public async estimateGeneration(request: DocumentGenerationRequest): Promise<GenerationEstimate> {
     const complexity = await this.analyzeComplexity(request);
-    
+
     const factors: any[] = [
-      { name: 'Complexity', impact: complexity.estimatedTime * 0.4, description: 'Base complexity time' },
-      { name: 'AI Processing', impact: request.generationMethod === GenerationMethod.AI_GENERATED ? 60 : 20, description: 'AI processing overhead' },
-      { name: 'Format Conversion', impact: request.outputFormat.length * 10, description: 'Time for format conversion' },
-      { name: 'Quality Checks', impact: request.features.qualityAssurance ? 30 : 5, description: 'Quality assessment time' }
+      {
+        name: 'Complexity',
+        impact: complexity.estimatedTime * 0.4,
+        description: 'Base complexity time',
+      },
+      {
+        name: 'AI Processing',
+        impact: request.generationMethod === GenerationMethod.AI_GENERATED ? 60 : 20,
+        description: 'AI processing overhead',
+      },
+      {
+        name: 'Format Conversion',
+        impact: request.outputFormat.length * 10,
+        description: 'Time for format conversion',
+      },
+      {
+        name: 'Quality Checks',
+        impact: request.features.qualityAssurance ? 30 : 5,
+        description: 'Quality assessment time',
+      },
     ];
 
     const estimatedDuration = factors.reduce((sum, factor) => sum + factor.impact, 0);
-    const confidence = Math.max(0.6, 1 - (complexity.level === DocumentComplexity.ENTERPRISE ? 0.3 : 0.1));
+    const confidence = Math.max(
+      0.6,
+      1 - (complexity.level === DocumentComplexity.ENTERPRISE ? 0.3 : 0.1)
+    );
 
     const alternatives: any[] = [
       {
         approach: GenerationMethod.TEMPLATE_BASED,
         duration: estimatedDuration * 0.6,
         quality: 0.8,
-        description: 'Fastest option using pre-built templates'
+        description: 'Fastest option using pre-built templates',
       },
       {
         approach: GenerationMethod.AI_GENERATED,
         duration: estimatedDuration * 1.2,
         quality: 0.9,
-        description: 'Highest quality with AI customization'
+        description: 'Highest quality with AI customization',
       },
       {
         approach: GenerationMethod.HYBRID,
         duration: estimatedDuration,
         quality: 0.95,
-        description: 'Balanced approach combining templates and AI'
-      }
+        description: 'Balanced approach combining templates and AI',
+      },
     ];
 
     return {
@@ -523,9 +576,9 @@ export class DocumentAutomationService {
       recommendations: [
         'Consider using hybrid approach for optimal balance',
         'Enable quality assurance for critical documents',
-        'Use template-based generation for time-sensitive requests'
+        'Use template-based generation for time-sensitive requests',
       ],
-      alternatives
+      alternatives,
     };
   }
 
@@ -557,8 +610,8 @@ export class DocumentAutomationService {
             spacing: 12,
             bold: true,
             italic: false,
-            underline: false
-          }
+            underline: false,
+          },
         },
         {
           id: 'parties',
@@ -566,17 +619,24 @@ export class DocumentAutomationService {
           order: 2,
           required: true,
           type: SectionType.PARTIES,
-          content: 'This Service Agreement ("Agreement") is entered into on {{agreement_date}} between {{client_name}}, a {{client_entity_type}} ("Client") and {{service_provider_name}}, a {{provider_entity_type}} ("Service Provider").',
-          variables: ['agreement_date', 'client_name', 'client_entity_type', 'service_provider_name', 'provider_entity_type'],
+          content:
+            'This Service Agreement ("Agreement") is entered into on {{agreement_date}} between {{client_name}}, a {{client_entity_type}} ("Client") and {{service_provider_name}}, a {{provider_entity_type}} ("Service Provider").',
+          variables: [
+            'agreement_date',
+            'client_name',
+            'client_entity_type',
+            'service_provider_name',
+            'provider_entity_type',
+          ],
           styling: {
             style: 'NORMAL' as any,
             indentation: 0,
             spacing: 6,
             bold: false,
             italic: false,
-            underline: false
-          }
-        }
+            underline: false,
+          },
+        },
       ],
       variables: [
         {
@@ -584,15 +644,15 @@ export class DocumentAutomationService {
           type: VariableType.DATE,
           description: 'Date when the agreement is signed',
           required: true,
-          validation: { required: true }
+          validation: { required: true },
         },
         {
           name: 'client_name',
           type: VariableType.TEXT,
           description: 'Full legal name of the client',
           required: true,
-          validation: { required: true, minLength: 2 }
-        }
+          validation: { required: true, minLength: 2 },
+        },
       ],
       conditionalLogic: [],
       author: 'System',
@@ -602,7 +662,7 @@ export class DocumentAutomationService {
         lastUsed: new Date(),
         averageRating: 0,
         successRate: 0,
-        popularVariables: []
+        popularVariables: [],
       },
       validation: {
         syntaxValid: true,
@@ -610,11 +670,11 @@ export class DocumentAutomationService {
         variablesValid: true,
         complianceValid: true,
         lastValidated: new Date(),
-        issues: []
+        issues: [],
       },
       precedentSources: [],
       complianceRequirements: [],
-      riskFactors: []
+      riskFactors: [],
     };
 
     this.templateCache.set(sampleTemplate.id, sampleTemplate);
@@ -624,14 +684,17 @@ export class DocumentAutomationService {
     const sampleClause: ClauseSelection = {
       clauseId: 'force-majeure-001',
       clauseType: 'FORCE_MAJEURE',
-      content: 'Neither party shall be liable for any failure or delay in performance under this Agreement which is due to an earthquake, flood, fire, storm, natural disaster, act of God, war, terrorism, armed conflict, labor strike, lockout, or boycott.',
-      variables: {}
+      content:
+        'Neither party shall be liable for any failure or delay in performance under this Agreement which is due to an earthquake, flood, fire, storm, natural disaster, act of God, war, terrorism, armed conflict, labor strike, lockout, or boycott.',
+      variables: {},
     };
 
     this.clauseLibrary.set(sampleClause.clauseId, sampleClause);
   }
 
-  private async createDynamicTemplate(request: DocumentGenerationRequest): Promise<DocumentTemplate> {
+  private async createDynamicTemplate(
+    request: DocumentGenerationRequest
+  ): Promise<DocumentTemplate> {
     return {
       id: `dynamic-${Date.now()}`,
       name: `Dynamic ${request.documentType} Template`,
@@ -652,7 +715,7 @@ export class DocumentAutomationService {
         lastUsed: new Date(),
         averageRating: 0,
         successRate: 0,
-        popularVariables: []
+        popularVariables: [],
       },
       validation: {
         syntaxValid: true,
@@ -660,11 +723,11 @@ export class DocumentAutomationService {
         variablesValid: true,
         complianceValid: true,
         lastValidated: new Date(),
-        issues: []
+        issues: [],
       },
       precedentSources: [],
       complianceRequirements: [],
-      riskFactors: []
+      riskFactors: [],
     };
   }
 
@@ -684,8 +747,8 @@ export class DocumentAutomationService {
           spacing: 12,
           bold: true,
           italic: false,
-          underline: false
-        }
+          underline: false,
+        },
       },
       {
         id: 'parties',
@@ -701,9 +764,9 @@ export class DocumentAutomationService {
           spacing: 6,
           bold: false,
           italic: false,
-          underline: false
-        }
-      }
+          underline: false,
+        },
+      },
     ];
 
     return commonSections;
@@ -722,42 +785,48 @@ export class DocumentAutomationService {
     return section.type === SectionType.TERMS || section.type === SectionType.CONDITIONS;
   }
 
-  private async buildGenerationContext(request: DocumentGenerationRequest, template: DocumentTemplate): Promise<any> {
+  private async buildGenerationContext(
+    request: DocumentGenerationRequest,
+    template: DocumentTemplate
+  ): Promise<any> {
     return {
       request,
       template,
       variables: request.variables,
       parties: request.parties,
       jurisdiction: request.jurisdiction,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
   }
 
   private resolveVariable(variable: any, context: any): ResolvedVariable {
     const value = context.variables[variable.name] || variable.defaultValue;
-    
+
     return {
       name: variable.name,
       value,
       type: variable.type,
       source: value ? VariableSource.USER_INPUT : VariableSource.DEFAULT_VALUE,
       resolved: !!value,
-      validation: { valid: !!value, errors: [], warnings: [] }
+      validation: { valid: !!value, errors: [], warnings: [] },
     };
   }
 
   private applyVariableSubstitutions(content: string, variables: ResolvedVariable[]): string {
     let result = content;
-    
+
     for (const variable of variables) {
       const placeholder = `{{${variable.name}}}`;
       result = result.replace(new RegExp(placeholder, 'g'), variable.value || '');
     }
-    
+
     return result;
   }
 
-  private async formatContentByType(content: string, format: OutputFormat): Promise<string | Buffer> {
+  private async formatContentByType(
+    content: string,
+    format: OutputFormat
+  ): Promise<string | Buffer> {
     switch (format) {
       case OutputFormat.DOCX:
         return Buffer.from(content, 'utf8'); // Simplified
@@ -774,7 +843,7 @@ export class DocumentAutomationService {
 
   private generateBasicDocumentContent(request: DocumentGenerationRequest): string {
     const parties = request.parties.map(p => `${p.name} (${p.role})`).join(', ');
-    
+
     return `${request.documentType.replace(/_/g, ' ')}
 
 This ${request.documentType.replace(/_/g, ' ')} is entered into for the jurisdiction of ${request.jurisdiction}.
@@ -798,12 +867,19 @@ Date: ${new Date().toLocaleDateString()}`;
 
   private enhanceContentBasic(content: string, request: DocumentGenerationRequest): string {
     // Basic content enhancement
-    return content + `\n\nENHANCED PROVISIONS:\n- Additional compliance measures for ${request.jurisdiction}\n- Risk mitigation clauses\n- Standard boilerplate provisions`;
+    return (
+      content +
+      `\n\nENHANCED PROVISIONS:\n- Additional compliance measures for ${request.jurisdiction}\n- Risk mitigation clauses\n- Standard boilerplate provisions`
+    );
   }
 
-  private async formatContent(content: string, request: DocumentGenerationRequest, format: OutputFormat): Promise<GeneratedDocument> {
+  private async formatContent(
+    content: string,
+    request: DocumentGenerationRequest,
+    format: OutputFormat
+  ): Promise<GeneratedDocument> {
     const formattedContent = await this.formatContentByType(content, format);
-    
+
     return {
       id: this.generateId(),
       name: `${request.documentType}.${format.toLowerCase()}`,
@@ -815,17 +891,22 @@ Date: ${new Date().toLocaleDateString()}`;
       wordCount: this.countWords(content),
       sections: [],
       variables: [],
-      checksum: this.calculateChecksum(content)
+      checksum: this.calculateChecksum(content),
     };
   }
 
   // Assessment helper methods
-  private assessCompleteness(document: GeneratedDocument, request: DocumentGenerationRequest): number {
+  private assessCompleteness(
+    document: GeneratedDocument,
+    request: DocumentGenerationRequest
+  ): number {
     const expectedSections = this.getExpectedSections(request.documentType);
     const presentSections = document.sections.map(s => s.type);
-    const missingEssential = expectedSections.filter(s => s.required && !presentSections.includes(s.type));
-    
-    return Math.max(0, 1 - (missingEssential.length * 0.2));
+    const missingEssential = expectedSections.filter(
+      s => s.required && !presentSections.includes(s.type)
+    );
+
+    return Math.max(0, 1 - missingEssential.length * 0.2);
   }
 
   private assessConsistency(content: string): number {
@@ -836,21 +917,23 @@ Date: ${new Date().toLocaleDateString()}`;
   private assessAccuracy(document: GeneratedDocument, request: DocumentGenerationRequest): number {
     const variableErrors = document.variables.filter(v => !v.resolved).length;
     const maxVariables = document.variables.length;
-    
-    return maxVariables > 0 ? Math.max(0, 1 - (variableErrors / maxVariables)) : 1;
+
+    return maxVariables > 0 ? Math.max(0, 1 - variableErrors / maxVariables) : 1;
   }
 
   private assessReadability(content: string): number {
     const sentences = content.split(/[.!?]+/).length;
     const words = this.countWords(content);
     const avgWordsPerSentence = words / sentences;
-    
+
     const optimal = avgWordsPerSentence >= 15 && avgWordsPerSentence <= 25;
     return optimal ? 0.9 : Math.max(0.5, 1 - Math.abs(avgWordsPerSentence - 20) * 0.02);
   }
 
   // Placeholder methods for various operations
-  private async selectRelevantClauses(request: DocumentGenerationRequest): Promise<ClauseSelection[]> {
+  private async selectRelevantClauses(
+    request: DocumentGenerationRequest
+  ): Promise<ClauseSelection[]> {
     return Array.from(this.clauseLibrary.values()).slice(0, 3); // Return first 3 clauses
   }
 
@@ -862,23 +945,38 @@ Date: ${new Date().toLocaleDateString()}`;
     return [
       { type: SectionType.TITLE, required: true },
       { type: SectionType.PARTIES, required: true },
-      { type: SectionType.TERMS, required: true }
+      { type: SectionType.TERMS, required: true },
     ];
   }
 
-  private getComplianceRequirements(jurisdiction: LegalJurisdiction, documentType: DocumentType): any[] {
+  private getComplianceRequirements(
+    jurisdiction: LegalJurisdiction,
+    documentType: DocumentType
+  ): any[] {
     return []; // Simplified - return empty array
   }
 
-  private async generateRecommendations(documents: GeneratedDocument[], quality: QualityAssessment, compliance: ComplianceAssessment): Promise<GenerationRecommendation[]> {
+  private async generateRecommendations(
+    documents: GeneratedDocument[],
+    quality: QualityAssessment,
+    compliance: ComplianceAssessment
+  ): Promise<GenerationRecommendation[]> {
     return []; // Simplified
   }
 
-  private async identifyWarnings(documents: GeneratedDocument[], request: DocumentGenerationRequest, context: any): Promise<GenerationWarning[]> {
+  private async identifyWarnings(
+    documents: GeneratedDocument[],
+    request: DocumentGenerationRequest,
+    context: any
+  ): Promise<GenerationWarning[]> {
     return []; // Simplified
   }
 
-  private async generateAlternatives(request: DocumentGenerationRequest, template: DocumentTemplate, context: any): Promise<DocumentAlternative[]> {
+  private async generateAlternatives(
+    request: DocumentGenerationRequest,
+    template: DocumentTemplate,
+    context: any
+  ): Promise<DocumentAlternative[]> {
     return []; // Simplified
   }
 
@@ -889,7 +987,7 @@ Date: ${new Date().toLocaleDateString()}`;
       [DocumentType.EMPLOYMENT_CONTRACT]: 0.5,
       [DocumentType.NON_DISCLOSURE_AGREEMENT]: 0.3,
       [DocumentType.PARTNERSHIP_AGREEMENT]: 0.8,
-      [DocumentType.LEASE_AGREEMENT]: 0.6
+      [DocumentType.LEASE_AGREEMENT]: 0.6,
     };
 
     return complexityMap[type] || 0.5;
@@ -900,7 +998,7 @@ Date: ${new Date().toLocaleDateString()}`;
       [LegalJurisdiction.NIGERIA]: 0.6,
       [LegalJurisdiction.SOUTH_AFRICA]: 0.7,
       [LegalJurisdiction.UAE]: 0.8,
-      [LegalJurisdiction.SAUDI_ARABIA]: 0.9
+      [LegalJurisdiction.SAUDI_ARABIA]: 0.9,
     };
 
     return complexityMap[jurisdiction] || 0.5;
@@ -915,7 +1013,7 @@ Date: ${new Date().toLocaleDateString()}`;
     if (features.complianceCheck) complexity += 0.3;
     if (features.qualityAssurance) complexity += 0.2;
     if (features.generateAlternatives) complexity += 0.4;
-    
+
     return Math.min(1, complexity);
   }
 
@@ -923,8 +1021,19 @@ Date: ${new Date().toLocaleDateString()}`;
     const resourceMap: Record<DocumentComplexity, string[]> = {
       [DocumentComplexity.SIMPLE]: ['Basic Template Engine', 'Standard AI Model'],
       [DocumentComplexity.STANDARD]: ['Template Engine', 'Enhanced AI Model', 'Compliance Checker'],
-      [DocumentComplexity.COMPLEX]: ['Advanced Template Engine', 'Premium AI Model', 'Legal Expert Review', 'Compliance Suite'],
-      [DocumentComplexity.ENTERPRISE]: ['Enterprise Template Suite', 'Advanced AI Models', 'Legal Expert Panel', 'Full Compliance Suite', 'Risk Assessment Tools']
+      [DocumentComplexity.COMPLEX]: [
+        'Advanced Template Engine',
+        'Premium AI Model',
+        'Legal Expert Review',
+        'Compliance Suite',
+      ],
+      [DocumentComplexity.ENTERPRISE]: [
+        'Enterprise Template Suite',
+        'Advanced AI Models',
+        'Legal Expert Panel',
+        'Full Compliance Suite',
+        'Risk Assessment Tools',
+      ],
     };
 
     return resourceMap[level] || [];
@@ -945,7 +1054,7 @@ Date: ${new Date().toLocaleDateString()}`;
     let hash = 0;
     for (let i = 0; i < content.length; i++) {
       const char = content.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash;
     }
     return Math.abs(hash).toString(16);
@@ -955,19 +1064,30 @@ Date: ${new Date().toLocaleDateString()}`;
     return `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  private createGenerationSummary(documents: GeneratedDocument[], template: DocumentTemplate, startTime: number): GenerationSummary {
+  private createGenerationSummary(
+    documents: GeneratedDocument[],
+    template: DocumentTemplate,
+    startTime: number
+  ): GenerationSummary {
     return {
       documentsGenerated: documents.length,
       sectionsIncluded: documents.reduce((sum, doc) => sum + doc.sections.length, 0),
-      variablesResolved: documents.reduce((sum, doc) => sum + doc.variables.filter(v => v.resolved).length, 0),
+      variablesResolved: documents.reduce(
+        (sum, doc) => sum + doc.variables.filter(v => v.resolved).length,
+        0
+      ),
       clausesUsed: 0,
       templateVersion: template.version,
       generationTime: Date.now() - startTime,
-      complexity: template.complexity
+      complexity: template.complexity,
     };
   }
 
-  private createGenerationMetadata(generationId: string, request: DocumentGenerationRequest, startTime: number): GenerationMetadata {
+  private createGenerationMetadata(
+    generationId: string,
+    request: DocumentGenerationRequest,
+    startTime: number
+  ): GenerationMetadata {
     return {
       requestId: `req_${Date.now()}`,
       generationId,
@@ -979,7 +1099,7 @@ Date: ${new Date().toLocaleDateString()}`;
       version: '1.0.0',
       environment: 'production',
       user: 'system',
-      session: 'session_' + Date.now()
+      session: 'session_' + Date.now(),
     };
   }
 
@@ -987,19 +1107,19 @@ Date: ${new Date().toLocaleDateString()}`;
     if (!request.documentType) {
       throw new Error('Document type is required');
     }
-    
+
     if (!request.jurisdiction) {
       throw new Error('Jurisdiction is required');
     }
-    
+
     if (!request.legalArea) {
       throw new Error('Legal area is required');
     }
-    
+
     if (!request.parties || request.parties.length === 0) {
       throw new Error('At least one party is required');
     }
-    
+
     if (!request.outputFormat || request.outputFormat.length === 0) {
       throw new Error('At least one output format is required');
     }

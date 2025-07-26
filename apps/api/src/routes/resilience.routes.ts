@@ -1,16 +1,19 @@
 /**
  * 🧪 RESILIENCE SERVICE DEMO ROUTE
- * 
+ *
  * Demonstrates the resilience service functionality with health checks
- * 
+ *
  * Author: Endawoke47
  * Created: 2025-07-13
  */
 
 import { Router } from 'express';
-import { initializeResilienceService, getResilienceService } from '../services/resilience-integration.service';
+import {
+  initializeResilienceService,
+  getResilienceService,
+} from '../services/resilience-integration.service';
 import { checkDatabaseHealth, checkRedisHealth } from '../config/database';
-import { logger } from '../config/logger';
+import enhancedLogger from '../utils/logger';
 
 const router = Router();
 
@@ -30,26 +33,25 @@ router.get('/health', async (req, res) => {
 
     const resilienceService = getResilienceService();
     const systemHealth = resilienceService.getSystemHealth();
-    
+
     // Add direct connection checks
     const additionalChecks = {
       database: await checkDatabaseHealth(),
       redis: await checkRedisHealth(),
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     res.json({
       status: 'operational',
       resilience: systemHealth,
-      connections: additionalChecks
+      connections: additionalChecks,
     });
-
   } catch (error) {
-    logger.error('Health check failed:', error);
+    enhancedLogger.error('Health check failed:', error);
     res.status(500).json({
       status: 'error',
       message: 'Health check failed',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -68,7 +70,7 @@ router.post('/test-query', async (req, res) => {
     const resilienceService = getResilienceService();
     const { operation = 'test', params = {} } = req.body;
 
-    logger.info('Testing resilient query', { operation, params });
+    enhancedLogger.info('Testing resilient query', { operation, params });
 
     const result = await resilienceService.resilientQuery(operation, params);
 
@@ -76,15 +78,14 @@ router.post('/test-query', async (req, res) => {
       success: true,
       operation,
       result,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
-
   } catch (error) {
-    logger.error('Resilient query test failed:', error);
+    enhancedLogger.error('Resilient query test failed:', error);
     res.status(500).json({
       success: false,
       message: 'Resilient query failed',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -106,15 +107,14 @@ router.post('/circuit-breaker/reset', async (req, res) => {
     res.json({
       success: true,
       message: 'Circuit breaker reset successfully',
-      timestamp: new Date()
+      timestamp: new Date(),
     });
-
   } catch (error) {
-    logger.error('Circuit breaker reset failed:', error);
+    enhancedLogger.error('Circuit breaker reset failed:', error);
     res.status(500).json({
       success: false,
       message: 'Circuit breaker reset failed',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -138,15 +138,14 @@ router.get('/metrics', async (req, res) => {
       circuitBreaker: health.circuitBreaker,
       cacheHitRatio: health.cacheHitRatio,
       uptime: health.uptime,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
-
   } catch (error) {
-    logger.error('Metrics retrieval failed:', error);
+    enhancedLogger.error('Metrics retrieval failed:', error);
     res.status(500).json({
       success: false,
       message: 'Metrics retrieval failed',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });

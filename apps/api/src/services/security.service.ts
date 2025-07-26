@@ -108,7 +108,7 @@ export class SecurityService {
     private sessionRepository: Repository<ClientSession>,
     private eventEmitter: EventEmitter2,
     private configService: ConfigService,
-    private jwtService: JwtService,
+    private jwtService: JwtService
   ) {}
 
   /**
@@ -156,12 +156,11 @@ export class SecurityService {
         ...twoFactorAuth,
         backupCodes, // Return unhashed codes for user to save
       };
-
     } catch (error) {
       this.logger.error(`Error setting up 2FA for client ${clientId}:`, error);
       throw new HttpException(
         'Failed to setup two-factor authentication',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -171,7 +170,7 @@ export class SecurityService {
    */
   async verifyTwoFactorAuth(
     clientId: string,
-    token: string,
+    token: string
   ): Promise<{ success: boolean; message: string }> {
     try {
       this.logger.log(`Verifying 2FA for client: ${clientId}`);
@@ -217,12 +216,11 @@ export class SecurityService {
       this.logger.log(`2FA enabled for client: ${clientId}`);
 
       return { success: true, message: 'Two-factor authentication enabled successfully' };
-
     } catch (error) {
       this.logger.error(`Error verifying 2FA for client ${clientId}:`, error);
       throw new HttpException(
         'Failed to verify two-factor authentication',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -238,7 +236,7 @@ export class SecurityService {
       userAgent: string;
       location?: { country: string; city: string; timezone: string };
     },
-    twoFactorVerified: boolean = false,
+    twoFactorVerified: boolean = false
   ): Promise<ClientSession> {
     try {
       this.logger.log(`Creating secure session for client: ${clientId}`);
@@ -301,20 +299,19 @@ export class SecurityService {
       this.logger.log(`Secure session created for client: ${clientId}, session: ${sessionId}`);
 
       return session;
-
     } catch (error) {
       this.logger.error(`Error creating secure session for client ${clientId}:`, error);
-      throw new HttpException(
-        'Failed to create secure session',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new HttpException('Failed to create secure session', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   /**
    * Encrypt sensitive data
    */
-  async encryptData(data: string, key?: Buffer): Promise<{
+  async encryptData(
+    data: string,
+    key?: Buffer
+  ): Promise<{
     encrypted: string;
     key: string;
     iv: string;
@@ -338,7 +335,6 @@ export class SecurityService {
         iv: iv.toString('hex'),
         tag: tag.toString('hex'),
       };
-
     } catch (error) {
       this.logger.error('Error encrypting data:', error);
       throw new HttpException('Encryption failed', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -348,12 +344,7 @@ export class SecurityService {
   /**
    * Decrypt sensitive data
    */
-  async decryptData(
-    encryptedData: string,
-    key: string,
-    iv: string,
-    tag: string,
-  ): Promise<string> {
+  async decryptData(encryptedData: string, key: string, iv: string, tag: string): Promise<string> {
     try {
       const keyBuffer = Buffer.from(key, 'hex');
       const ivBuffer = Buffer.from(iv, 'hex');
@@ -367,7 +358,6 @@ export class SecurityService {
       decrypted += decipher.final('utf8');
 
       return decrypted;
-
     } catch (error) {
       this.logger.error('Error decrypting data:', error);
       throw new HttpException('Decryption failed', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -398,7 +388,6 @@ export class SecurityService {
       await this.sessionRepository.save(session);
 
       return session;
-
     } catch (error) {
       this.logger.error('Error validating session:', error);
       return null;
@@ -427,12 +416,11 @@ export class SecurityService {
         passwordPolicy,
         auditLog,
       };
-
     } catch (error) {
       this.logger.error(`Error fetching security settings for client ${clientId}:`, error);
       throw new HttpException(
         'Failed to fetch security settings',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -442,7 +430,7 @@ export class SecurityService {
    */
   async updateSecuritySettings(
     clientId: string,
-    settings: Partial<SecuritySettings>,
+    settings: Partial<SecuritySettings>
   ): Promise<SecuritySettings> {
     try {
       this.logger.log(`Updating security settings for client: ${clientId}`);
@@ -463,12 +451,11 @@ export class SecurityService {
 
       // Get updated settings
       return await this.getSecuritySettings(clientId);
-
     } catch (error) {
       this.logger.error(`Error updating security settings for client ${clientId}:`, error);
       throw new HttpException(
         'Failed to update security settings',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -491,7 +478,7 @@ export class SecurityService {
 
       const settings = await this.getSecuritySettings(clientId);
       const sessions = await this.getActiveSessions(clientId);
-      
+
       let score = 100;
       const recommendations: string[] = [];
       const vulnerabilities: any[] = [];
@@ -566,13 +553,9 @@ export class SecurityService {
       this.logger.log(`Security audit completed for client: ${clientId}, score: ${score}`);
 
       return auditResult;
-
     } catch (error) {
       this.logger.error(`Error performing security audit for client ${clientId}:`, error);
-      throw new HttpException(
-        'Failed to perform security audit',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new HttpException('Failed to perform security audit', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -688,7 +671,10 @@ export class SecurityService {
     // Implementation for validating security settings
   }
 
-  private async saveSecuritySettings(clientId: string, settings: Partial<SecuritySettings>): Promise<void> {
+  private async saveSecuritySettings(
+    clientId: string,
+    settings: Partial<SecuritySettings>
+  ): Promise<void> {
     // Implementation for saving security settings
   }
 

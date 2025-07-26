@@ -181,6 +181,29 @@ class ProductionApiClient {
     }
   }
 
+  // Generic HTTP methods
+  async get<T>(endpoint: string): Promise<ApiResponse<T>> {
+    return this.request(endpoint);
+  }
+
+  async post<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+    return this.request(endpoint, {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  async put<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+    return this.request(endpoint, {
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
+    return this.request(endpoint, { method: 'DELETE' });
+  }
+
   // Authentication
   async login(email: string, password: string): Promise<ApiResponse<{ user: User; token: string }>> {
     return this.request('/auth/login', {

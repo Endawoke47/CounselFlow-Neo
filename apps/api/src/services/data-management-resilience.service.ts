@@ -1,9 +1,9 @@
 /**
  * 🛡️ RESILIENCE AND RELIABILITY ENHANCEMENTS
- * 
- * This service adds built-in redundancy, fallback mechanisms, 
+ *
+ * This service adds built-in redundancy, fallback mechanisms,
  * and health checks to the centralized data management system.
- * 
+ *
  * Author: Endawoke47
  * Created: 2025-07-13
  */
@@ -42,13 +42,13 @@ interface FallbackConfig {
 @Injectable()
 export class DataManagementResilienceService implements OnModuleInit {
   private readonly logger = new Logger(DataManagementResilienceService.name);
-  
+
   // Circuit breaker state
   private circuitBreaker = {
     isOpen: false,
     failures: 0,
     lastFailureTime: null as Date | null,
-    resetTimeout: 30000 // 30 seconds
+    resetTimeout: 30000, // 30 seconds
   };
 
   // Fallback configuration
@@ -56,7 +56,7 @@ export class DataManagementResilienceService implements OnModuleInit {
     enableDirectDatabaseAccess: true,
     cacheBypassThreshold: 1000, // 1 second
     maxRetries: 3,
-    circuitBreakerThreshold: 5
+    circuitBreakerThreshold: 5,
   };
 
   // Health metrics
@@ -64,14 +64,14 @@ export class DataManagementResilienceService implements OnModuleInit {
     totalRequests: 0,
     failedRequests: 0,
     avgResponseTime: 0,
-    lastHealthCheck: new Date()
+    lastHealthCheck: new Date(),
   };
 
   constructor(
     private dataHub: DataManagementHubService,
     private contextProvider: DataContextProviderService,
     @InjectDataSource() private dataSource: DataSource,
-    @InjectRedis() private redis: Redis,
+    @InjectRedis() private redis: Redis
   ) {}
 
   async onModuleInit() {
@@ -83,10 +83,7 @@ export class DataManagementResilienceService implements OnModuleInit {
    * 🛡️ RESILIENT DATA QUERY
    * Wraps data queries with fallback mechanisms
    */
-  async resilientQuery<T>(
-    queryFn: () => Promise<T>,
-    fallbackFn?: () => Promise<T>
-  ): Promise<T> {
+  async resilientQuery<T>(queryFn: () => Promise<T>, fallbackFn?: () => Promise<T>): Promise<T> {
     const startTime = Date.now();
     this.healthMetrics.totalRequests++;
 
@@ -104,15 +101,14 @@ export class DataManagementResilienceService implements OnModuleInit {
       // Execute main query with timeout
       const result = await Promise.race([
         queryFn(),
-        this.timeoutPromise(this.fallbackConfig.cacheBypassThreshold)
+        this.timeoutPromise(this.fallbackConfig.cacheBypassThreshold),
       ]);
 
       // Update success metrics
       const responseTime = Date.now() - startTime;
       this.updateSuccessMetrics(responseTime);
-      
-      return result;
 
+      return result;
     } catch (error) {
       this.handleQueryFailure(error as Error);
       return await this.executeFallback(fallbackFn);
@@ -127,22 +123,22 @@ export class DataManagementResilienceService implements OnModuleInit {
     maxRetries: number = this.fallbackConfig.maxRetries
   ): Promise<T> {
     let lastError: Error;
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await operation();
       } catch (error) {
         lastError = error as Error;
-        
+
         if (attempt === maxRetries) {
           break; // Don't wait after last attempt
         }
 
         const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000); // Max 10s
         this.logger.warn(`Retry attempt ${attempt}/${maxRetries} after ${delay}ms`, {
-          error: (error as Error).message
+          error: (error as Error).message,
         });
-        
+
         await this.delay(delay);
       }
     }
@@ -156,27 +152,27 @@ export class DataManagementResilienceService implements OnModuleInit {
   async performHealthCheck(): Promise<HealthStatus> {
     try {
       const startTime = Date.now();
-      
+
       // Test each component
       const healthTests = await Promise.allSettled([
         this.testDataHub(),
-        this.testContextProvider(), 
+        this.testContextProvider(),
         this.testCacheConnection(),
-        this.testDatabaseConnection()
+        this.testDatabaseConnection(),
       ]);
 
       const responseTime = Date.now() - startTime;
-      
+
       const services = {
         dataHub: healthTests[0].status === 'fulfilled',
         contextProvider: healthTests[1].status === 'fulfilled',
         cache: healthTests[2].status === 'fulfilled',
-        database: healthTests[3].status === 'fulfilled'
+        database: healthTests[3].status === 'fulfilled',
       };
 
       const healthyServices = Object.values(services).filter(Boolean).length;
       const totalServices = Object.keys(services).length;
-      
+
       let status: 'healthy' | 'degraded' | 'critical';
       if (healthyServices === totalServices) {
         status = 'healthy';
@@ -192,18 +188,17 @@ export class DataManagementResilienceService implements OnModuleInit {
         metrics: {
           responseTime,
           errorRate: this.calculateErrorRate(),
-          cacheHitRatio: this.getCacheHitRatio()
+          cacheHitRatio: this.getCacheHitRatio(),
         },
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       this.healthMetrics.lastHealthCheck = new Date();
-      
+
       // Log health status
       this.logger.log('Health check completed', { status, services, responseTime });
-      
-      return healthStatus;
 
+      return healthStatus;
     } catch (error) {
       this.logger.error('Health check failed', { error });
       return {
@@ -212,14 +207,14 @@ export class DataManagementResilienceService implements OnModuleInit {
           dataHub: false,
           contextProvider: false,
           cache: false,
-          database: false
+          database: false,
         },
         metrics: {
           responseTime: -1,
           errorRate: 1,
-          cacheHitRatio: 0
+          cacheHitRatio: 0,
         },
-        timestamp: new Date()
+        timestamp: new Date(),
       };
     }
   }
@@ -230,19 +225,18 @@ export class DataManagementResilienceService implements OnModuleInit {
   async fallbackToDirectDatabase(query: any): Promise<any> {
     try {
       this.logger.warn('Using direct database fallback', { query });
-      
+
       // This would implement direct database access
       // bypassing the centralized system
       const result = await this.executeDirectDatabaseQuery(query);
-      
+
       this.logger.warn('Direct database fallback used', {
         type: 'direct-database',
         query,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
 
       return result;
-      
     } catch (error) {
       this.logger.error('Direct database fallback failed', { error, query });
       throw error;
@@ -257,16 +251,16 @@ export class DataManagementResilienceService implements OnModuleInit {
       circuitBreaker: {
         isOpen: this.circuitBreaker.isOpen,
         failures: this.circuitBreaker.failures,
-        lastFailureTime: this.circuitBreaker.lastFailureTime
+        lastFailureTime: this.circuitBreaker.lastFailureTime,
       },
       health: {
         totalRequests: this.healthMetrics.totalRequests,
         failedRequests: this.healthMetrics.failedRequests,
         successRate: this.calculateSuccessRate(),
         avgResponseTime: this.healthMetrics.avgResponseTime,
-        lastHealthCheck: this.healthMetrics.lastHealthCheck
+        lastHealthCheck: this.healthMetrics.lastHealthCheck,
       },
-      fallbackConfig: this.fallbackConfig
+      fallbackConfig: this.fallbackConfig,
     };
   }
 
@@ -304,24 +298,23 @@ export class DataManagementResilienceService implements OnModuleInit {
       this.openCircuitBreaker();
     }
 
-    this.logger.error('Query failed', { 
+    this.logger.error('Query failed', {
       error: error.message,
       failures: this.circuitBreaker.failures,
-      circuitBreakerOpen: this.circuitBreaker.isOpen
+      circuitBreakerOpen: this.circuitBreaker.isOpen,
     });
 
     this.logger.warn('System query failed', {
       error: error.message,
       timestamp: new Date(),
-      failures: this.circuitBreaker.failures
+      failures: this.circuitBreaker.failures,
     });
   }
 
   private updateSuccessMetrics(responseTime: number): void {
     const totalRequests = this.healthMetrics.totalRequests;
-    this.healthMetrics.avgResponseTime = (
-      (this.healthMetrics.avgResponseTime * (totalRequests - 1)) + responseTime
-    ) / totalRequests;
+    this.healthMetrics.avgResponseTime =
+      (this.healthMetrics.avgResponseTime * (totalRequests - 1) + responseTime) / totalRequests;
 
     // Reset circuit breaker on success
     if (this.circuitBreaker.failures > 0) {
@@ -332,16 +325,16 @@ export class DataManagementResilienceService implements OnModuleInit {
   private openCircuitBreaker(): void {
     this.circuitBreaker.isOpen = true;
     this.logger.warn('Circuit breaker opened due to repeated failures');
-    
+
     this.logger.warn('Circuit breaker opened', {
       failures: this.circuitBreaker.failures,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
   }
 
   private shouldResetCircuitBreaker(): boolean {
     if (!this.circuitBreaker.lastFailureTime) return false;
-    
+
     const timeSinceLastFailure = Date.now() - this.circuitBreaker.lastFailureTime.getTime();
     return timeSinceLastFailure > this.circuitBreaker.resetTimeout;
   }
@@ -350,10 +343,10 @@ export class DataManagementResilienceService implements OnModuleInit {
     this.circuitBreaker.isOpen = false;
     this.circuitBreaker.failures = 0;
     this.circuitBreaker.lastFailureTime = null;
-    
+
     this.logger.log('Circuit breaker reset');
     this.eventEmitter.emit('system.circuit-breaker.reset', {
-      timestamp: new Date()
+      timestamp: new Date(),
     });
   }
 
@@ -410,11 +403,11 @@ export class DataManagementResilienceService implements OnModuleInit {
       const startTime = Date.now();
       await this.redis.ping();
       const responseTime = Date.now() - startTime;
-      
+
       if (responseTime > 1000) {
         this.logger.warn('Redis ping response time is high', { responseTime });
       }
-      
+
       this.logger.debug('Redis health check passed', { responseTime });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -428,11 +421,11 @@ export class DataManagementResilienceService implements OnModuleInit {
       const startTime = Date.now();
       await this.dataSource.query('SELECT 1');
       const responseTime = Date.now() - startTime;
-      
+
       if (responseTime > 2000) {
         this.logger.warn('Database query response time is high', { responseTime });
       }
-      
+
       this.logger.debug('Database health check passed', { responseTime });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -445,9 +438,9 @@ export class DataManagementResilienceService implements OnModuleInit {
     // This bypasses the centralized data management system entirely
     this.logger.warn('🔄 Executing direct database query as fallback', {
       query: query?.operation || 'unknown',
-      timestamp: new Date()
+      timestamp: new Date(),
     });
-    
+
     try {
       // For different query types, we'd implement specific fallback logic
       if (query?.operation === 'find') {
@@ -457,7 +450,7 @@ export class DataManagementResilienceService implements OnModuleInit {
       } else if (query?.operation === 'save') {
         return await this.dataSource.getRepository(query.entity).save(query.data);
       }
-      
+
       // Generic query execution
       return await this.dataSource.query(query.sql, query.parameters);
     } catch (error) {

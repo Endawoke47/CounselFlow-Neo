@@ -15,7 +15,7 @@ export enum IntelligenceType {
   MARKET_INTELLIGENCE = 'market_intelligence',
   REGULATORY_INTELLIGENCE = 'regulatory_intelligence',
   CASE_OUTCOME_PREDICTION = 'case_outcome_prediction',
-  SENTIMENT_ANALYSIS = 'sentiment_analysis'
+  SENTIMENT_ANALYSIS = 'sentiment_analysis',
 }
 
 export enum AnalyticsPeriod {
@@ -25,7 +25,7 @@ export enum AnalyticsPeriod {
   LAST_6_MONTHS = 'last_6_months',
   LAST_YEAR = 'last_year',
   LAST_2_YEARS = 'last_2_years',
-  CUSTOM_RANGE = 'custom_range'
+  CUSTOM_RANGE = 'custom_range',
 }
 
 export enum TrendDirection {
@@ -33,7 +33,7 @@ export enum TrendDirection {
   DECREASING = 'decreasing',
   STABLE = 'stable',
   VOLATILE = 'volatile',
-  SEASONAL = 'seasonal'
+  SEASONAL = 'seasonal',
 }
 
 export enum InsightCategory {
@@ -44,7 +44,7 @@ export enum InsightCategory {
   CASE_OUTCOMES = 'case_outcomes',
   CONTRACT_PATTERNS = 'contract_patterns',
   COMPLIANCE_ISSUES = 'compliance_issues',
-  JURISDICTIONAL_DIFFERENCES = 'jurisdictional_differences'
+  JURISDICTIONAL_DIFFERENCES = 'jurisdictional_differences',
 }
 
 export enum PredictionConfidence {
@@ -52,7 +52,7 @@ export enum PredictionConfidence {
   LOW = 'low',
   MEDIUM = 'medium',
   HIGH = 'high',
-  VERY_HIGH = 'very_high'
+  VERY_HIGH = 'very_high',
 }
 
 // ===== ANALYTICS REQUEST TYPES =====
@@ -100,7 +100,7 @@ export enum CompanySize {
   MEDIUM = 'medium',
   LARGE = 'large',
   ENTERPRISE = 'enterprise',
-  MULTINATIONAL = 'multinational'
+  MULTINATIONAL = 'multinational',
 }
 
 export interface ValueRange {
@@ -116,7 +116,7 @@ export enum PractitionerType {
   MEDIATOR = 'mediator',
   LEGAL_COUNSEL = 'legal_counsel',
   PARALEGAL = 'paralegal',
-  LEGAL_ADVISOR = 'legal_advisor'
+  LEGAL_ADVISOR = 'legal_advisor',
 }
 
 export enum CourtLevel {
@@ -127,7 +127,7 @@ export enum CourtLevel {
   SUPREME = 'supreme',
   CONSTITUTIONAL = 'constitutional',
   COMMERCIAL = 'commercial',
-  ARBITRATION = 'arbitration'
+  ARBITRATION = 'arbitration',
 }
 
 export enum VisualizationType {
@@ -140,7 +140,7 @@ export enum VisualizationType {
   SUNBURST = 'sunburst',
   GEOGRAPHICAL_MAP = 'geographical_map',
   NETWORK_DIAGRAM = 'network_diagram',
-  TIMELINE = 'timeline'
+  TIMELINE = 'timeline',
 }
 
 // ===== ANALYTICS RESULT TYPES =====
@@ -286,7 +286,7 @@ export enum PredictionType {
   COMPLIANCE_REQUIREMENT = 'compliance_requirement',
   LEGAL_TREND = 'legal_trend',
   CONTRACT_DISPUTE = 'contract_dispute',
-  POLICY_IMPACT = 'policy_impact'
+  POLICY_IMPACT = 'policy_impact',
 }
 
 export interface PredictionResult {
@@ -370,7 +370,7 @@ export enum ComparisonType {
   TEMPORAL = 'temporal',
   CATEGORICAL = 'categorical',
   PEER_ANALYSIS = 'peer_analysis',
-  BEST_PRACTICE = 'best_practice'
+  BEST_PRACTICE = 'best_practice',
 }
 
 export interface ComparisonSubject {
@@ -727,7 +727,7 @@ export enum RecommendationType {
   RISK_MITIGATION = 'risk_mitigation',
   OPPORTUNITY = 'opportunity',
   COST_OPTIMIZATION = 'cost_optimization',
-  PROCESS_IMPROVEMENT = 'process_improvement'
+  PROCESS_IMPROVEMENT = 'process_improvement',
 }
 
 export interface RecommendedAction {

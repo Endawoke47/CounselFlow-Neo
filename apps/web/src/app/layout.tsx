@@ -4,8 +4,6 @@
 
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { AppProviders } from '../providers/app-providers';
-import { Toaster } from 'react-hot-toast';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -60,12 +58,16 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
         <meta name="theme-color" content="#14b8a6" />
+        {/* Performance optimization hints */}
+        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="//api.counselflow.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        {/* Critical resource preloads */}
+        <link rel="preload" href="/fonts/inter-display.woff2" as="font" type="font/woff2" crossOrigin="" />
+        <link rel="preload" href="/fonts/inter.woff2" as="font" type="font/woff2" crossOrigin="" />
       </head>
       <body className={inter.className}>
-        <AppProviders>
-          {children}
-          <Toaster position="top-right" />
-        </AppProviders>
+        {children}
       </body>
     </html>
   );

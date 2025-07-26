@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+// import { usePerformanceOptimization, useAdaptiveRendering } from '../hooks/usePerformance';
 import { 
   ArrowRight, 
   Shield, 
@@ -40,26 +41,55 @@ export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
+  // Performance optimization hooks (temporarily disabled)
+  // const { 
+  //   optimizeComponent, 
+  //   createThrottledFunction, 
+  //   createDebouncedFunction 
+  // } = usePerformanceOptimization();
+  
+  // const { 
+  //   shouldReduceAnimations, 
+  //   shouldReduceQuality,
+  //   getOptimalImageQuality 
+  // } = useAdaptiveRendering();
+
+  // Refs for performance optimization
+  const heroRef = useRef<HTMLDivElement>(null);
+  const featuresRef = useRef<HTMLDivElement>(null);
+
+  // Simplified mouse tracking
+  const handleMouseMove = (e: MouseEvent) => {
+    const x = (e.clientX / window.innerWidth - 0.5) * 20;
+    const y = (e.clientY / window.innerHeight - 0.5) * 20;
+    setMousePosition({ x, y });
+  };
+
   // Track mouse position for magnetic effects
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * 20;
-      const y = (e.clientY / window.innerHeight - 0.5) * 20;
-      setMousePosition({ x, y });
-    };
-
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // Enhanced scroll effects
+  // Enhanced scroll effects with performance optimization
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Initialize performance optimizations for critical components
+  useEffect(() => {
+    // Temporarily disabled for debugging
+    // if (heroRef.current) {
+    //   optimizeComponent(heroRef.current);
+    // }
+    // if (featuresRef.current) {
+    //   optimizeComponent(featuresRef.current);
+    // }
   }, []);
 
   const handleLogin = () => {
@@ -253,8 +283,10 @@ export default function Home() {
       </nav>
 
       {/* Minimalist Hero Section */}
-      <section className="min-h-screen flex items-center justify-center relative bg-gradient-to-b from-white to-gray-50/30 parallax-container">
-        {/* Advanced Background Animation */}
+      <section 
+        ref={heroRef}
+        className="min-h-screen flex items-center justify-center relative bg-gradient-to-b from-white to-gray-50/30 parallax-container critical-content above-fold"
+      >
         <div className="hero-background">
           <div className="gradient-mesh"></div>
           <div className="parallax-layer" data-depth="1">
@@ -322,7 +354,11 @@ export default function Home() {
       </section>
 
       {/* Clean Solutions Section */}
-      <section id="solutions" className="py-32 px-8 bg-white">
+      <section 
+        ref={featuresRef}
+        id="solutions" 
+        className="py-32 px-8 bg-white below-fold"
+      >
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-24">
             <h2 className="text-4xl md:text-5xl font-extralight text-gray-900 mb-6 tracking-tight">

@@ -8,7 +8,7 @@ export class GoogleProvider extends BaseAIProvider {
 
   constructor(config: any) {
     super(config);
-    
+
     if (!config.apiKey) {
       throw new Error('Google API key is required');
     }
@@ -29,16 +29,20 @@ export class GoogleProvider extends BaseAIProvider {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }],
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
           generationConfig: {
             temperature: request.options?.temperature || 0.1,
             maxOutputTokens: request.options?.maxTokens || 2048,
-          }
-        })
+          },
+        }),
       });
 
       if (!response.ok) {
@@ -47,7 +51,7 @@ export class GoogleProvider extends BaseAIProvider {
 
       const data = await response.json();
       const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      
+
       return {
         output: this.formatLegalResponse(generatedText, request.type),
         model,
@@ -56,12 +60,13 @@ export class GoogleProvider extends BaseAIProvider {
         metadata: {
           provider: 'google',
           finishReason: data.candidates?.[0]?.finishReason,
-          safetyRatings: data.candidates?.[0]?.safetyRatings
-        }
+          safetyRatings: data.candidates?.[0]?.safetyRatings,
+        },
       };
-
     } catch (error) {
-      throw new Error(`Google processing failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Google processing failed: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -78,7 +83,7 @@ export class GoogleProvider extends BaseAIProvider {
     try {
       const response = await fetch(`${this.baseURL}?key=${this.apiKey}`);
       if (!response.ok) return ['gemini-pro'];
-      
+
       const data = await response.json();
       return data.models?.map((model: any) => model.name.split('/').pop()) || ['gemini-pro'];
     } catch {
@@ -93,13 +98,13 @@ export class GoogleProvider extends BaseAIProvider {
           analysis: response,
           riskLevel: this.extractRiskLevel(response),
           keyIssues: this.extractKeyIssues(response),
-          recommendations: this.extractRecommendations(response)
+          recommendations: this.extractRecommendations(response),
         };
       case 'legal_research':
         return {
           research: response,
           sources: this.extractSources(response),
-          summary: this.extractSummary(response)
+          summary: this.extractSummary(response),
         };
       default:
         return { analysis: response };

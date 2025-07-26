@@ -1,9 +1,9 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
-import { Alert } from '../components/ui/Alert';
+import { Button } from '../components/ui/button';
+import { Card } from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import { Select } from '../components/ui/select';
+import { Alert } from '../components/ui/alert';
 
 // Enhanced Workflow Node Interface
 interface WorkflowNode {

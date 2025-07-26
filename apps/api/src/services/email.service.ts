@@ -72,19 +72,19 @@ class EmailService {
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      
-      logger.info('Email sent successfully', { 
+
+      logger.info('Email sent successfully', {
         to: options.to,
         subject: options.subject,
-        messageId: info.messageId 
+        messageId: info.messageId,
       });
 
       return true;
     } catch (error) {
-      logger.error('Failed to send email', { 
-        error, 
+      logger.error('Failed to send email', {
+        error,
         to: options.to,
-        subject: options.subject 
+        subject: options.subject,
       });
       return false;
     }
@@ -95,7 +95,7 @@ class EmailService {
    */
   async sendPasswordResetEmail(email: string, resetToken: string): Promise<boolean> {
     const resetUrl = `${env.APP_URL || 'http://localhost:3000'}/auth/reset-password?token=${resetToken}`;
-    
+
     const html = this.generatePasswordResetHTML(resetUrl);
     const text = this.generatePasswordResetText(resetUrl);
 
@@ -127,7 +127,7 @@ class EmailService {
    */
   async sendEmailVerificationEmail(email: string, verificationToken: string): Promise<boolean> {
     const verificationUrl = `${env.APP_URL || 'http://localhost:3000'}/auth/verify-email?token=${verificationToken}`;
-    
+
     const html = this.generateEmailVerificationHTML(verificationUrl);
     const text = this.generateEmailVerificationText(verificationUrl);
 

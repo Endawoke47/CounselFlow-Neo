@@ -39,7 +39,7 @@ export class OllamaProvider extends BaseAIProvider {
       }
 
       const data = await response.json();
-      
+
       return {
         output: this.formatLegalResponse(data.response, request.type),
         model,
@@ -49,12 +49,13 @@ export class OllamaProvider extends BaseAIProvider {
           provider: 'ollama',
           totalDuration: data.total_duration,
           loadDuration: data.load_duration,
-          evalCount: data.eval_count
-        }
+          evalCount: data.eval_count,
+        },
       };
-
     } catch (error) {
-      throw new Error(`Ollama processing failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Ollama processing failed: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -62,7 +63,7 @@ export class OllamaProvider extends BaseAIProvider {
     try {
       const response = await fetch(`${this.baseURL}/api/tags`, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
       return response.ok;
     } catch {
@@ -74,7 +75,7 @@ export class OllamaProvider extends BaseAIProvider {
     try {
       const response = await fetch(`${this.baseURL}/api/tags`);
       if (!response.ok) return [];
-      
+
       const data = await response.json();
       return data.models?.map((model: any) => model.name) || [];
     } catch {
@@ -90,14 +91,14 @@ export class OllamaProvider extends BaseAIProvider {
           analysis: response,
           riskLevel: this.extractRiskLevel(response),
           keyFindings: this.extractKeyFindings(response),
-          recommendations: this.extractRecommendations(response)
+          recommendations: this.extractRecommendations(response),
         };
       case 'legal_research':
         return {
           research: response,
           relevantLaws: this.extractLaws(response),
           precedents: this.extractPrecedents(response),
-          summary: this.extractSummary(response)
+          summary: this.extractSummary(response),
         };
       default:
         return { analysis: response };
@@ -105,11 +106,8 @@ export class OllamaProvider extends BaseAIProvider {
   }
 
   private extractRiskLevel(text: string): string {
-    const riskPatterns = [
-      /risk.*?(?:high|medium|low)/gi,
-      /(?:high|medium|low).*?risk/gi
-    ];
-    
+    const riskPatterns = [/risk.*?(?:high|medium|low)/gi, /(?:high|medium|low).*?risk/gi];
+
     for (const pattern of riskPatterns) {
       const match = text.match(pattern);
       if (match) {
@@ -126,7 +124,7 @@ export class OllamaProvider extends BaseAIProvider {
     const findings: string[] = [];
     const patterns = [
       /(?:key findings?|important|critical|significant)[:\s]*(.*?)(?:\n|$)/gi,
-      /(?:\d+\.)\s*(.*?)(?:\n|$)/gi
+      /(?:\d+\.)\s*(.*?)(?:\n|$)/gi,
     ];
 
     for (const pattern of patterns) {
@@ -137,7 +135,7 @@ export class OllamaProvider extends BaseAIProvider {
         }
       }
     }
-    
+
     return findings.slice(0, 5); // Top 5 findings
   }
 
@@ -145,7 +143,7 @@ export class OllamaProvider extends BaseAIProvider {
     const recommendations: string[] = [];
     const patterns = [
       /(?:recommend|suggest|advise)[:\s]*(.*?)(?:\n|$)/gi,
-      /(?:should|must|need to)[:\s]*(.*?)(?:\n|$)/gi
+      /(?:should|must|need to)[:\s]*(.*?)(?:\n|$)/gi,
     ];
 
     for (const pattern of patterns) {
@@ -156,7 +154,7 @@ export class OllamaProvider extends BaseAIProvider {
         }
       }
     }
-    
+
     return recommendations.slice(0, 5);
   }
 
@@ -164,7 +162,7 @@ export class OllamaProvider extends BaseAIProvider {
     const laws: string[] = [];
     const patterns = [
       /(?:act|law|statute|regulation|code)[:\s]*(.*?)(?:\n|$)/gi,
-      /(?:section|article)\s+\d+.*?(?:\n|$)/gi
+      /(?:section|article)\s+\d+.*?(?:\n|$)/gi,
     ];
 
     for (const pattern of patterns) {
@@ -175,7 +173,7 @@ export class OllamaProvider extends BaseAIProvider {
         }
       }
     }
-    
+
     return laws.slice(0, 10);
   }
 
@@ -183,7 +181,7 @@ export class OllamaProvider extends BaseAIProvider {
     const precedents: string[] = [];
     const patterns = [
       /(?:case|precedent|decision)[:\s]*(.*?)(?:\n|$)/gi,
-      /v\.\s+.*?(?:\n|$)/gi // Case citations with "v."
+      /v\.\s+.*?(?:\n|$)/gi, // Case citations with "v."
     ];
 
     for (const pattern of patterns) {
@@ -194,7 +192,7 @@ export class OllamaProvider extends BaseAIProvider {
         }
       }
     }
-    
+
     return precedents.slice(0, 5);
   }
 

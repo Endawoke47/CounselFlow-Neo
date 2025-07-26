@@ -2,12 +2,12 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { AIGatewayService } from '../services/ai-gateway.service';
-import { 
-  aiRequestSchema, 
-  AIAnalysisType, 
-  LegalJurisdiction, 
-  SupportedLanguage, 
-  LegalSystem 
+import {
+  aiRequestSchema,
+  AIAnalysisType,
+  LegalJurisdiction,
+  SupportedLanguage,
+  LegalSystem,
 } from '../types/ai.types';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.middleware';
 
@@ -22,9 +22,9 @@ router.post('/analyze', async (req: AuthenticatedRequest, res) => {
   try {
     const validatedRequest = aiRequestSchema.parse(req.body);
     const userId = req.user?.id || 'anonymous';
-    
+
     const result = await aiGateway.processRequest(validatedRequest, userId);
-    
+
     res.json({
       success: true,
       data: result,
@@ -34,14 +34,14 @@ router.post('/analyze', async (req: AuthenticatedRequest, res) => {
         model: result.model,
         tokensUsed: result.tokensUsed,
         cost: result.cost,
-        cached: result.cached
-      }
+        cached: result.cached,
+      },
     });
   } catch (error) {
     console.error('AI analysis error:', error);
     res.status(400).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Analysis failed'
+      error: error instanceof Error ? error.message : 'Analysis failed',
     });
   }
 });
@@ -53,11 +53,13 @@ router.post('/contract/analyze', async (req: AuthenticatedRequest, res) => {
       contract: z.any(),
       jurisdiction: z.nativeEnum(LegalJurisdiction).optional(),
       language: z.nativeEnum(SupportedLanguage).optional(),
-      confidentialityLevel: z.enum(['public', 'confidential', 'privileged']).optional()
+      confidentialityLevel: z.enum(['public', 'confidential', 'privileged']).optional(),
     });
 
-    const { contract, jurisdiction, language, confidentialityLevel } = contractSchema.parse(req.body);
-    
+    const { contract, jurisdiction, language, confidentialityLevel } = contractSchema.parse(
+      req.body
+    );
+
     const request = {
       type: AIAnalysisType.CONTRACT_ANALYSIS,
       input: contract,
@@ -66,8 +68,8 @@ router.post('/contract/analyze', async (req: AuthenticatedRequest, res) => {
         legalSystem: LegalSystem.COMMON_LAW,
         language: language || SupportedLanguage.ENGLISH,
         practiceArea: 'contract_law',
-        confidentialityLevel: confidentialityLevel || 'confidential'
-      }
+        confidentialityLevel: confidentialityLevel || 'confidential',
+      },
     };
 
     const result = await aiGateway.processRequest(request, req.user?.id || 'anonymous');
@@ -75,7 +77,7 @@ router.post('/contract/analyze', async (req: AuthenticatedRequest, res) => {
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Contract analysis failed'
+      error: error instanceof Error ? error.message : 'Contract analysis failed',
     });
   }
 });
@@ -87,11 +89,11 @@ router.post('/research', async (req: AuthenticatedRequest, res) => {
       query: z.string(),
       jurisdiction: z.nativeEnum(LegalJurisdiction),
       practiceArea: z.string().optional(),
-      language: z.nativeEnum(SupportedLanguage).optional()
+      language: z.nativeEnum(SupportedLanguage).optional(),
     });
 
     const { query, jurisdiction, practiceArea, language } = researchSchema.parse(req.body);
-    
+
     const request = {
       type: AIAnalysisType.LEGAL_RESEARCH,
       input: { query, practiceArea },
@@ -100,8 +102,8 @@ router.post('/research', async (req: AuthenticatedRequest, res) => {
         legalSystem: LegalSystem.MIXED_SYSTEM,
         language: language || SupportedLanguage.ENGLISH,
         practiceArea: practiceArea || 'general',
-        confidentialityLevel: 'public' as const
-      }
+        confidentialityLevel: 'public' as const,
+      },
     };
 
     const result = await aiGateway.processRequest(request, req.user?.id || 'anonymous');
@@ -109,7 +111,7 @@ router.post('/research', async (req: AuthenticatedRequest, res) => {
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Research failed'
+      error: error instanceof Error ? error.message : 'Research failed',
     });
   }
 });
@@ -119,7 +121,7 @@ router.get('/jurisdictions', (req: AuthenticatedRequest, res) => {
   const jurisdictions = Object.values(LegalJurisdiction);
   res.json({
     success: true,
-    data: jurisdictions
+    data: jurisdictions,
   });
 });
 
@@ -127,7 +129,7 @@ router.get('/languages', (req: AuthenticatedRequest, res) => {
   const languages = Object.values(SupportedLanguage);
   res.json({
     success: true,
-    data: languages
+    data: languages,
   });
 });
 
@@ -140,13 +142,13 @@ router.get('/health', async (req: AuthenticatedRequest, res) => {
       data: {
         status: 'healthy',
         providers: health,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Health check failed'
+      error: error instanceof Error ? error.message : 'Health check failed',
     });
   }
 });

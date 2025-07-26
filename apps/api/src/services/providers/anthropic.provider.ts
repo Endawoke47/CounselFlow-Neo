@@ -8,7 +8,7 @@ export class AnthropicProvider extends BaseAIProvider {
 
   constructor(config: any) {
     super(config);
-    
+
     if (!config.apiKey) {
       throw new Error('Anthropic API key is required');
     }
@@ -30,11 +30,11 @@ export class AnthropicProvider extends BaseAIProvider {
         model,
         max_tokens_to_sample: request.options?.maxTokens || 2048,
         temperature: request.options?.temperature || 0.1,
-        prompt: `${systemPrompt}\n\nHuman: ${userPrompt}\n\nAssistant:`
+        prompt: `${systemPrompt}\n\nHuman: ${userPrompt}\n\nAssistant:`,
       });
 
       const response = message.completion || '';
-      
+
       return {
         output: this.formatLegalResponse(response, request.type),
         model,
@@ -42,12 +42,13 @@ export class AnthropicProvider extends BaseAIProvider {
         tokensUsed: this.estimateTokensUsed(response),
         metadata: {
           provider: 'anthropic',
-          stopReason: message.stop_reason
-        }
+          stopReason: message.stop_reason,
+        },
       };
-
     } catch (error) {
-      throw new Error(`Anthropic processing failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Anthropic processing failed: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -57,7 +58,7 @@ export class AnthropicProvider extends BaseAIProvider {
       await this.client.completions.create({
         model: 'claude-instant-v1',
         max_tokens_to_sample: 10,
-        prompt: 'Human: Hello\n\nAssistant:'
+        prompt: 'Human: Hello\n\nAssistant:',
       });
       return true;
     } catch {
@@ -66,18 +67,14 @@ export class AnthropicProvider extends BaseAIProvider {
   }
 
   async getAvailableModels(): Promise<string[]> {
-    return [
-      'claude-3-haiku-20240307',
-      'claude-3-sonnet-20240229',
-      'claude-3-opus-20240229'
-    ];
+    return ['claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'claude-3-opus-20240229'];
   }
 
   private getSystemPrompt(request: ValidatedAIRequest): string {
     const { context } = request;
-    
+
     let systemPrompt = `You are Claude, an expert legal AI assistant with comprehensive knowledge of African and Middle Eastern legal systems. `;
-    
+
     if (context?.jurisdiction) {
       systemPrompt += `You have particular expertise in legal systems of ${context.jurisdiction}. `;
     }
@@ -119,7 +116,7 @@ export class AnthropicProvider extends BaseAIProvider {
           keyProvisions: this.extractKeyProvisions(response),
           complianceIssues: this.extractComplianceIssues(response),
           recommendations: this.extractRecommendations(response),
-          jurisdictionalConsiderations: this.extractJurisdictionalNotes(response)
+          jurisdictionalConsiderations: this.extractJurisdictionalNotes(response),
         };
       case 'legal_research':
         return {
@@ -127,7 +124,7 @@ export class AnthropicProvider extends BaseAIProvider {
           primarySources: this.extractPrimarySources(response),
           secondarySources: this.extractSecondarySources(response),
           legalPrinciples: this.extractLegalPrinciples(response),
-          practicalApplication: this.extractPracticalApplication(response)
+          practicalApplication: this.extractPracticalApplication(response),
         };
       case 'compliance_check':
         return {
@@ -135,33 +132,31 @@ export class AnthropicProvider extends BaseAIProvider {
           complianceStatus: this.extractComplianceStatus(response),
           violations: this.extractViolations(response),
           remedialActions: this.extractRemedialActions(response),
-          monitoringRequirements: this.extractMonitoring(response)
+          monitoringRequirements: this.extractMonitoring(response),
         };
       default:
         return { analysis: response };
     }
   }
 
-
-
   private extractRiskAssessment(text: string): any {
     const riskLevel = this.extractRiskLevel(text);
     const riskFactors = this.extractRiskFactors(text);
-    
+
     return {
       level: riskLevel,
       factors: riskFactors,
       impact: this.extractImpact(text),
-      likelihood: this.extractLikelihood(text)
+      likelihood: this.extractLikelihood(text),
     };
   }
 
   private extractRiskLevel(text: string): string {
     const patterns = [
       /risk.*?(?:high|medium|low|critical|minimal)/gi,
-      /(?:high|medium|low|critical|minimal).*?risk/gi
+      /(?:high|medium|low|critical|minimal).*?risk/gi,
     ];
-    
+
     for (const pattern of patterns) {
       const match = text.match(pattern);
       if (match) {
@@ -178,7 +173,7 @@ export class AnthropicProvider extends BaseAIProvider {
     const factors: string[] = [];
     const patterns = [
       /(?:risk factor|concern|issue)[:\s]*(.*?)(?:\n|$)/gi,
-      /(?:potential|possible)\s+(?:risk|problem)[:\s]*(.*?)(?:\n|$)/gi
+      /(?:potential|possible)\s+(?:risk|problem)[:\s]*(.*?)(?:\n|$)/gi,
     ];
 
     for (const pattern of patterns) {
@@ -189,7 +184,7 @@ export class AnthropicProvider extends BaseAIProvider {
         }
       }
     }
-    
+
     return factors.slice(0, 5);
   }
 
@@ -197,7 +192,7 @@ export class AnthropicProvider extends BaseAIProvider {
     const provisions: string[] = [];
     const patterns = [
       /(?:key|important|critical)\s+(?:provision|clause|term)[:\s]*(.*?)(?:\n|$)/gi,
-      /provision[:\s]*(.*?)(?:\n|$)/gi
+      /provision[:\s]*(.*?)(?:\n|$)/gi,
     ];
 
     for (const pattern of patterns) {
@@ -208,7 +203,7 @@ export class AnthropicProvider extends BaseAIProvider {
         }
       }
     }
-    
+
     return provisions.slice(0, 5);
   }
 
@@ -216,7 +211,7 @@ export class AnthropicProvider extends BaseAIProvider {
     const issues: string[] = [];
     const patterns = [
       /(?:compliance|regulatory)\s+(?:issue|problem|concern)[:\s]*(.*?)(?:\n|$)/gi,
-      /(?:non-compliant|violation)[:\s]*(.*?)(?:\n|$)/gi
+      /(?:non-compliant|violation)[:\s]*(.*?)(?:\n|$)/gi,
     ];
 
     for (const pattern of patterns) {
@@ -227,7 +222,7 @@ export class AnthropicProvider extends BaseAIProvider {
         }
       }
     }
-    
+
     return issues.slice(0, 3);
   }
 
@@ -235,7 +230,7 @@ export class AnthropicProvider extends BaseAIProvider {
     const recommendations: string[] = [];
     const patterns = [
       /recommend(?:ation)?[:\s]*(.*?)(?:\n\n|$)/gi,
-      /(?:should|must|need to|advise)[:\s]*(.*?)(?:\n|$)/gi
+      /(?:should|must|need to|advise)[:\s]*(.*?)(?:\n|$)/gi,
     ];
 
     for (const pattern of patterns) {
@@ -246,7 +241,7 @@ export class AnthropicProvider extends BaseAIProvider {
         }
       }
     }
-    
+
     return recommendations.slice(0, 5);
   }
 
@@ -254,7 +249,7 @@ export class AnthropicProvider extends BaseAIProvider {
     const notes: string[] = [];
     const patterns = [
       /(?:jurisdiction|legal system|local law)[:\s]*(.*?)(?:\n|$)/gi,
-      /(?:country|state|regional)\s+(?:law|requirement)[:\s]*(.*?)(?:\n|$)/gi
+      /(?:country|state|regional)\s+(?:law|requirement)[:\s]*(.*?)(?:\n|$)/gi,
     ];
 
     for (const pattern of patterns) {
@@ -265,7 +260,7 @@ export class AnthropicProvider extends BaseAIProvider {
         }
       }
     }
-    
+
     return notes.slice(0, 3);
   }
 
@@ -273,7 +268,7 @@ export class AnthropicProvider extends BaseAIProvider {
     const sources: string[] = [];
     const patterns = [
       /(?:act|statute|law|constitution|regulation)[:\s]*[^\n.]{10,}/gi,
-      /section\s+\d+[^\n.]*/gi
+      /section\s+\d+[^\n.]*/gi,
     ];
 
     for (const pattern of patterns) {
@@ -282,7 +277,7 @@ export class AnthropicProvider extends BaseAIProvider {
         sources.push(match[0].trim());
       }
     }
-    
+
     return sources.slice(0, 5);
   }
 
@@ -290,7 +285,7 @@ export class AnthropicProvider extends BaseAIProvider {
     const sources: string[] = [];
     const patterns = [
       /(?:case|precedent|decision)[:\s]*[^\n.]{15,}/gi,
-      /\w+\s+v\.?\s+\w+[^\n.]*/gi
+      /\w+\s+v\.?\s+\w+[^\n.]*/gi,
     ];
 
     for (const pattern of patterns) {
@@ -299,7 +294,7 @@ export class AnthropicProvider extends BaseAIProvider {
         sources.push(match[0].trim());
       }
     }
-    
+
     return sources.slice(0, 3);
   }
 
@@ -307,7 +302,7 @@ export class AnthropicProvider extends BaseAIProvider {
     const principles: string[] = [];
     const patterns = [
       /(?:principle|doctrine|rule)[:\s]*(.*?)(?:\n|$)/gi,
-      /(?:established|fundamental)\s+(?:law|principle)[:\s]*(.*?)(?:\n|$)/gi
+      /(?:established|fundamental)\s+(?:law|principle)[:\s]*(.*?)(?:\n|$)/gi,
     ];
 
     for (const pattern of patterns) {
@@ -318,7 +313,7 @@ export class AnthropicProvider extends BaseAIProvider {
         }
       }
     }
-    
+
     return principles.slice(0, 3);
   }
 
@@ -326,7 +321,7 @@ export class AnthropicProvider extends BaseAIProvider {
     const applications: string[] = [];
     const patterns = [
       /(?:practical|application|practice)[:\s]*(.*?)(?:\n|$)/gi,
-      /(?:in practice|practically)[:\s]*(.*?)(?:\n|$)/gi
+      /(?:in practice|practically)[:\s]*(.*?)(?:\n|$)/gi,
     ];
 
     for (const pattern of patterns) {
@@ -337,16 +332,16 @@ export class AnthropicProvider extends BaseAIProvider {
         }
       }
     }
-    
+
     return applications.slice(0, 3);
   }
 
   private extractComplianceStatus(text: string): string {
     const patterns = [
       /compliance.*?(?:status|level)[:\s]*(\w+)/gi,
-      /(?:compliant|non-compliant|partial)/gi
+      /(?:compliant|non-compliant|partial)/gi,
     ];
-    
+
     for (const pattern of patterns) {
       const match = text.match(pattern);
       if (match) {
@@ -361,9 +356,7 @@ export class AnthropicProvider extends BaseAIProvider {
 
   private extractViolations(text: string): string[] {
     const violations: string[] = [];
-    const patterns = [
-      /(?:violation|breach|non-compliance)[:\s]*(.*?)(?:\n|$)/gi
-    ];
+    const patterns = [/(?:violation|breach|non-compliance)[:\s]*(.*?)(?:\n|$)/gi];
 
     for (const pattern of patterns) {
       const matches = text.matchAll(pattern);
@@ -373,7 +366,7 @@ export class AnthropicProvider extends BaseAIProvider {
         }
       }
     }
-    
+
     return violations.slice(0, 3);
   }
 
@@ -381,7 +374,7 @@ export class AnthropicProvider extends BaseAIProvider {
     const actions: string[] = [];
     const patterns = [
       /(?:remedial|corrective)\s+action[:\s]*(.*?)(?:\n|$)/gi,
-      /(?:fix|correct|remedy)[:\s]*(.*?)(?:\n|$)/gi
+      /(?:fix|correct|remedy)[:\s]*(.*?)(?:\n|$)/gi,
     ];
 
     for (const pattern of patterns) {
@@ -392,7 +385,7 @@ export class AnthropicProvider extends BaseAIProvider {
         }
       }
     }
-    
+
     return actions.slice(0, 3);
   }
 
@@ -400,7 +393,7 @@ export class AnthropicProvider extends BaseAIProvider {
     const monitoring: string[] = [];
     const patterns = [
       /(?:monitor|track|review)[:\s]*(.*?)(?:\n|$)/gi,
-      /ongoing\s+(?:compliance|monitoring)[:\s]*(.*?)(?:\n|$)/gi
+      /ongoing\s+(?:compliance|monitoring)[:\s]*(.*?)(?:\n|$)/gi,
     ];
 
     for (const pattern of patterns) {
@@ -411,16 +404,13 @@ export class AnthropicProvider extends BaseAIProvider {
         }
       }
     }
-    
+
     return monitoring.slice(0, 3);
   }
 
   private extractImpact(text: string): string {
-    const patterns = [
-      /impact[:\s]*(\w+)/gi,
-      /(?:significant|minor|major|severe)\s+impact/gi
-    ];
-    
+    const patterns = [/impact[:\s]*(\w+)/gi, /(?:significant|minor|major|severe)\s+impact/gi];
+
     for (const pattern of patterns) {
       const match = text.match(pattern);
       if (match) {
@@ -434,11 +424,8 @@ export class AnthropicProvider extends BaseAIProvider {
   }
 
   private extractLikelihood(text: string): string {
-    const patterns = [
-      /likelihood[:\s]*(\w+)/gi,
-      /(?:likely|unlikely|probable|possible)/gi
-    ];
-    
+    const patterns = [/likelihood[:\s]*(\w+)/gi, /(?:likely|unlikely|probable|possible)/gi];
+
     for (const pattern of patterns) {
       const match = text.match(pattern);
       if (match) {

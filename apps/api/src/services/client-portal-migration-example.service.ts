@@ -1,9 +1,9 @@
 /**
  * 🔄 MIGRATION EXAMPLE: Client Portal Service
- * 
+ *
  * This shows how to migrate your existing Client Portal service
  * to use the new centralized data management system.
- * 
+ *
  * Author: Endawoke47
  * Created: 2025-07-13
  */
@@ -16,15 +16,13 @@ import { ClientPortalDataAdapter } from './module-data-adapters.service';
 // BEFORE: Old implementation with direct repository access
 @Injectable()
 export class ClientPortalServiceOld {
-  constructor(
-    // Multiple repository injections
-    // @InjectRepository(Client) private clientRepository: Repository<Client>,
-    // @InjectRepository(Case) private caseRepository: Repository<Case>,
-    // @InjectRepository(Document) private documentRepository: Repository<Document>,
-    // @InjectRepository(Message) private messageRepository: Repository<Message>,
-    // @InjectRepository(Payment) private paymentRepository: Repository<Payment>,
-    // @InjectRepository(Notification) private notificationRepository: Repository<Notification>,
-  ) {}
+  constructor() // @InjectRepository(Client) private clientRepository: Repository<Client>, // Multiple repository injections
+  // @InjectRepository(Case) private caseRepository: Repository<Case>,
+  // @InjectRepository(Document) private documentRepository: Repository<Document>,
+  // @InjectRepository(Message) private messageRepository: Repository<Message>,
+  // @InjectRepository(Payment) private paymentRepository: Repository<Payment>,
+  // @InjectRepository(Notification) private notificationRepository: Repository<Notification>,
+  {}
 
   // Old method - multiple database queries, no caching, no intelligence
   async getClientDashboardOld(clientId: string): Promise<any> {
@@ -55,9 +53,7 @@ export class ClientPortalService {
   private readonly logger = new Logger(ClientPortalService.name);
   private readonly adapter: ClientPortalDataAdapter;
 
-  constructor(
-    private adapterFactory: ModuleDataAdapterFactory
-  ) {
+  constructor(private adapterFactory: ModuleDataAdapterFactory) {
     this.adapter = this.adapterFactory.getAdapter('client-portal') as ClientPortalDataAdapter;
     this.logger.log('🔄 Client Portal Service migrated to centralized data management');
   }
@@ -75,15 +71,14 @@ export class ClientPortalService {
     try {
       // Single call that handles everything intelligently
       const dashboard = await this.adapter.getClientDashboard(clientId);
-      
+
       this.logger.log(`Dashboard loaded for client ${clientId}`, {
         cacheHit: dashboard.metadata.cacheInfo.cached,
         dataPoints: Object.keys(dashboard).length,
-        responseTime: Date.now()
+        responseTime: Date.now(),
       });
 
       return dashboard;
-
     } catch (error) {
       this.logger.error('Failed to load client dashboard', { error, clientId });
       throw error;
@@ -97,7 +92,7 @@ export class ClientPortalService {
   async getClientCases(clientId: string): Promise<any> {
     try {
       const cases = await this.adapter.getClientCases(clientId);
-      
+
       // The adapter automatically provides:
       // - Related documents for each case
       // - Recent activity timeline
@@ -106,7 +101,6 @@ export class ClientPortalService {
       // - Cached results for performance
 
       return cases;
-
     } catch (error) {
       this.logger.error('Failed to load client cases', { error, clientId });
       throw error;
@@ -122,14 +116,13 @@ export class ClientPortalService {
       const results = await this.adapter.searchModuleData(clientId, searchTerm, {
         entities: ['Case', 'Document', 'Message'],
         fuzzy: true,
-        limit: 50
+        limit: 50,
       });
 
       return {
         ...results,
-        suggestions: this.generateSearchSuggestions(searchTerm, results)
+        suggestions: this.generateSearchSuggestions(searchTerm, results),
       };
-
     } catch (error) {
       this.logger.error('Client data search failed', { error, clientId, searchTerm });
       throw error;
@@ -151,10 +144,9 @@ export class ClientPortalService {
           // Add client-specific insights
           activityTrend: this.analyzeActivityTrend(analytics),
           engagementScore: this.calculateEngagementScore(analytics),
-          recommendations: this.generateRecommendations(analytics)
-        }
+          recommendations: this.generateRecommendations(analytics),
+        },
       };
-
     } catch (error) {
       this.logger.error('Client analytics failed', { error, clientId });
       throw error;
@@ -185,11 +177,10 @@ export class ClientPortalService {
         clientId,
         entity,
         operation,
-        resultId: result.id
+        resultId: result.id,
       });
 
       return result;
-
     } catch (error) {
       this.logger.error('Client data update failed', { error, clientId, entity, operation });
       throw error;
@@ -201,7 +192,7 @@ export class ClientPortalService {
   private generateSearchSuggestions(searchTerm: string, results: any): string[] {
     // Logic to generate intelligent search suggestions
     const suggestions = [];
-    
+
     if (results.totalFound === 0) {
       suggestions.push(
         `Try searching for "${searchTerm.substring(0, searchTerm.length - 1)}"`,
@@ -224,7 +215,7 @@ export class ClientPortalService {
     return {
       direction: 'increasing', // 'increasing', 'decreasing', 'stable'
       percentage: 15,
-      period: '30 days'
+      period: '30 days',
     };
   }
 
@@ -238,7 +229,7 @@ export class ClientPortalService {
     return [
       'Schedule follow-up meeting - client activity decreased',
       'Send document update - case milestone approaching',
-      'Review billing - payment pattern changed'
+      'Review billing - payment pattern changed',
     ];
   }
 }
@@ -259,10 +250,7 @@ export class ClientPortalController {
   }
 
   @Get(':clientId/search')
-  async searchClientData(
-    @Param('clientId') clientId: string,
-    @Query('q') searchTerm: string
-  ) {
+  async searchClientData(@Param('clientId') clientId: string, @Query('q') searchTerm: string) {
     return this.clientPortalService.searchClientData(clientId, searchTerm);
   }
 
@@ -272,10 +260,13 @@ export class ClientPortalController {
     @Query('start') start?: string,
     @Query('end') end?: string
   ) {
-    const timeRange = start && end ? {
-      start: new Date(start),
-      end: new Date(end)
-    } : undefined;
+    const timeRange =
+      start && end
+        ? {
+            start: new Date(start),
+            end: new Date(end),
+          }
+        : undefined;
 
     return this.clientPortalService.getClientAnalytics(clientId, timeRange);
   }
@@ -283,7 +274,7 @@ export class ClientPortalController {
 
 /**
  * 📊 COMPARISON: Before vs After
- * 
+ *
  * BEFORE (Old Way):
  * ❌ 6 repository injections
  * ❌ Multiple database queries per request
@@ -293,7 +284,7 @@ export class ClientPortalController {
  * ❌ No predictive loading
  * ❌ No real-time sync
  * ❌ No intelligent filtering
- * 
+ *
  * AFTER (New Way):
  * ✅ 1 adapter injection
  * ✅ Single intelligent data request
@@ -305,13 +296,13 @@ export class ClientPortalController {
  * ✅ Permission-based filtering
  * ✅ Performance monitoring
  * ✅ Analytics and insights
- * 
+ *
  * PERFORMANCE:
  * - 70% faster response times
  * - 85% cache hit ratio
  * - 80% reduction in database queries
  * - 60% less memory usage
- * 
+ *
  * DEVELOPER EXPERIENCE:
  * - 90% less boilerplate code
  * - 100% backward compatibility

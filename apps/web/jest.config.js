@@ -14,6 +14,16 @@ const customJestConfig = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   testEnvironment: 'jest-environment-jsdom',
+  transform: {
+    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', {
+      presets: [
+        ['next/babel', { 'preset-react': { runtime: 'automatic' } }]
+      ]
+    }]
+  },
+  transformIgnorePatterns: [
+    'node_modules/(?!(.*\\.mjs$))'
+  ],
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     '!src/**/*.d.ts',
@@ -28,6 +38,13 @@ const customJestConfig = {
   ],
   testTimeout: 10000,
   verbose: true,
+  globals: {
+    'ts-jest': {
+      tsconfig: {
+        jsx: 'react-jsx'
+      }
+    }
+  }
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

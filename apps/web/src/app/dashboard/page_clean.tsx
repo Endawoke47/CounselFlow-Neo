@@ -18,8 +18,8 @@ import {
   Scale,
   BarChart3
 } from 'lucide-react';
-import { MainLayout } from '@/components/layout/main-layout';
-import { ProductionApiClient } from '@/lib/production-api-client';
+import MainLayout from '@/components/layout/MainLayout';
+import { productionApiClient } from '@/lib/production-api-client';
 
 interface Client {
   id: string;
@@ -118,30 +118,68 @@ export default function DashboardPage() {
     setError(null);
 
     try {
-      const apiClient = ProductionApiClient.getInstance();
+      const apiClient = productionApiClient;
 
       // Load metrics
       const metricsResponse = await apiClient.get('/api/dashboard/metrics');
-      if (metricsResponse && metricsResponse.data) {
+      if (metricsResponse && metricsResponse.data && Array.isArray(metricsResponse.data)) {
         setMetrics(metricsResponse.data);
+      } else if (metricsResponse && metricsResponse.data) {
+        // Transform API response to match expected structure
+        const apiData = metricsResponse.data as any;
+        const transformedMetrics = [
+          {
+            title: 'Active Matters',
+            value: String(apiData.activeMatters || 0),
+            change: '+0%',
+            trend: 'up',
+            icon: FileText,
+            color: 'text-blue-600'
+          },
+          {
+            title: 'Total Clients',
+            value: String(apiData.totalClients || 0),
+            change: '+0%',
+            trend: 'up',
+            icon: Building2,
+            color: 'text-purple-600'
+          },
+          {
+            title: 'Revenue (YTD)',
+            value: `KES ${apiData.revenue || 0}`,
+            change: '+0%',
+            trend: 'up',
+            icon: DollarSign,
+            color: 'text-green-600'
+          },
+          {
+            title: 'Pending Tasks',
+            value: String(apiData.pendingTasks || 0),
+            change: '0%',
+            trend: 'down',
+            icon: Clock,
+            color: 'text-orange-600'
+          }
+        ];
+        setMetrics(transformedMetrics);
       }
 
       // Load clients
       const clientsResponse = await apiClient.get('/api/clients?limit=5');
-      if (clientsResponse && clientsResponse.clients) {
-        setClients(clientsResponse.clients);
+      if (clientsResponse && (clientsResponse as any).clients) {
+        setClients((clientsResponse as any).clients);
       }
 
       // Load contracts
       const contractsResponse = await apiClient.get('/api/contracts?limit=5');
-      if (contractsResponse && contractsResponse.contracts) {
-        setContracts(contractsResponse.contracts);
+      if (contractsResponse && (contractsResponse as any).contracts) {
+        setContracts((contractsResponse as any).contracts);
       }
 
       // Load recent activities
       const activitiesResponse = await apiClient.get('/api/activities?limit=5');
-      if (activitiesResponse && activitiesResponse.activities) {
-        setRecentActivities(activitiesResponse.activities);
+      if (activitiesResponse && (activitiesResponse as any).activities) {
+        setRecentActivities((activitiesResponse as any).activities);
       }
 
       setIsLoading(false);

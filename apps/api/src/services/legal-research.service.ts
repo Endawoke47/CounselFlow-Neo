@@ -1,7 +1,7 @@
 // Legal Research Service - Advanced Semantic Search Engine
 // Phase 2: Feature 1 Implementation
 
-import { 
+import {
   LegalResearchRequest,
   LegalResearchResult,
   LegalDocument,
@@ -12,12 +12,17 @@ import {
   DocumentType,
   AuthorityLevel,
   BindingLevel,
-  SemanticSearchOptions
+  SemanticSearchOptions,
 } from '../types/legal-research.types';
 import { AIGatewayService } from './ai-gateway.service';
 import { CacheService } from './cache.service';
 import { UsageTracker } from './usage-tracker.service';
-import { LegalJurisdiction, SupportedLanguage, AIProvider, AIAnalysisType } from '../types/ai.types';
+import {
+  LegalJurisdiction,
+  SupportedLanguage,
+  AIProvider,
+  AIAnalysisType,
+} from '../types/ai.types';
 import winston from 'winston';
 
 export class LegalResearchService {
@@ -45,8 +50,8 @@ export class LegalResearchService {
       ),
       transports: [
         new winston.transports.File({ filename: 'logs/legal-research.log' }),
-        new winston.transports.Console()
-      ]
+        new winston.transports.Console(),
+      ],
     });
   }
 
@@ -59,16 +64,60 @@ export class LegalResearchService {
 
   private setupAfricanSources() {
     const africanCountries = [
-      'nigeria', 'south_africa', 'egypt', 'kenya', 'ghana', 'morocco',
-      'ethiopia', 'uganda', 'tunisia', 'algeria', 'angola', 'cameroon',
-      'ivory_coast', 'madagascar', 'mozambique', 'mali', 'burkina_faso',
-      'niger', 'malawi', 'zambia', 'senegal', 'chad', 'somalia', 'zimbabwe',
-      'guinea', 'rwanda', 'benin', 'burundi', 'tunisia', 'sierra_leone',
-      'togo', 'libya', 'liberia', 'mauritania', 'lesotho', 'namibia',
-      'botswana', 'gambia', 'gabon', 'guinea_bissau', 'mauritius',
-      'eswatini', 'djibouti', 'comoros', 'cape_verde', 'sao_tome_principe',
-      'seychelles', 'central_african_republic', 'congo', 'dr_congo',
-      'equatorial_guinea', 'eritrea', 'south_sudan', 'sudan'
+      'nigeria',
+      'south_africa',
+      'egypt',
+      'kenya',
+      'ghana',
+      'morocco',
+      'ethiopia',
+      'uganda',
+      'tunisia',
+      'algeria',
+      'angola',
+      'cameroon',
+      'ivory_coast',
+      'madagascar',
+      'mozambique',
+      'mali',
+      'burkina_faso',
+      'niger',
+      'malawi',
+      'zambia',
+      'senegal',
+      'chad',
+      'somalia',
+      'zimbabwe',
+      'guinea',
+      'rwanda',
+      'benin',
+      'burundi',
+      'tunisia',
+      'sierra_leone',
+      'togo',
+      'libya',
+      'liberia',
+      'mauritania',
+      'lesotho',
+      'namibia',
+      'botswana',
+      'gambia',
+      'gabon',
+      'guinea_bissau',
+      'mauritius',
+      'eswatini',
+      'djibouti',
+      'comoros',
+      'cape_verde',
+      'sao_tome_principe',
+      'seychelles',
+      'central_african_republic',
+      'congo',
+      'dr_congo',
+      'equatorial_guinea',
+      'eritrea',
+      'south_sudan',
+      'sudan',
     ];
 
     africanCountries.forEach(country => {
@@ -77,16 +126,29 @@ export class LegalResearchService {
         legalDatabases: [],
         governmentSources: [],
         academicSources: [],
-        lastUpdated: new Date()
+        lastUpdated: new Date(),
       });
     });
   }
 
   private setupMiddleEasternSources() {
     const middleEasternCountries = [
-      'uae', 'saudi_arabia', 'israel', 'turkey', 'iran', 'iraq',
-      'jordan', 'kuwait', 'lebanon', 'oman', 'palestine', 'qatar',
-      'syria', 'yemen', 'bahrain', 'cyprus'
+      'uae',
+      'saudi_arabia',
+      'israel',
+      'turkey',
+      'iran',
+      'iraq',
+      'jordan',
+      'kuwait',
+      'lebanon',
+      'oman',
+      'palestine',
+      'qatar',
+      'syria',
+      'yemen',
+      'bahrain',
+      'cyprus',
     ];
 
     middleEasternCountries.forEach(country => {
@@ -95,7 +157,7 @@ export class LegalResearchService {
         legalDatabases: [],
         governmentSources: [],
         academicSources: [],
-        lastUpdated: new Date()
+        lastUpdated: new Date(),
       });
     });
   }
@@ -106,7 +168,7 @@ export class LegalResearchService {
       internationalCourts: [],
       regionalBodies: [],
       academicSources: [],
-      lastUpdated: new Date()
+      lastUpdated: new Date(),
     });
   }
 
@@ -135,7 +197,7 @@ export class LegalResearchService {
       const documents = await this.executeSemanticSearch(request);
       const citations = await this.generateCitations(documents, request.citationFormat);
       const precedents = await this.findPrecedents(documents, request);
-      const analysis = request.includeAnalysis 
+      const analysis = request.includeAnalysis
         ? await this.generateAnalysis(documents, precedents, request)
         : null;
 
@@ -158,10 +220,10 @@ export class LegalResearchService {
           providersUsed: [AIProvider.OLLAMA, AIProvider.LEGAL_BERT],
           cachingUsed: false,
           qualityScore: 0.95,
-          completeness: 0.90,
+          completeness: 0.9,
           freshness: 0.85,
-          diversityScore: 0.88
-        }
+          diversityScore: 0.88,
+        },
       };
 
       // Cache result
@@ -179,17 +241,16 @@ export class LegalResearchService {
         cost: 0,
         success: true,
         processingTime: result.executionTime,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
 
-      this.logger.info(`Research completed`, { 
-        requestId, 
+      this.logger.info(`Research completed`, {
+        requestId,
         documentsFound: documents.length,
-        executionTime: result.executionTime 
+        executionTime: result.executionTime,
       });
 
       return result;
-
     } catch (error) {
       this.logger.error(`Research failed`, { requestId, error });
       throw new Error(`Legal research failed: ${error}`);
@@ -209,8 +270,8 @@ export class LegalResearchService {
         recency: 0.3,
         relevance: 0.4,
         authority: 0.2,
-        jurisdiction: 0.1
-      }
+        jurisdiction: 0.1,
+      },
     };
 
     // Multi-provider search strategy
@@ -218,7 +279,7 @@ export class LegalResearchService {
 
     // 1. AI-enhanced query understanding
     const enhancedQuery = await this.enhanceQuery(request.query, request.legalAreas);
-    
+
     // 2. Jurisdiction-specific searches
     for (const jurisdiction of request.jurisdictions) {
       searchPromises.push(this.searchJurisdiction(enhancedQuery, jurisdiction, request));
@@ -259,18 +320,21 @@ export class LegalResearchService {
     Enhanced query:`;
 
     try {
-      const response = await this.aiGateway.processRequest({
-        input: enhancementPrompt,
-        type: AIAnalysisType.LEGAL_RESEARCH,
-        context: {
-          jurisdiction: LegalJurisdiction.INTERNATIONAL,
-          legalSystem: 'mixed' as any,
-          language: SupportedLanguage.ENGLISH,
-          practiceArea: 'legal_research',
-          confidentialityLevel: 'public'
+      const response = await this.aiGateway.processRequest(
+        {
+          input: enhancementPrompt,
+          type: AIAnalysisType.LEGAL_RESEARCH,
+          context: {
+            jurisdiction: LegalJurisdiction.INTERNATIONAL,
+            legalSystem: 'mixed' as any,
+            language: SupportedLanguage.ENGLISH,
+            practiceArea: 'legal_research',
+            confidentialityLevel: 'public',
+          },
+          provider: AIProvider.LEGAL_BERT,
         },
-        provider: AIProvider.LEGAL_BERT
-      }, 'research-user');
+        'research-user'
+      );
 
       return response.output || query;
     } catch (error) {
@@ -283,8 +347,8 @@ export class LegalResearchService {
    * Search within specific jurisdiction
    */
   private async searchJurisdiction(
-    query: string, 
-    jurisdiction: LegalJurisdiction, 
+    query: string,
+    jurisdiction: LegalJurisdiction,
     request: LegalResearchRequest
   ): Promise<LegalDocument[]> {
     // Simulated search - in production, this would query real legal databases
@@ -310,7 +374,7 @@ export class LegalResearchService {
           accessLevel: 'public' as any,
           lastUpdated: new Date(),
           subscription: false,
-          searchCapabilities: ['full_text', 'semantic'] as any
+          searchCapabilities: ['full_text', 'semantic'] as any,
         },
         metadata: {
           wordCount: 5000,
@@ -322,11 +386,11 @@ export class LegalResearchService {
           complexity: request.complexity,
           readingTime: 15,
           checksum: 'mock_checksum',
-          version: '1.0'
+          version: '1.0',
         },
         relevanceScore: 0.85,
-        confidenceScore: 0.90
-      }
+        confidenceScore: 0.9,
+      },
     ];
 
     return mockDocuments;
@@ -342,7 +406,7 @@ export class LegalResearchService {
   ): Promise<LegalDocument[]> {
     // Comparative analysis across jurisdictions
     this.logger.info(`Executing comparative search across ${jurisdictions.length} jurisdictions`);
-    
+
     // This would use AI to find similar legal concepts across jurisdictions
     return [];
   }
@@ -359,17 +423,21 @@ export class LegalResearchService {
       shortForm: this.formatShortCitation(doc, format),
       accessed: new Date(),
       validatedAt: new Date(),
-      isValid: true
+      isValid: true,
     }));
   }
 
   /**
    * Find legal precedents relevant to the query
    */
-  private async findPrecedents(documents: LegalDocument[], request: LegalResearchRequest): Promise<Precedent[]> {
-    const caseDocuments = documents.filter(doc => 
-      doc.documentType === DocumentType.CASE_LAW ||
-      doc.documentType === DocumentType.COURT_DECISION
+  private async findPrecedents(
+    documents: LegalDocument[],
+    request: LegalResearchRequest
+  ): Promise<Precedent[]> {
+    const caseDocuments = documents.filter(
+      doc =>
+        doc.documentType === DocumentType.CASE_LAW ||
+        doc.documentType === DocumentType.COURT_DECISION
     );
 
     return caseDocuments.map(caseDoc => ({
@@ -383,7 +451,7 @@ export class LegalResearchService {
       legalReasoning: 'Legal reasoning from the case',
       relevanceToQuery: caseDoc.relevanceScore,
       isOverruled: false,
-      relatedStatutes: []
+      relatedStatutes: [],
     }));
   }
 
@@ -412,18 +480,21 @@ export class LegalResearchService {
     `;
 
     try {
-      const response = await this.aiGateway.processRequest({
-        input: analysisPrompt,
-        type: AIAnalysisType.LEGAL_RESEARCH,
-        context: {
-          jurisdiction: request.jurisdictions[0],
-          legalSystem: 'mixed' as any,
-          language: SupportedLanguage.ENGLISH,
-          practiceArea: request.legalAreas[0],
-          confidentialityLevel: 'public'
+      const response = await this.aiGateway.processRequest(
+        {
+          input: analysisPrompt,
+          type: AIAnalysisType.LEGAL_RESEARCH,
+          context: {
+            jurisdiction: request.jurisdictions[0],
+            legalSystem: 'mixed' as any,
+            language: SupportedLanguage.ENGLISH,
+            practiceArea: request.legalAreas[0],
+            confidentialityLevel: 'public',
+          },
+          provider: AIProvider.OLLAMA,
         },
-        provider: AIProvider.OLLAMA
-      }, 'research-user');
+        'research-user'
+      );
 
       return {
         summary: response.output || 'Analysis summary',
@@ -434,7 +505,7 @@ export class LegalResearchService {
         researchGaps: ['Gap 1', 'Gap 2'],
         confidenceLevel: 0.85,
         methodologyUsed: ['AI analysis', 'Semantic search', 'Citation analysis'],
-        limitations: ['Limited to available databases', 'AI interpretation required']
+        limitations: ['Limited to available databases', 'AI interpretation required'],
       };
     } catch (error) {
       this.logger.warn(`Analysis generation failed`, { error });
@@ -447,7 +518,7 @@ export class LegalResearchService {
         researchGaps: [],
         confidenceLevel: 0.5,
         methodologyUsed: [],
-        limitations: ['Analysis generation failed']
+        limitations: ['Analysis generation failed'],
       };
     }
   }
@@ -477,7 +548,7 @@ export class LegalResearchService {
       jurisdictions: request.jurisdictions.sort(),
       legalAreas: request.legalAreas.sort(),
       documentTypes: request.documentTypes.sort(),
-      complexity: request.complexity
+      complexity: request.complexity,
     });
     return `research:${Buffer.from(key).toString('base64')}`;
   }
@@ -493,7 +564,7 @@ export class LegalResearchService {
   }
 
   private rankDocuments(
-    documents: LegalDocument[], 
+    documents: LegalDocument[],
     request: LegalResearchRequest,
     options: SemanticSearchOptions
   ): LegalDocument[] {
@@ -505,24 +576,26 @@ export class LegalResearchService {
   }
 
   private calculateDocumentScore(
-    doc: LegalDocument, 
+    doc: LegalDocument,
     request: LegalResearchRequest,
     options: SemanticSearchOptions
   ): number {
     const weights = options.weightFactors;
-    
+
     const relevanceScore = doc.relevanceScore * weights.relevance;
     const recencyScore = this.calculateRecencyScore(doc.publicationDate) * weights.recency;
     const authorityScore = this.calculateAuthorityScore(doc.authority) * weights.authority;
     const jurisdictionScore = request.jurisdictions.includes(doc.jurisdiction) ? 1 : 0.5;
-    
-    return relevanceScore + recencyScore + authorityScore + (jurisdictionScore * weights.jurisdiction);
+
+    return (
+      relevanceScore + recencyScore + authorityScore + jurisdictionScore * weights.jurisdiction
+    );
   }
 
   private calculateRecencyScore(date: Date): number {
     const now = new Date();
     const ageInYears = (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24 * 365);
-    return Math.max(0, 1 - (ageInYears / 10)); // Decreases over 10 years
+    return Math.max(0, 1 - ageInYears / 10); // Decreases over 10 years
   }
 
   private calculateAuthorityScore(authority: AuthorityLevel): number {
@@ -533,20 +606,20 @@ export class LegalResearchService {
       [AuthorityLevel.ADMINISTRATIVE]: 0.5,
       [AuthorityLevel.ACADEMIC]: 0.4,
       [AuthorityLevel.PRACTITIONER]: 0.3,
-      [AuthorityLevel.UNKNOWN]: 0.2
+      [AuthorityLevel.UNKNOWN]: 0.2,
     };
     return scores[authority] || 0.2;
   }
 
   private calculateOverallConfidence(documents: LegalDocument[], precedents: Precedent[]): number {
     if (documents.length === 0) return 0;
-    
+
     const docConfidences = documents.map(d => d.confidenceScore);
     const avgDocConfidence = docConfidences.reduce((sum, conf) => sum + conf, 0) / documents.length;
-    
+
     // Factor in number of supporting documents and precedents
     const volumeBonus = Math.min(0.1, (documents.length + precedents.length) * 0.01);
-    
+
     return Math.min(1.0, avgDocConfidence + volumeBonus);
   }
 
@@ -554,7 +627,10 @@ export class LegalResearchService {
     return jurisdictions.map(jurisdiction => this.legalSources.get(jurisdiction)).filter(Boolean);
   }
 
-  private async generateSuggestions(request: LegalResearchRequest, documents: LegalDocument[]): Promise<any[]> {
+  private async generateSuggestions(
+    request: LegalResearchRequest,
+    documents: LegalDocument[]
+  ): Promise<any[]> {
     // Generate intelligent suggestions based on results
     return [
       {
@@ -563,8 +639,8 @@ export class LegalResearchService {
         reason: 'Recent legislative changes may affect your research',
         priority: 'high',
         estimatedValue: 0.8,
-        relatedQueries: ['recent amendments', 'legislative updates']
-      }
+        relatedQueries: ['recent amendments', 'legislative updates'],
+      },
     ];
   }
 
@@ -573,7 +649,7 @@ export class LegalResearchService {
     return [
       `${query} recent developments`,
       `${query} comparative analysis`,
-      `${query} regulatory updates`
+      `${query} regulatory updates`,
     ];
   }
 

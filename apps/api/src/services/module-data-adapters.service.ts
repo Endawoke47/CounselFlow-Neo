@@ -1,11 +1,11 @@
 /**
  * 🔌 MODULE DATA ADAPTER
- * 
+ *
  * Base adapter class that existing modules can extend to integrate
  * with the centralized data management system without breaking changes.
- * 
+ *
  * This provides backward compatibility while enabling new capabilities.
- * 
+ *
  * Author: Endawoke47
  * Created: 2025-07-13
  */
@@ -52,10 +52,7 @@ export abstract class BaseModuleDataAdapter {
    * 📊 GET MODULE DATA
    * Main method modules use to get their data
    */
-  async getModuleData(
-    userId: string,
-    request: ModuleDataRequest
-  ): Promise<any> {
+  async getModuleData(userId: string, request: ModuleDataRequest): Promise<any> {
     try {
       const context = {
         userId: userId || this.config.defaultUserId || 'system',
@@ -63,14 +60,13 @@ export abstract class BaseModuleDataAdapter {
         module: this.config.moduleName,
         action: request.action,
         entityId: request.entityId,
-        filters: request.filters
+        filters: request.filters,
       };
 
       const data = await this.dataContextProvider.getModuleData(context);
-      
+
       // Transform data for module compatibility
       return this.transformDataForModule(data, request);
-
     } catch (error) {
       this.logger.error('Failed to get module data', { error, request });
       throw error;
@@ -91,16 +87,10 @@ export abstract class BaseModuleDataAdapter {
         userId: userId || this.config.defaultUserId || 'system',
         userRole: await this.getUserRole(userId),
         module: this.config.moduleName,
-        action: `${operation}_${entity.toLowerCase()}`
+        action: `${operation}_${entity.toLowerCase()}`,
       };
 
-      return await this.dataContextProvider.updateModuleData(
-        context,
-        entity,
-        operation,
-        data
-      );
-
+      return await this.dataContextProvider.updateModuleData(context, entity, operation, data);
     } catch (error) {
       this.logger.error('Failed to update module data', { error, entity, operation });
       throw error;
@@ -110,17 +100,13 @@ export abstract class BaseModuleDataAdapter {
   /**
    * 🔍 SEARCH MODULE DATA
    */
-  async searchModuleData(
-    userId: string,
-    searchTerm: string,
-    options?: any
-  ): Promise<any> {
+  async searchModuleData(userId: string, searchTerm: string, options?: any): Promise<any> {
     try {
       const context = {
         userId: userId || this.config.defaultUserId || 'system',
         userRole: await this.getUserRole(userId),
         module: this.config.moduleName,
-        action: 'search'
+        action: 'search',
       };
 
       const results = await this.dataContextProvider.searchAcrossModules(
@@ -130,7 +116,6 @@ export abstract class BaseModuleDataAdapter {
       );
 
       return this.transformSearchResults(results);
-
     } catch (error) {
       this.logger.error('Module search failed', { error, searchTerm });
       throw error;
@@ -140,20 +125,16 @@ export abstract class BaseModuleDataAdapter {
   /**
    * 📈 GET MODULE ANALYTICS
    */
-  async getModuleAnalytics(
-    userId: string,
-    timeRange?: { start: Date; end: Date }
-  ): Promise<any> {
+  async getModuleAnalytics(userId: string, timeRange?: { start: Date; end: Date }): Promise<any> {
     try {
       const context = {
         userId: userId || this.config.defaultUserId || 'system',
         userRole: await this.getUserRole(userId),
         module: this.config.moduleName,
-        action: 'analytics'
+        action: 'analytics',
       };
 
       return await this.dataContextProvider.getModuleAnalytics(context, timeRange);
-
     } catch (error) {
       this.logger.error('Module analytics failed', { error, timeRange });
       throw error;
@@ -172,15 +153,12 @@ export abstract class BaseModuleDataAdapter {
  */
 @Injectable()
 export class ClientPortalDataAdapter extends BaseModuleDataAdapter {
-  constructor(
-    dataContextProvider: DataContextProviderService,
-    dataHub: DataManagementHubService
-  ) {
+  constructor(dataContextProvider: DataContextProviderService, dataHub: DataManagementHubService) {
     super(dataContextProvider, dataHub, {
       moduleName: 'client-portal',
       autoCache: true,
       realTimeSync: true,
-      enablePredictive: true
+      enablePredictive: true,
     });
   }
 
@@ -193,7 +171,7 @@ export class ClientPortalDataAdapter extends BaseModuleDataAdapter {
       messages: data.secondary.filter((item: any) => item.constructor.name === 'Message'),
       payments: data.secondary.filter((item: any) => item.constructor.name === 'Payment'),
       notifications: data.secondary.filter((item: any) => item.constructor.name === 'Notification'),
-      metadata: data.metadata
+      metadata: data.metadata,
     };
   }
 
@@ -202,7 +180,7 @@ export class ClientPortalDataAdapter extends BaseModuleDataAdapter {
       clients: results.results.find((r: any) => r.entity === 'Client')?.results || [],
       cases: results.results.find((r: any) => r.entity === 'Case')?.results || [],
       documents: results.results.find((r: any) => r.entity === 'Document')?.results || [],
-      totalFound: results.metadata.totalFound
+      totalFound: results.metadata.totalFound,
     };
   }
 
@@ -218,8 +196,8 @@ export class ClientPortalDataAdapter extends BaseModuleDataAdapter {
       entityId: clientId,
       options: {
         includeRelated: true,
-        useCache: true
-      }
+        useCache: true,
+      },
     });
   }
 
@@ -227,7 +205,7 @@ export class ClientPortalDataAdapter extends BaseModuleDataAdapter {
     return this.getModuleData(clientId, {
       action: 'view_cases',
       filters: { clientId },
-      options: { includeRelated: true }
+      options: { includeRelated: true },
     });
   }
 }
@@ -237,15 +215,12 @@ export class ClientPortalDataAdapter extends BaseModuleDataAdapter {
  */
 @Injectable()
 export class AIAssistantDataAdapter extends BaseModuleDataAdapter {
-  constructor(
-    dataContextProvider: DataContextProviderService,
-    dataHub: DataManagementHubService
-  ) {
+  constructor(dataContextProvider: DataContextProviderService, dataHub: DataManagementHubService) {
     super(dataContextProvider, dataHub, {
       moduleName: 'ai-assistant',
       autoCache: true,
       realTimeSync: false,
-      enablePredictive: true
+      enablePredictive: true,
     });
   }
 
@@ -260,9 +235,9 @@ export class AIAssistantDataAdapter extends BaseModuleDataAdapter {
       context: {
         jurisdiction: this.extractJurisdiction(data),
         practiceArea: this.extractPracticeArea(data),
-        relatedCases: data.related
+        relatedCases: data.related,
       },
-      metadata: data.metadata
+      metadata: data.metadata,
     };
   }
 
@@ -272,7 +247,7 @@ export class AIAssistantDataAdapter extends BaseModuleDataAdapter {
       cases: results.results.find(r => r.entity === 'Case')?.results || [],
       legalQueries: results.results.find(r => r.entity === 'LegalQuery')?.results || [],
       relevanceScore: this.calculateRelevanceScore(results),
-      totalFound: results.metadata.totalFound
+      totalFound: results.metadata.totalFound,
     };
   }
 
@@ -287,8 +262,8 @@ export class AIAssistantDataAdapter extends BaseModuleDataAdapter {
       entityId: documentId,
       options: {
         includeRelated: true,
-        useCache: false // Always fresh for AI analysis
-      }
+        useCache: false, // Always fresh for AI analysis
+      },
     });
   }
 
@@ -296,7 +271,7 @@ export class AIAssistantDataAdapter extends BaseModuleDataAdapter {
     return this.searchModuleData(userId, query, {
       entities: ['Case', 'Document', 'LegalQuery'],
       fuzzy: true,
-      limit: 20
+      limit: 20,
     });
   }
 
@@ -321,15 +296,12 @@ export class AIAssistantDataAdapter extends BaseModuleDataAdapter {
  */
 @Injectable()
 export class DocumentManagementDataAdapter extends BaseModuleDataAdapter {
-  constructor(
-    dataContextProvider: DataContextProviderService,
-    dataHub: DataManagementHubService
-  ) {
+  constructor(dataContextProvider: DataContextProviderService, dataHub: DataManagementHubService) {
     super(dataContextProvider, dataHub, {
       moduleName: 'document-management',
       autoCache: true,
       realTimeSync: true,
-      enablePredictive: false
+      enablePredictive: false,
     });
   }
 
@@ -341,7 +313,7 @@ export class DocumentManagementDataAdapter extends BaseModuleDataAdapter {
       versions: data.secondary.filter(item => item.constructor.name === 'DocumentVersion'),
       comments: data.secondary.filter(item => item.constructor.name === 'Comment'),
       folders: this.organizeFolderStructure(data),
-      metadata: data.metadata
+      metadata: data.metadata,
     };
   }
 
@@ -349,7 +321,7 @@ export class DocumentManagementDataAdapter extends BaseModuleDataAdapter {
     return {
       documents: results.results.find(r => r.entity === 'Document')?.results || [],
       folders: this.groupByFolder(results.results),
-      totalFound: results.metadata.totalFound
+      totalFound: results.metadata.totalFound,
     };
   }
 
@@ -364,8 +336,8 @@ export class DocumentManagementDataAdapter extends BaseModuleDataAdapter {
       entityId: folderId,
       options: {
         includeRelated: true,
-        useCache: true
-      }
+        useCache: true,
+      },
     });
   }
 
@@ -374,7 +346,7 @@ export class DocumentManagementDataAdapter extends BaseModuleDataAdapter {
       action: 'view_versions',
       entityId: documentId,
       filters: { documentId },
-      options: { includeRelated: true }
+      options: { includeRelated: true },
     });
   }
 
@@ -410,15 +382,18 @@ export class ModuleDataAdapterFactory {
 
   private initializeAdapters(): void {
     // Initialize all adapters
-    this.adapters.set('client-portal', 
+    this.adapters.set(
+      'client-portal',
       new ClientPortalDataAdapter(this.dataContextProvider, this.dataHub)
     );
-    
-    this.adapters.set('ai-assistant', 
+
+    this.adapters.set(
+      'ai-assistant',
       new AIAssistantDataAdapter(this.dataContextProvider, this.dataHub)
     );
-    
-    this.adapters.set('document-management', 
+
+    this.adapters.set(
+      'document-management',
       new DocumentManagementDataAdapter(this.dataContextProvider, this.dataHub)
     );
   }

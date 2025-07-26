@@ -1,16 +1,16 @@
 // AI Gateway Service - Core Implementation
 // Self-hosted primary with hybrid premium API fallback
 
-import { 
-  AIProvider, 
-  AIResponse, 
-  ProviderConfig, 
+import {
+  AIProvider,
+  AIResponse,
+  ProviderConfig,
   AIUsage,
   aiRequestSchema,
   ValidatedAIRequest,
   LegalJurisdiction,
   SupportedLanguage,
-  AIAnalysisType 
+  AIAnalysisType,
 } from '../types/ai.types';
 import { OllamaProvider } from './providers/ollama.provider';
 import { OpenAIProvider } from './providers/openai.provider';
@@ -46,8 +46,8 @@ export class AIGatewayService {
       ),
       transports: [
         new winston.transports.File({ filename: 'logs/ai-gateway.log' }),
-        new winston.transports.Console()
-      ]
+        new winston.transports.Console(),
+      ],
     });
   }
 
@@ -56,7 +56,7 @@ export class AIGatewayService {
       // Primary: Self-hosted providers (free, private)
       this.providers.set(AIProvider.OLLAMA, new OllamaProvider());
       this.providers.set(AIProvider.LEGAL_BERT, new LegalBertProvider());
-      
+
       // Hybrid: Premium APIs (when API keys provided)
       this.providers.set(AIProvider.OPENAI, new OpenAIProvider());
       this.providers.set(AIProvider.ANTHROPIC, new AnthropicProvider());
@@ -87,30 +87,30 @@ export class AIGatewayService {
   // Main request processing method
   async processRequest(request: ValidatedAIRequest, userId: string): Promise<AIResponse> {
     const startTime = Date.now();
-    
+
     try {
       // Validate request
       const validatedRequest = aiRequestSchema.parse(request);
-      
+
       // Check cache first
       const cacheKey = this.cache.generateKey(validatedRequest);
       const cachedResult = await this.cache.get(cacheKey);
-      
+
       if (cachedResult) {
         console.log('📋 Cache hit for request');
         return {
           ...cachedResult,
           cached: true,
-          processingTime: Date.now() - startTime
+          processingTime: Date.now() - startTime,
         };
       }
 
       // Select optimal provider
       const selectedProvider = this.selectProvider(validatedRequest);
-      
+
       // Execute request
       const result = await this.executeRequest(selectedProvider, validatedRequest, userId);
-      
+
       // Cache successful results
       if (result.success) {
         await this.cache.set(cacheKey, result, 3600); // 1 hour cache
@@ -124,15 +124,14 @@ export class AIGatewayService {
         tokensUsed: result.tokensUsed || 0,
         cost: result.cost || 0,
         success: result.success,
-        processingTime: Date.now() - startTime
+        processingTime: Date.now() - startTime,
       });
 
       return {
         ...result,
         cached: false,
-        processingTime: Date.now() - startTime
+        processingTime: Date.now() - startTime,
       };
-
     } catch (error) {
       this.logger.error('AI request processing failed', { error, userId, request });
       throw error;
@@ -182,7 +181,7 @@ export class AIGatewayService {
       AIAnalysisType.COMPLIANCE_CHECK,
       AIAnalysisType.CLAUSE_EXTRACTION,
       AIAnalysisType.LEGAL_RESEARCH,
-      AIAnalysisType.PRECEDENT_MATCHING
+      AIAnalysisType.PRECEDENT_MATCHING,
     ].includes(type);
   }
 
@@ -190,13 +189,13 @@ export class AIGatewayService {
     return [
       AIAnalysisType.RISK_ASSESSMENT,
       AIAnalysisType.CASE_PREDICTION,
-      AIAnalysisType.COMPLIANCE_CHECK
+      AIAnalysisType.COMPLIANCE_CHECK,
     ].includes(type);
   }
 
   private async executeRequest(
-    provider: AIProvider, 
-    request: ValidatedAIRequest, 
+    provider: AIProvider,
+    request: ValidatedAIRequest,
     userId: string
   ): Promise<AIResponse> {
     const providerInstance = this.providers.get(provider);
@@ -207,23 +206,23 @@ export class AIGatewayService {
     try {
       console.log(`🤖 Processing with ${provider}`);
       const result = await providerInstance.processRequest(request);
-      
+
       return {
         ...result,
         provider,
         model: providerInstance.getModel?.() || 'unknown',
-        success: true
+        success: true,
       };
     } catch (error) {
       console.error(`❌ Provider ${provider} failed:`, error);
-      
+
       // Try fallback provider
       const fallbackProvider = this.getFallbackProvider(provider);
       if (fallbackProvider) {
         console.log(`🔄 Trying fallback provider: ${fallbackProvider}`);
         return this.executeRequest(fallbackProvider, request, userId);
       }
-      
+
       throw error;
     }
   }
@@ -234,7 +233,7 @@ export class AIGatewayService {
       [AIProvider.OLLAMA]: [AIProvider.OPENAI, AIProvider.ANTHROPIC],
       [AIProvider.OPENAI]: [AIProvider.ANTHROPIC, AIProvider.GOOGLE],
       [AIProvider.ANTHROPIC]: [AIProvider.OPENAI, AIProvider.GOOGLE],
-      [AIProvider.GOOGLE]: [AIProvider.OPENAI, AIProvider.OLLAMA]
+      [AIProvider.GOOGLE]: [AIProvider.OPENAI, AIProvider.OLLAMA],
     };
 
     const fallbacks = fallbackMap[failedProvider] || [];
@@ -251,10 +250,10 @@ export class AIGatewayService {
         if (!providerInstance) {
           return { available: false };
         }
-        
+
         const available = await providerInstance.isHealthy();
         const latency = Date.now() - startTime;
-        
+
         return { available, latency };
       } catch (error) {
         return { available: false, latency: Date.now() - startTime };
@@ -262,24 +261,24 @@ export class AIGatewayService {
     } else {
       // All providers status
       const status: Record<string, any> = {};
-      
+
       for (const [providerType, providerInstance] of this.providers.entries()) {
         try {
           status[providerType] = {
             enabled: this.enabledProviders.has(providerType),
             healthy: await providerInstance.isHealthy(),
-            name: providerInstance.constructor.name
+            name: providerInstance.constructor.name,
           };
         } catch (error) {
           status[providerType] = {
             enabled: this.enabledProviders.has(providerType),
             healthy: false,
             name: providerInstance.constructor.name,
-            error: error instanceof Error ? error.message : 'Unknown error'
+            error: error instanceof Error ? error.message : 'Unknown error',
           };
         }
       }
-      
+
       return status;
     }
   }
@@ -289,7 +288,7 @@ export class AIGatewayService {
     if (!providerInstance) {
       throw new Error(`Provider ${provider} not found`);
     }
-    
+
     if (apiKey) {
       // Store API key configuration
       const config: ProviderConfig = this.configs.get(provider) || {
@@ -298,12 +297,12 @@ export class AIGatewayService {
         priority: 1,
         models: [],
         rateLimit: { requestsPerMinute: 60 },
-        costPerToken: 0
+        costPerToken: 0,
       };
       (config as any).apiKey = apiKey;
       this.configs.set(provider, config);
     }
-    
+
     this.enabledProviders.add(provider);
     console.log(`✅ Provider ${provider} enabled`);
   }
@@ -318,7 +317,7 @@ export class AIGatewayService {
     if (!provider) {
       throw new Error(`Provider ${providerType} not found`);
     }
-    
+
     try {
       return await provider.isHealthy();
     } catch (error) {
@@ -328,7 +327,7 @@ export class AIGatewayService {
 
   async healthCheck(): Promise<Record<string, any>> {
     const health: Record<string, any> = {};
-    
+
     for (const [providerType, provider] of this.providers.entries()) {
       try {
         health[providerType] = await provider.isHealthy();
@@ -336,7 +335,7 @@ export class AIGatewayService {
         health[providerType] = false;
       }
     }
-    
+
     return health;
   }
 
@@ -346,7 +345,7 @@ export class AIGatewayService {
     return Object.values(LegalJurisdiction).includes(jurisdiction);
   }
 
-  // Language support check  
+  // Language support check
   isLanguageSupported(language: SupportedLanguage): boolean {
     return Object.values(SupportedLanguage).includes(language);
   }

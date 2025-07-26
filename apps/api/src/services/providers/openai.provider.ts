@@ -8,7 +8,7 @@ export class OpenAIProvider extends BaseAIProvider {
 
   constructor(config: any) {
     super(config);
-    
+
     if (!config.apiKey) {
       throw new Error('OpenAI API key is required');
     }
@@ -30,19 +30,19 @@ export class OpenAIProvider extends BaseAIProvider {
         messages: [
           {
             role: 'system',
-            content: this.getSystemPrompt(request)
+            content: this.getSystemPrompt(request),
           },
           {
-            role: 'user', 
-            content: prompt
-          }
+            role: 'user',
+            content: prompt,
+          },
         ],
         temperature: request.options?.temperature || 0.1,
         max_tokens: request.options?.maxTokens || 2048,
       });
 
       const response = completion.choices[0]?.message?.content || '';
-      
+
       return {
         output: this.formatLegalResponse(response, request.type),
         model,
@@ -51,12 +51,13 @@ export class OpenAIProvider extends BaseAIProvider {
         metadata: {
           provider: 'openai',
           finishReason: completion.choices[0]?.finish_reason,
-          usage: completion.usage
-        }
+          usage: completion.usage,
+        },
       };
-
     } catch (error) {
-      throw new Error(`OpenAI processing failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `OpenAI processing failed: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -72,9 +73,7 @@ export class OpenAIProvider extends BaseAIProvider {
   async getAvailableModels(): Promise<string[]> {
     try {
       const models = await this.client.models.list();
-      return models.data
-        .filter(model => model.id.includes('gpt'))
-        .map(model => model.id);
+      return models.data.filter(model => model.id.includes('gpt')).map(model => model.id);
     } catch {
       return ['gpt-4', 'gpt-3.5-turbo'];
     }
@@ -82,9 +81,9 @@ export class OpenAIProvider extends BaseAIProvider {
 
   private getSystemPrompt(request: ValidatedAIRequest): string {
     const { context } = request;
-    
+
     let systemPrompt = `You are an expert legal AI assistant with deep knowledge of African and Middle Eastern legal systems. `;
-    
+
     if (context?.jurisdiction) {
       const countryName = this.getCountryName(context.jurisdiction);
       systemPrompt += `You specialize in ${countryName} law and legal practices. `;
@@ -126,7 +125,7 @@ export class OpenAIProvider extends BaseAIProvider {
           riskLevel: this.extractRiskLevel(response),
           keyFindings: this.extractKeyFindings(response),
           recommendations: this.extractRecommendations(response),
-          complianceNotes: this.extractComplianceNotes(response)
+          complianceNotes: this.extractComplianceNotes(response),
         };
       case 'legal_research':
         return {
@@ -134,14 +133,14 @@ export class OpenAIProvider extends BaseAIProvider {
           relevantStatutes: this.extractStatutes(response),
           casePrecedents: this.extractPrecedents(response),
           legalAnalysis: this.extractAnalysis(response),
-          practicalGuidance: this.extractGuidance(response)
+          practicalGuidance: this.extractGuidance(response),
         };
       case 'risk_assessment':
         return {
           riskAnalysis: response,
           riskLevel: this.extractRiskLevel(response),
           mitigationStrategies: this.extractMitigation(response),
-          timelineConsiderations: this.extractTimeline(response)
+          timelineConsiderations: this.extractTimeline(response),
         };
       default:
         return { analysis: response };
@@ -152,9 +151,9 @@ export class OpenAIProvider extends BaseAIProvider {
     const riskPatterns = [
       /risk.*?(?:high|medium|low)/gi,
       /(?:high|medium|low).*?risk/gi,
-      /risk level[:\s]*(?:high|medium|low)/gi
+      /risk level[:\s]*(?:high|medium|low)/gi,
     ];
-    
+
     for (const pattern of riskPatterns) {
       const match = text.match(pattern);
       if (match) {
@@ -170,13 +169,13 @@ export class OpenAIProvider extends BaseAIProvider {
   private extractKeyFindings(text: string): string[] {
     const findings: string[] = [];
     const sections = text.split(/(?:\n|^)(?:\d+\.|[-*])\s+/);
-    
+
     for (const section of sections) {
       if (section.trim().length > 20 && section.trim().length < 200) {
         findings.push(section.trim().replace(/^\d+\.\s*/, ''));
       }
     }
-    
+
     return findings.slice(0, 5);
   }
 
@@ -184,7 +183,7 @@ export class OpenAIProvider extends BaseAIProvider {
     const recommendations: string[] = [];
     const patterns = [
       /recommend(?:ation)?s?[:\s]*(.*?)(?:\n\n|$)/gi,
-      /(?:should|must|ought to|advise)[:\s]*(.*?)(?:\n|$)/gi
+      /(?:should|must|ought to|advise)[:\s]*(.*?)(?:\n|$)/gi,
     ];
 
     for (const pattern of patterns) {
@@ -195,7 +194,7 @@ export class OpenAIProvider extends BaseAIProvider {
         }
       }
     }
-    
+
     return recommendations.slice(0, 5);
   }
 
@@ -203,7 +202,7 @@ export class OpenAIProvider extends BaseAIProvider {
     const notes: string[] = [];
     const patterns = [
       /compliance[:\s]*(.*?)(?:\n|$)/gi,
-      /(?:regulatory|legal requirement)[:\s]*(.*?)(?:\n|$)/gi
+      /(?:regulatory|legal requirement)[:\s]*(.*?)(?:\n|$)/gi,
     ];
 
     for (const pattern of patterns) {
@@ -214,7 +213,7 @@ export class OpenAIProvider extends BaseAIProvider {
         }
       }
     }
-    
+
     return notes.slice(0, 3);
   }
 
@@ -222,7 +221,7 @@ export class OpenAIProvider extends BaseAIProvider {
     const statutes: string[] = [];
     const patterns = [
       /(?:act|statute|law|regulation|code)\s+[^\n.]{10,}/gi,
-      /section\s+\d+[^\n.]*/gi
+      /section\s+\d+[^\n.]*/gi,
     ];
 
     for (const pattern of patterns) {
@@ -231,16 +230,13 @@ export class OpenAIProvider extends BaseAIProvider {
         statutes.push(match[0].trim());
       }
     }
-    
+
     return statutes.slice(0, 5);
   }
 
   private extractPrecedents(text: string): string[] {
     const precedents: string[] = [];
-    const patterns = [
-      /(?:case|precedent)[:\s]*[^\n.]{10,}/gi,
-      /\w+\s+v\.?\s+\w+[^\n.]*/gi
-    ];
+    const patterns = [/(?:case|precedent)[:\s]*[^\n.]{10,}/gi, /\w+\s+v\.?\s+\w+[^\n.]*/gi];
 
     for (const pattern of patterns) {
       const matches = text.matchAll(pattern);
@@ -248,7 +244,7 @@ export class OpenAIProvider extends BaseAIProvider {
         precedents.push(match[0].trim());
       }
     }
-    
+
     return precedents.slice(0, 3);
   }
 
@@ -259,9 +255,7 @@ export class OpenAIProvider extends BaseAIProvider {
 
   private extractGuidance(text: string): string[] {
     const guidance: string[] = [];
-    const patterns = [
-      /(?:practical|guidance|step)[:\s]*(.*?)(?:\n|$)/gi
-    ];
+    const patterns = [/(?:practical|guidance|step)[:\s]*(.*?)(?:\n|$)/gi];
 
     for (const pattern of patterns) {
       const matches = text.matchAll(pattern);
@@ -271,15 +265,13 @@ export class OpenAIProvider extends BaseAIProvider {
         }
       }
     }
-    
+
     return guidance.slice(0, 3);
   }
 
   private extractMitigation(text: string): string[] {
     const strategies: string[] = [];
-    const patterns = [
-      /(?:mitig|prevent|avoid)[:\s]*(.*?)(?:\n|$)/gi
-    ];
+    const patterns = [/(?:mitig|prevent|avoid)[:\s]*(.*?)(?:\n|$)/gi];
 
     for (const pattern of patterns) {
       const matches = text.matchAll(pattern);
@@ -289,7 +281,7 @@ export class OpenAIProvider extends BaseAIProvider {
         }
       }
     }
-    
+
     return strategies.slice(0, 3);
   }
 
@@ -297,7 +289,7 @@ export class OpenAIProvider extends BaseAIProvider {
     const timeline: string[] = [];
     const patterns = [
       /(?:timeline|timeframe|duration)[:\s]*(.*?)(?:\n|$)/gi,
-      /(?:\d+\s*(?:days?|weeks?|months?|years?))[^\n.]*/gi
+      /(?:\d+\s*(?:days?|weeks?|months?|years?))[^\n.]*/gi,
     ];
 
     for (const pattern of patterns) {
@@ -306,7 +298,7 @@ export class OpenAIProvider extends BaseAIProvider {
         timeline.push(match[0].trim());
       }
     }
-    
+
     return timeline.slice(0, 3);
   }
 }

@@ -1,16 +1,16 @@
 /**
  * 🛡️ RESILIENCE AND RELIABILITY ENHANCEMENTS (Express.js Version)
- * 
- * This service adds built-in redundancy, fallback mechanisms, 
+ *
+ * This service adds built-in redundancy, fallback mechanisms,
  * and health checks to the centralized data management system.
- * 
+ *
  * Author: Endawoke47
  * Created: 2025-07-13
  */
 
 import Redis from 'ioredis';
 import { Pool } from 'pg';
-import { logger } from '../config/logger';
+import enhancedLogger from '../utils/logger';
 import { DataManagementHubService } from './data-management-hub.service';
 import { DataContextProviderService } from './data-context-provider.service';
 
@@ -37,12 +37,11 @@ interface SystemMetrics {
 }
 
 export class DataManagementResilienceService {
-  private readonly logger = logger.child({ service: 'DataManagementResilience' });
-  
+  private readonly logger = enhancedLogger.child({ service: 'DataManagementResilience' });
+
   // Circuit breaker configuration
   private readonly FAILURE_THRESHOLD = 5;
   private readonly RESET_TIMEOUT = 60000; // 1 minute
-  private readonly RETRY_DELAY = 1000; // 1 second
   private readonly MAX_RETRIES = 3;
 
   // Component health status
@@ -50,21 +49,21 @@ export class DataManagementResilienceService {
     isHealthy: true,
     lastCheck: new Date(),
     responseTime: 0,
-    errors: []
+    errors: [],
   };
 
   private contextProviderHealth: HealthStatus = {
     isHealthy: true,
     lastCheck: new Date(),
     responseTime: 0,
-    errors: []
+    errors: [],
   };
 
   private circuitBreaker: CircuitBreakerState = {
     isOpen: false,
     failures: 0,
     lastFailure: null,
-    successCount: 0
+    successCount: 0,
   };
 
   private systemMetrics: SystemMetrics = {
@@ -72,14 +71,14 @@ export class DataManagementResilienceService {
     successfulRequests: 0,
     failedRequests: 0,
     avgResponseTime: 0,
-    lastHealthCheck: new Date()
+    lastHealthCheck: new Date(),
   };
 
   constructor(
     private dataHub: DataManagementHubService,
     private contextProvider: DataContextProviderService,
     private redis: Redis,
-    private dbPool: Pool,
+    private dbPool: Pool
   ) {
     this.startHealthMonitoring();
     this.logger.info('🛡️ Data Management Resilience Service initialized');
@@ -100,21 +99,20 @@ export class DataManagementResilienceService {
       }
 
       // Attempt primary query through data hub
-      const result = await this.executeWithRetry(
-        () => this.dataHub.query(operation, params)
+      const result = await this.executeWithRetry(() =>
+        this.dataHub.query({ entity: operation, ...params })
       );
 
       // Success - record metrics and reset circuit breaker
       this.recordSuccess(Date.now() - startTime);
       return result;
-
     } catch (error) {
       this.recordFailure();
-      this.logger.warn('Primary query failed, attempting fallback', { 
-        operation, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      this.logger.warn('Primary query failed, attempting fallback', {
+        operation,
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
-      
+
       return await this.executeWithFallback(operation, params);
     }
   }
@@ -132,12 +130,12 @@ export class DataManagementResilienceService {
         return await operation();
       } catch (error) {
         if (attempt === retries) throw error;
-        
+
         const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
         this.logger.debug(`Retry attempt ${attempt}/${retries} after ${delay}ms`, {
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
-        
+
         await this.delay(delay);
       }
     }
@@ -152,25 +150,29 @@ export class DataManagementResilienceService {
     try {
       // First fallback: Context Provider
       this.logger.info('🔄 Attempting Context Provider fallback');
-      const result = await this.contextProvider.getContextualData(params);
+      const result = await this.contextProvider.getModuleData({
+        userId: params.userId || 'system',
+        userRole: params.userRole || 'system',
+        module: 'fallback',
+        action: operation,
+        entityId: params.entityId,
+      });
       this.logger.info('✅ Context Provider fallback successful');
       return result;
-      
     } catch (contextError) {
-      this.logger.warn('Context Provider fallback failed', { 
-        error: contextError instanceof Error ? contextError.message : 'Unknown error' 
+      this.logger.warn('Context Provider fallback failed', {
+        error: contextError instanceof Error ? contextError.message : 'Unknown error',
       });
-      
+
       try {
         // Final fallback: Direct Database
         this.logger.info('🔄 Attempting direct database fallback');
         const result = await this.executeDirectDatabaseQuery({ operation, ...params });
         this.logger.info('✅ Direct database fallback successful');
         return result;
-        
       } catch (dbError) {
-        this.logger.error('❌ All fallback mechanisms failed', { 
-          error: dbError instanceof Error ? dbError.message : 'Unknown error' 
+        this.logger.error('❌ All fallback mechanisms failed', {
+          error: dbError instanceof Error ? dbError.message : 'Unknown error',
         });
         throw new Error('All data access methods failed');
       }
@@ -187,7 +189,7 @@ export class DataManagementResilienceService {
       contextProviderHealth: this.contextProviderHealth,
       metrics: this.systemMetrics,
       cacheHitRatio: this.calculateCacheHitRatio(),
-      uptime: process.uptime()
+      uptime: process.uptime(),
     };
   }
 
@@ -199,7 +201,7 @@ export class DataManagementResilienceService {
     this.circuitBreaker.failures = 0;
     this.circuitBreaker.successCount = 0;
     this.circuitBreaker.lastFailure = null;
-    
+
     this.logger.info('🔄 Circuit breaker manually reset');
   }
 
@@ -212,11 +214,10 @@ export class DataManagementResilienceService {
    */
   private recordSuccess(responseTime: number): void {
     this.systemMetrics.successfulRequests++;
-    this.systemMetrics.avgResponseTime = 
-      (this.systemMetrics.avgResponseTime + responseTime) / 2;
-    
+    this.systemMetrics.avgResponseTime = (this.systemMetrics.avgResponseTime + responseTime) / 2;
+
     this.circuitBreaker.successCount++;
-    
+
     // Reset circuit breaker after successful operations
     if (this.circuitBreaker.successCount >= 3) {
       this.circuitBreaker.isOpen = false;
@@ -229,7 +230,7 @@ export class DataManagementResilienceService {
     this.circuitBreaker.failures++;
     this.circuitBreaker.lastFailure = new Date();
     this.circuitBreaker.successCount = 0;
-    
+
     // Open circuit breaker if threshold exceeded
     if (this.circuitBreaker.failures >= this.FAILURE_THRESHOLD) {
       this.openCircuitBreaker();
@@ -239,10 +240,10 @@ export class DataManagementResilienceService {
   private openCircuitBreaker(): void {
     this.circuitBreaker.isOpen = true;
     this.logger.warn('Circuit breaker opened due to repeated failures');
-    
+
     this.logger.warn('Circuit breaker opened', {
       failures: this.circuitBreaker.failures,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
     // Auto-reset after timeout
@@ -259,7 +260,7 @@ export class DataManagementResilienceService {
       hub: { healthy: false, responseTime: 0, error: null as string | null },
       contextProvider: { healthy: false, responseTime: 0, error: null as string | null },
       redis: { healthy: false, responseTime: 0, error: null as string | null },
-      database: { healthy: false, responseTime: 0, error: null as string | null }
+      database: { healthy: false, responseTime: 0, error: null as string | null },
     };
 
     // Test Data Hub
@@ -342,11 +343,11 @@ export class DataManagementResilienceService {
       const startTime = Date.now();
       await this.redis.ping();
       const responseTime = Date.now() - startTime;
-      
+
       if (responseTime > 1000) {
         this.logger.warn('Redis ping response time is high', { responseTime });
       }
-      
+
       this.logger.debug('Redis health check passed', { responseTime });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -362,11 +363,11 @@ export class DataManagementResilienceService {
       await client.query('SELECT 1');
       client.release();
       const responseTime = Date.now() - startTime;
-      
+
       if (responseTime > 2000) {
         this.logger.warn('Database query response time is high', { responseTime });
       }
-      
+
       this.logger.debug('Database health check passed', { responseTime });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -379,12 +380,12 @@ export class DataManagementResilienceService {
     // This bypasses the centralized data management system entirely
     this.logger.warn('🔄 Executing direct database query as fallback', {
       query: query?.operation || 'unknown',
-      timestamp: new Date()
+      timestamp: new Date(),
     });
-    
+
     try {
       const client = await this.dbPool.connect();
-      
+
       try {
         // For different query types, we'd implement specific fallback logic
         if (query?.operation === 'findUsers') {
@@ -394,7 +395,7 @@ export class DataManagementResilienceService {
           const result = await client.query('SELECT * FROM documents WHERE $1', [query.filter]);
           return result.rows;
         }
-        
+
         // Generic query execution
         const result = await client.query(query.sql, query.parameters);
         return result.rows;

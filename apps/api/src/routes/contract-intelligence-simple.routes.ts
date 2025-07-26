@@ -3,13 +3,13 @@
 
 import { Router, Request, Response } from 'express';
 import { ContractIntelligenceService } from '../services/contract-intelligence.service';
-import { 
+import {
   ContractAnalysisRequest,
   ContractType,
   ContractAnalysisType,
   ComplianceStandard,
   RiskLevel,
-  AnalysisDepth
+  AnalysisDepth,
 } from '../types/contract-intelligence.types';
 import { LegalJurisdiction, SupportedLanguage } from '../types/ai.types';
 import winston from 'winston';
@@ -18,14 +18,11 @@ const router = Router();
 const contractIntelligence = new ContractIntelligenceService();
 const logger = winston.createLogger({
   level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
+  format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
   transports: [
     new winston.transports.File({ filename: 'logs/contract-api.log' }),
-    new winston.transports.Console()
-  ]
+    new winston.transports.Console(),
+  ],
 });
 
 /**
@@ -34,12 +31,12 @@ const logger = winston.createLogger({
  */
 router.post('/analyze', async (req: Request, res: Response) => {
   const requestId = `contract_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  
+
   try {
-    logger.info(`Contract analysis request received`, { 
+    logger.info(`Contract analysis request received`, {
       requestId,
       jurisdiction: req.body.jurisdiction,
-      analysisTypes: req.body.analysisTypes 
+      analysisTypes: req.body.analysisTypes,
     });
 
     // Basic validation
@@ -47,29 +44,29 @@ router.post('/analyze', async (req: Request, res: Response) => {
       return res.status(400).json({
         success: false,
         error: 'Jurisdiction and analysisTypes are required',
-        requestId
+        requestId,
       });
     }
 
     // Process document
     let documentContent: any = {};
-    
+
     if (req.body.documentContent) {
       documentContent = {
         content: req.body.documentContent,
         fileName: req.body.fileName || 'contract.txt',
-        mimeType: 'text/plain'
+        mimeType: 'text/plain',
       };
     } else if (req.body.documentUrl) {
       documentContent = {
         fileUrl: req.body.documentUrl,
-        fileName: req.body.fileName || 'contract_from_url.pdf'
+        fileName: req.body.fileName || 'contract_from_url.pdf',
       };
     } else {
       return res.status(400).json({
         success: false,
         error: 'Document content or URL must be provided',
-        requestId
+        requestId,
       });
     }
 
@@ -94,9 +91,9 @@ router.post('/analyze', async (req: Request, res: Response) => {
         extractConditions: true,
         extractPenalties: true,
         extractDeadlines: true,
-        identifyMissingClauses: true
+        identifyMissingClauses: true,
       },
-      analysisDepth: AnalysisDepth.COMPREHENSIVE
+      analysisDepth: AnalysisDepth.COMPREHENSIVE,
     };
 
     // Execute analysis
@@ -107,20 +104,19 @@ router.post('/analyze', async (req: Request, res: Response) => {
       analysisId: result.analysisId,
       clausesFound: result.extractedClauses.length,
       risksIdentified: result.identifiedRisks.length,
-      executionTime: result.summary.executionTime
+      executionTime: result.summary.executionTime,
     });
 
     res.status(200).json({
       success: true,
       requestId,
       data: result,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-
   } catch (error: any) {
-    logger.error(`Contract analysis failed`, { 
-      requestId, 
-      error: error.message 
+    logger.error(`Contract analysis failed`, {
+      requestId,
+      error: error.message,
     });
 
     res.status(500).json({
@@ -128,7 +124,7 @@ router.post('/analyze', async (req: Request, res: Response) => {
       error: 'Contract analysis failed',
       message: error.message,
       requestId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -139,32 +135,35 @@ router.post('/analyze', async (req: Request, res: Response) => {
  */
 router.post('/quick-scan', async (req: Request, res: Response) => {
   const requestId = `quick_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  
+
   try {
-    logger.info(`Quick contract scan request received`, { 
+    logger.info(`Quick contract scan request received`, {
       requestId,
-      jurisdiction: req.body.jurisdiction 
+      jurisdiction: req.body.jurisdiction,
     });
 
     if (!req.body.jurisdiction || !req.body.documentContent) {
       return res.status(400).json({
         success: false,
         error: 'Jurisdiction and document content are required',
-        requestId
+        requestId,
       });
     }
 
     const documentContent = {
       content: req.body.documentContent,
       fileName: 'contract.txt',
-      mimeType: 'text/plain'
+      mimeType: 'text/plain',
     };
 
     // Quick scan with minimal analysis types
     const analysisRequest: ContractAnalysisRequest = {
       document: documentContent,
       jurisdiction: req.body.jurisdiction,
-      analysisTypes: [ContractAnalysisType.RISK_ASSESSMENT, ContractAnalysisType.RED_FLAG_DETECTION],
+      analysisTypes: [
+        ContractAnalysisType.RISK_ASSESSMENT,
+        ContractAnalysisType.RED_FLAG_DETECTION,
+      ],
       language: SupportedLanguage.ENGLISH,
       contractType: req.body.contractType,
       complianceStandards: [],
@@ -181,9 +180,9 @@ router.post('/quick-scan', async (req: Request, res: Response) => {
         extractConditions: false,
         extractPenalties: false,
         extractDeadlines: false,
-        identifyMissingClauses: false
+        identifyMissingClauses: false,
       },
-      analysisDepth: AnalysisDepth.BASIC
+      analysisDepth: AnalysisDepth.BASIC,
     };
 
     const result = await contractIntelligence.analyzeContract(analysisRequest);
@@ -191,35 +190,39 @@ router.post('/quick-scan', async (req: Request, res: Response) => {
     // Return simplified response for quick scan
     const quickScanResult = {
       analysisId: result.analysisId,
-      overallRiskLevel: result.contractScore.overall < 60 ? 'HIGH' : 
-                       result.contractScore.overall < 80 ? 'MEDIUM' : 'LOW',
+      overallRiskLevel:
+        result.contractScore.overall < 60
+          ? 'HIGH'
+          : result.contractScore.overall < 80
+            ? 'MEDIUM'
+            : 'LOW',
       contractScore: result.contractScore.overall,
       redFlags: result.redFlags.length,
       criticalRisks: result.identifiedRisks.filter(r => r.level === RiskLevel.CRITICAL).length,
-      recommendations: result.identifiedRisks.length > 0 ? 
-        ['Professional legal review recommended'] : 
-        ['Contract appears acceptable'],
-      executionTime: result.summary.executionTime
+      recommendations:
+        result.identifiedRisks.length > 0
+          ? ['Professional legal review recommended']
+          : ['Contract appears acceptable'],
+      executionTime: result.summary.executionTime,
     };
 
     logger.info(`Quick contract scan completed`, {
       requestId,
       analysisId: result.analysisId,
       riskLevel: quickScanResult.overallRiskLevel,
-      executionTime: result.summary.executionTime
+      executionTime: result.summary.executionTime,
     });
 
     res.status(200).json({
       success: true,
       requestId,
       data: quickScanResult,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-
   } catch (error: any) {
-    logger.error(`Quick contract scan failed`, { 
+    logger.error(`Quick contract scan failed`, {
       requestId,
-      error: error.message 
+      error: error.message,
     });
 
     res.status(500).json({
@@ -227,7 +230,7 @@ router.post('/quick-scan', async (req: Request, res: Response) => {
       error: 'Quick contract scan failed',
       message: error.message,
       requestId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -249,15 +252,15 @@ router.get('/supported-features', async (req: Request, res: Response) => {
         supportedLanguages: Object.values(SupportedLanguage),
         fileFormats: ['PDF', 'DOCX', 'TXT'],
         maxFileSize: '50MB',
-        maxBatchSize: 10
+        maxBatchSize: 10,
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
     res.status(500).json({
       success: false,
       error: 'Failed to retrieve supported features',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -276,7 +279,7 @@ router.get('/health', async (req: Request, res: Response) => {
       dependencies: {
         aiGateway: 'healthy',
         cache: 'healthy',
-        usageTracker: 'healthy'
+        usageTracker: 'healthy',
       },
       capabilities: {
         clauseExtraction: true,
@@ -284,21 +287,21 @@ router.get('/health', async (req: Request, res: Response) => {
         complianceCheck: true,
         termExtraction: true,
         redFlagDetection: true,
-        batchProcessing: true
+        batchProcessing: true,
       },
       supportedJurisdictions: Object.values(LegalJurisdiction).length,
-      supportedContractTypes: Object.values(ContractType).length
+      supportedContractTypes: Object.values(ContractType).length,
     };
 
     res.status(200).json({
       success: true,
-      data: healthStatus
+      data: healthStatus,
     });
   } catch (error: any) {
     res.status(500).json({
       success: false,
       error: 'Health check failed',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });

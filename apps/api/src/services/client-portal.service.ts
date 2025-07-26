@@ -201,7 +201,7 @@ export class ClientPortalService {
     private notificationService: NotificationService,
     private paymentService: PaymentService,
     private eventEmitter: EventEmitter2,
-    private configService: ConfigService,
+    private configService: ConfigService
   ) {}
 
   /**
@@ -328,13 +328,9 @@ export class ClientPortalService {
 
       this.logger.log(`Dashboard data fetched successfully for client: ${clientId}`);
       return dashboardData;
-
     } catch (error) {
       this.logger.error(`Error fetching dashboard data for client ${clientId}:`, error);
-      throw new HttpException(
-        'Failed to fetch dashboard data',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new HttpException('Failed to fetch dashboard data', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -346,7 +342,7 @@ export class ClientPortalService {
     participantIds: string[],
     subject: string,
     initialMessage: string,
-    caseId?: string,
+    caseId?: string
   ): Promise<SecureCommunication> {
     try {
       this.logger.log(`Creating secure communication for client: ${clientId}`);
@@ -355,7 +351,7 @@ export class ClientPortalService {
       const encryptionKey = await this.encryptionService.generateKey();
       const { encrypted: encryptedMessage, iv } = await this.encryptionService.encrypt(
         initialMessage,
-        encryptionKey,
+        encryptionKey
       );
 
       const threadId = `thread_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -365,15 +361,17 @@ export class ClientPortalService {
         threadId,
         participants: [clientId, ...participantIds],
         subject,
-        messages: [{
-          id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          senderId: clientId,
-          content: encryptedMessage,
-          timestamp: new Date(),
-          encrypted: true,
-          attachments: [],
-          readBy: [{ userId: clientId, timestamp: new Date() }],
-        }],
+        messages: [
+          {
+            id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            senderId: clientId,
+            content: encryptedMessage,
+            timestamp: new Date(),
+            encrypted: true,
+            attachments: [],
+            readBy: [{ userId: clientId, timestamp: new Date() }],
+          },
+        ],
         encryption: {
           algorithm: 'AES-256-GCM',
           keyId: encryptionKey.id,
@@ -411,12 +409,11 @@ export class ClientPortalService {
 
       this.logger.log(`Secure communication created: ${threadId}`);
       return communication;
-
     } catch (error) {
       this.logger.error(`Error creating secure communication:`, error);
       throw new HttpException(
         'Failed to create secure communication',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -427,7 +424,7 @@ export class ClientPortalService {
   async startDocumentCollaboration(
     clientId: string,
     documentId: string,
-    participantIds: string[],
+    participantIds: string[]
   ): Promise<DocumentCollaboration> {
     try {
       this.logger.log(`Starting document collaboration for document: ${documentId}`);
@@ -509,12 +506,11 @@ export class ClientPortalService {
 
       this.logger.log(`Document collaboration started: ${sessionId}`);
       return collaboration;
-
     } catch (error) {
       this.logger.error(`Error starting document collaboration:`, error);
       throw new HttpException(
         'Failed to start document collaboration',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -525,7 +521,7 @@ export class ClientPortalService {
   async processPayment(
     clientId: string,
     paymentId: string,
-    paymentMethod: any,
+    paymentMethod: any
   ): Promise<{ success: boolean; transactionId: string; receipt: any }> {
     try {
       this.logger.log(`Processing payment for client: ${clientId}, payment: ${paymentId}`);
@@ -595,13 +591,9 @@ export class ClientPortalService {
       }
 
       return result;
-
     } catch (error) {
       this.logger.error(`Error processing payment:`, error);
-      throw new HttpException(
-        'Failed to process payment',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new HttpException('Failed to process payment', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -610,7 +602,7 @@ export class ClientPortalService {
    */
   async configurePortal(
     clientId: string,
-    config: Partial<ClientPortalConfig>,
+    config: Partial<ClientPortalConfig>
   ): Promise<ClientPortalConfig> {
     try {
       this.logger.log(`Configuring portal for client: ${clientId}`);
@@ -641,13 +633,9 @@ export class ClientPortalService {
 
       this.logger.log(`Portal configured for client: ${clientId}`);
       return updatedConfig;
-
     } catch (error) {
       this.logger.error(`Error configuring portal:`, error);
-      throw new HttpException(
-        'Failed to configure portal',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new HttpException('Failed to configure portal', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -688,13 +676,9 @@ export class ClientPortalService {
       };
 
       return analytics;
-
     } catch (error) {
       this.logger.error(`Error fetching portal analytics:`, error);
-      throw new HttpException(
-        'Failed to fetch portal analytics',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new HttpException('Failed to fetch portal analytics', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
