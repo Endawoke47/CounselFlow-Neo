@@ -20,7 +20,9 @@ import {
   Menu,
   Search,
   Bell,
-  User
+  User,
+  Users,
+  Brain
 } from 'lucide-react';
 
 interface MainLayoutProps {
@@ -43,9 +45,22 @@ export default function MainLayout({ children }: MainLayoutProps) {
     { name: 'Task Management', href: '/task-management', icon: Target, current: pathname === '/task-management' },
     { name: 'Licensing & Regulatory', href: '/licensing-regulatory', icon: CheckCircle, current: pathname === '/licensing-regulatory' },
     { name: 'Legal Spend', href: '/outsourcing-legal-spend', icon: Calculator, current: pathname === '/outsourcing-legal-spend' },
-    { name: 'Help & Support', href: '/help-support', icon: HelpCircle, current: pathname === '/help-support' },
-    { name: 'Settings', href: '/settings', icon: Settings, current: pathname === '/settings' },
   ];
+
+  // Define topbar-only pages for current page indicator
+  const topbarPages = {
+    '/client-management': 'Clients',
+    '/ai-assistant': 'AI Legal Assistant',
+    '/help-support': 'Help & Support',
+    '/settings': 'Settings',
+  };
+
+  // Get current page name from sidebar navigation or topbar pages
+  const getCurrentPageName = () => {
+    const sidebarPage = navigation.find(item => item.current);
+    if (sidebarPage) return sidebarPage.name;
+    return topbarPages[pathname as keyof typeof topbarPages] || 'Dashboard';
+  };
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -130,16 +145,118 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
       {/* Main content */}
       <div className="md:pl-64 flex flex-col flex-1">
-        {/* Top nav for mobile */}
-        <div className="sticky top-0 z-10 bg-white border-b border-neutral-200 pl-1 pt-1 sm:pl-3 sm:pt-3 md:hidden shadow-corporate">
-          <button
-            type="button"
-            className="-ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-neutral-500 hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <span className="sr-only">Open sidebar</span>
-            <Menu className="h-6 w-6" />
-          </button>
+        {/* Smart Topbar - Desktop */}
+        <div className="hidden md:block sticky top-0 z-20 bg-white border-b border-neutral-200 shadow-corporate">
+          <div className="flex items-center justify-between px-6 py-3">
+            {/* Left side - Current page indicator */}
+            <div className="flex items-center space-x-3">
+              <div className="w-2 h-2 bg-primary-600 rounded-full"></div>
+              <span className="text-sm font-medium text-neutral-600">
+                {getCurrentPageName()}
+              </span>
+            </div>
+            
+            {/* Right side - Quick actions */}
+            <div className="flex items-center space-x-1">
+              <Link
+                href="/client-management"
+                className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors group ${
+                  pathname === '/client-management'
+                    ? 'text-primary-600 bg-primary-100'
+                    : 'text-neutral-600 hover:text-primary-600 hover:bg-primary-50'
+                }`}
+                title="Clients"
+              >
+                <Users className="h-5 w-5" />
+                <span className="sr-only">Clients</span>
+              </Link>
+              
+              <Link
+                href="/ai-assistant"
+                className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors group ${
+                  pathname === '/ai-assistant'
+                    ? 'text-primary-600 bg-primary-100'
+                    : 'text-neutral-600 hover:text-primary-600 hover:bg-primary-50'
+                }`}
+                title="AI Legal Assistant"
+              >
+                <Brain className="h-5 w-5" />
+                <span className="sr-only">AI Legal Assistant</span>
+              </Link>
+              
+              <Link
+                href="/help-support"
+                className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors group ${
+                  pathname === '/help-support'
+                    ? 'text-primary-600 bg-primary-100'
+                    : 'text-neutral-600 hover:text-primary-600 hover:bg-primary-50'
+                }`}
+                title="Help & Support"
+              >
+                <HelpCircle className="h-5 w-5" />
+                <span className="sr-only">Help & Support</span>
+              </Link>
+              
+              <Link
+                href="/settings"
+                className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors group ${
+                  pathname === '/settings'
+                    ? 'text-primary-600 bg-primary-100'
+                    : 'text-neutral-600 hover:text-primary-600 hover:bg-primary-50'
+                }`}
+                title="Settings"
+              >
+                <Settings className="h-5 w-5" />
+                <span className="sr-only">Settings</span>
+              </Link>
+              
+              {/* User profile indicator */}
+              <div className="ml-2 w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
+                <User className="h-4 w-4 text-white" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Top nav for mobile - Enhanced with quick actions */}
+        <div className="sticky top-0 z-10 bg-white border-b border-neutral-200 md:hidden shadow-corporate">
+          <div className="flex items-center justify-between px-4 py-3">
+            <button
+              type="button"
+              className="h-10 w-10 inline-flex items-center justify-center rounded-lg text-neutral-500 hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <span className="sr-only">Open sidebar</span>
+              <Menu className="h-6 w-6" />
+            </button>
+            
+            {/* Mobile quick actions */}
+            <div className="flex items-center space-x-1">
+              <Link
+                href="/ai-assistant"
+                className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${
+                  pathname === '/ai-assistant'
+                    ? 'text-primary-600 bg-primary-100'
+                    : 'text-neutral-600 hover:text-primary-600 hover:bg-primary-50'
+                }`}
+                title="AI Assistant"
+              >
+                <Brain className="h-5 w-5" />
+              </Link>
+              
+              <Link
+                href="/help-support"
+                className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${
+                  pathname === '/help-support'
+                    ? 'text-primary-600 bg-primary-100'
+                    : 'text-neutral-600 hover:text-primary-600 hover:bg-primary-50'
+                }`}
+                title="Help"
+              >
+                <HelpCircle className="h-5 w-5" />
+              </Link>
+            </div>
+          </div>
         </div>
 
         {/* Page content */}

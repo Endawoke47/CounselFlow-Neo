@@ -18,8 +18,8 @@ import {
   Scale,
   BarChart3
 } from 'lucide-react';
-import MainLayout from '@/components/layout/MainLayout';
-import { productionApiClient } from '@/lib/production-api-client';
+import { MainLayout } from '@/components/layout/main-layout';
+import { ProductionApiClient } from '@/lib/production-api-client';
 
 interface Client {
   id: string;
@@ -118,31 +118,30 @@ export default function DashboardPage() {
     setError(null);
 
     try {
+      const apiClient = ProductionApiClient.getInstance();
+
+      // Load metrics
+      const metricsResponse = await apiClient.get('/api/dashboard/metrics');
+      if (metricsResponse && metricsResponse.data) {
+        setMetrics(metricsResponse.data);
+      }
+
       // Load clients
-      const clientsResponse = await productionApiClient.getClients({ limit: 5 });
-      if (clientsResponse && clientsResponse.data && clientsResponse.data.clients) {
-        setClients(clientsResponse.data.clients);
+      const clientsResponse = await apiClient.get('/api/clients?limit=5');
+      if (clientsResponse && clientsResponse.clients) {
+        setClients(clientsResponse.clients);
       }
 
       // Load contracts
-      const contractsResponse = await productionApiClient.getContracts({ limit: 5 });
-      if (contractsResponse && contractsResponse.data && contractsResponse.data.contracts) {
-        setContracts(contractsResponse.data.contracts);
+      const contractsResponse = await apiClient.get('/api/contracts?limit=5');
+      if (contractsResponse && contractsResponse.contracts) {
+        setContracts(contractsResponse.contracts);
       }
 
-      // Load matters for metrics
-      const mattersResponse = await productionApiClient.getMatters({ limit: 100 });
-      if (mattersResponse && mattersResponse.data && mattersResponse.data.matters) {
-        // Update metrics with real data
-        setMetrics(prev => prev.map(metric => {
-          if (metric.title === 'Active Matters') {
-            return { ...metric, value: mattersResponse.data?.matters?.length?.toString() || '0' };
-          }
-          if (metric.title === 'Total Clients') {
-            return { ...metric, value: clientsResponse?.data?.clients?.length?.toString() || '0' };
-          }
-          return metric;
-        }));
+      // Load recent activities
+      const activitiesResponse = await apiClient.get('/api/activities?limit=5');
+      if (activitiesResponse && activitiesResponse.activities) {
+        setRecentActivities(activitiesResponse.activities);
       }
 
       setIsLoading(false);

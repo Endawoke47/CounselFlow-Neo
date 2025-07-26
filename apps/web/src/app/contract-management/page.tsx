@@ -1,10 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/layout/MainLayout';
-import { FileText, Plus, Search, Download, Upload, Edit3, Trash2, Eye, CheckCircle, AlertTriangle, BarChart3, Calendar, Brain, TrendingUp, Clock, DollarSign } from 'lucide-react';
+import { SimpleAIContractAnalysis } from '../../components/SimpleAIContractAnalysis';
+import { productionApiClient, type Contract } from '@/lib/production-api-client';
+import { useAuth } from '../../providers/auth-provider';
+import { FileText, Plus, Search, Download, Upload, Edit3, Trash2, Eye, CheckCircle, AlertTriangle, BarChart3, Calendar, Brain, TrendingUp, Clock, DollarSign, Zap } from 'lucide-react';
 
-interface Contract {
+// Frontend display interface for contracts
+interface ContractDisplay {
   id: string;
   title: string;
   counterparty: string;
@@ -23,86 +27,127 @@ interface Contract {
 export default function ContractManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [contracts, setContracts] = useState<Contract[]>([
-    {
-      id: 'CTR001',
-      title: 'Software Licensing Agreement',
-      counterparty: 'TechSoft Solutions Ltd',
-      type: 'Software License',
-      status: 'Active',
-      value: 250000,
-      startDate: '2024-01-15',
-      endDate: '2025-01-14',
-      renewalDate: '2025-01-14',
-      riskScore: 85,
-      compliance: 95,
-      autoRenewal: true,
-      priority: 'High'
-    },
-    {
-      id: 'CTR002',
-      title: 'Office Lease Agreement',
-      counterparty: 'Prime Properties Kenya',
-      type: 'Real Estate',
-      status: 'Active',
-      value: 480000,
-      startDate: '2023-06-01',
-      endDate: '2026-05-31',
-      riskScore: 92,
-      compliance: 88,
-      autoRenewal: false,
-      priority: 'Medium'
-    },
-    {
-      id: 'CTR003',
-      title: 'Supply Chain Agreement',
-      counterparty: 'African Logistics Co',
-      type: 'Supply Chain',
-      status: 'Under Review',
-      value: 150000,
-      startDate: '2024-12-01',
-      endDate: '2025-11-30',
-      riskScore: 78,
-      compliance: 82,
-      autoRenewal: true,
-      priority: 'High'
-    },
-    {
-      id: 'CTR004',
-      title: 'Employment Contract',
-      counterparty: 'Jane Doe',
-      type: 'Employment',
-      status: 'Active',
-      value: 75000,
-      startDate: '2024-03-01',
-      endDate: '2025-02-28',
-      riskScore: 65,
-      compliance: 98,
-      autoRenewal: false,
-      priority: 'Low'
-    }
-  ]);
+  const [contracts, setContracts] = useState<ContractDisplay[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isAddingContract, setIsAddingContract] = useState(false);
-  const [editingContract, setEditingContract] = useState<Contract | null>(null);
-  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+  const [editingContract, setEditingContract] = useState<ContractDisplay | null>(null);
+  const [selectedContract, setSelectedContract] = useState<ContractDisplay | null>(null);
+  const [showAIAnalysis, setShowAIAnalysis] = useState(false);
+  const [aiAnalysisContract, setAIAnalysisContract] = useState<ContractDisplay | null>(null);
+  
+  const { user } = useAuth();
+
+  // Load contracts and clients from API
+  useEffect(() => {
+    loadContracts();
+    loadClients();
+  }, []);
+
+  const loadClients = async () => {
+    try {
+      const response = await productionApiClient.getClients();
+      setClients(response.data?.clients || []);
+    } catch (err: any) {
+      console.error('Failed to load clients:', err);
+      // Fallback clients for development
+      setClients([
+        { id: 'CLT001', name: 'TechCorp Ltd' },
+        { id: 'CLT002', name: 'Jane Doe' },
+        { id: 'CLT003', name: 'ABC Corporation' }
+      ]);
+    }
+  };
+
+  const loadContracts = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await productionApiClient.getContracts();
+      const data = response.data?.contracts || [];
+      
+      // Transform API data to match frontend interface
+      const transformedContracts: ContractDisplay[] = data.map((contract: Contract) => ({
+        id: contract.id,
+        title: contract.title || '',
+        counterparty: contract.client?.name || contract.clientId || 'Unknown',
+        type: contract.contractType || 'General',
+        status: contract.status || 'Draft',
+        value: contract.value || 0,
+        startDate: contract.startDate ? new Date(contract.startDate).toISOString().split('T')[0] : '',
+        endDate: contract.endDate ? new Date(contract.endDate).toISOString().split('T')[0] : '',
+        renewalDate: undefined, // Map from contract data if available
+        riskScore: contract.riskLevel === 'high' ? 80 : contract.riskLevel === 'medium' ? 60 : 40,
+        compliance: 85, // Default compliance score
+        autoRenewal: false, // Map from contract data if available
+        priority: contract.priority || 'medium'
+      }));
+      
+      setContracts(transformedContracts);
+    } catch (err: any) {
+      console.error('Failed to load contracts:', err);
+      setError(err.message || 'Failed to load contracts');
+      // Fallback to mock data for development
+      setContracts([
+        {
+          id: 'CTR001',
+          title: 'Software Licensing Agreement',
+          counterparty: 'TechSoft Solutions Ltd',
+          type: 'Software License',
+          status: 'Active',
+          value: 250000,
+          startDate: '2024-01-15',
+          endDate: '2025-01-14',
+          renewalDate: '2025-01-14',
+          riskScore: 85,
+          compliance: 95,
+          autoRenewal: true,
+          priority: 'High'
+        },
+        {
+          id: 'CTR002',
+          title: 'Office Lease Agreement',
+          counterparty: 'Prime Properties Kenya',
+          type: 'Real Estate',
+          status: 'Active',
+          value: 480000,
+          startDate: '2023-06-01',
+          endDate: '2026-05-31',
+          riskScore: 92,
+          compliance: 88,
+          autoRenewal: false,
+          priority: 'Medium'
+        }
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Handlers for full functionality
   const handleAddContract = () => {
     setIsAddingContract(true);
   };
 
-  const handleEditContract = (contract: Contract) => {
+  const handleEditContract = (contract: ContractDisplay) => {
     setEditingContract(contract);
     setIsAddingContract(true);
   };
 
-  const handleDeleteContract = (contractId: string) => {
+  const handleDeleteContract = async (contractId: string) => {
     if (confirm('Are you sure you want to delete this contract?')) {
-      setContracts(contracts.filter(c => c.id !== contractId));
+      try {
+        await productionApiClient.deleteContract(contractId);
+        setContracts(contracts.filter(c => c.id !== contractId));
+      } catch (err: any) {
+        console.error('Failed to delete contract:', err);
+        alert('Failed to delete contract: ' + (err.message || 'Unknown error'));
+      }
     }
   };
 
-  const handleViewContract = (contract: Contract) => {
+  const handleViewContract = (contract: ContractDisplay) => {
     setSelectedContract(contract);
   };
 
@@ -137,31 +182,81 @@ export default function ContractManagementPage() {
   const handleAIReview = (contractId: string) => {
     const contract = contracts.find(c => c.id === contractId);
     if (contract) {
-      alert(`AI Review initiated for "${contract.title}". Analyzing clauses, risk factors, and compliance requirements...`);
+      setAIAnalysisContract(contract);
+      setShowAIAnalysis(true);
     }
   };
 
-  const handleSaveContract = (contractData: Partial<Contract>) => {
-    if (editingContract) {
-      setContracts(contracts.map(c => c.id === editingContract.id ? { ...c, ...contractData } : c));
-    } else {
-      const newContract: Contract = {
-        id: `CTR${String(contracts.length + 1).padStart(3, '0')}`,
-        title: contractData.title || '',
-        counterparty: contractData.counterparty || '',
-        type: contractData.type || '',
-        status: contractData.status || 'Draft',
-        value: contractData.value || 0,
-        startDate: contractData.startDate || new Date().toISOString().split('T')[0],
-        endDate: contractData.endDate || '',
-        renewalDate: contractData.renewalDate,
-        riskScore: contractData.riskScore || 0,
-        compliance: contractData.compliance || 0,
-        autoRenewal: contractData.autoRenewal || false,
-        priority: contractData.priority || 'Medium'
+  const handleAIAnalysisComplete = (analysis: any) => {
+    console.log('AI Analysis completed:', analysis);
+    // Update contract with AI analysis results if needed
+    if (aiAnalysisContract && analysis) {
+      const updatedContract = {
+        ...aiAnalysisContract,
+        riskScore: analysis.overallRiskScore || aiAnalysisContract.riskScore,
+        // Update other fields based on AI analysis
       };
-      setContracts([...contracts, newContract]);
+      setContracts(contracts.map(c => c.id === aiAnalysisContract.id ? updatedContract : c));
     }
+  };
+
+  const handleSaveContract = async (contractData: Partial<ContractDisplay>) => {
+    try {
+      // Transform frontend data to backend API format  
+      const apiData = {
+        title: contractData.title || 'Untitled Contract',
+        description: contractData.title || 'Contract description',
+        clientId: 'default-client-id', // This should be selected from a client list
+        contractType: contractData.type || 'General',
+        status: (contractData.status || 'Draft') as "Draft" | "Under Review" | "Approved" | "Executed" | "Expired" | "Terminated",
+        value: contractData.value || 0,
+        currency: 'KES',
+        startDate: contractData.startDate || new Date().toISOString(),
+        endDate: contractData.endDate || '',
+        riskLevel: (contractData.riskScore && contractData.riskScore > 70 ? 'high' : 
+                   contractData.riskScore && contractData.riskScore > 50 ? 'medium' : 'low') as "low" | "medium" | "high",
+        priority: (contractData.priority || 'medium') as "low" | "medium" | "high" | "urgent",
+        assignedLawyerId: user?.id || 'default-lawyer-id'
+      };
+
+      if (editingContract) {
+        const response = await productionApiClient.updateContract(editingContract.id, apiData);
+        const updatedContract = response.data;
+        if (updatedContract) {
+          setContracts(contracts.map(c => c.id === editingContract.id ? {
+            ...c,
+            ...contractData,
+            id: updatedContract.id || c.id
+          } : c));
+        }
+      } else {
+        const response = await productionApiClient.createContract(apiData);
+        const newContract = response.data;
+        if (newContract) {
+          const formattedContract: ContractDisplay = {
+            id: newContract.id,
+            title: newContract.title || contractData.title || '',
+            counterparty: contractData.counterparty || 'Unknown',
+            type: newContract.contractType || contractData.type || '',
+            status: newContract.status || contractData.status || 'Draft',
+            value: newContract.value || contractData.value || 0,
+            startDate: newContract.startDate ? new Date(newContract.startDate).toISOString().split('T')[0] : contractData.startDate || '',
+            endDate: newContract.endDate ? new Date(newContract.endDate).toISOString().split('T')[0] : contractData.endDate || '',
+            renewalDate: contractData.renewalDate,
+            riskScore: newContract.riskLevel === 'high' ? 80 : newContract.riskLevel === 'medium' ? 60 : 40,
+            compliance: 85,
+            autoRenewal: false, // Map from contract data if available
+            priority: newContract.priority || contractData.priority || 'Medium'
+          };
+          setContracts([...contracts, formattedContract]);
+        }
+      }
+    } catch (err: any) {
+      console.error('Failed to save contract:', err);
+      alert('Failed to save contract: ' + (err.message || 'Unknown error'));
+      return; // Don't close modal on error
+    }
+    
     setIsAddingContract(false);
     setEditingContract(null);
   };
@@ -475,6 +570,7 @@ export default function ContractManagementPage() {
               const contractData = {
                 title: formData.get('title') as string,
                 counterparty: formData.get('counterparty') as string,
+                clientId: formData.get('clientId') as string,
                 type: formData.get('type') as string,
                 status: formData.get('status') as string,
                 value: parseInt(formData.get('value') as string) || 0,
@@ -508,6 +604,20 @@ export default function ContractManagementPage() {
                     defaultValue={editingContract?.counterparty}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Client</label>
+                  <select
+                    name="clientId"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="">Select Client (Optional)</option>
+                    {clients.map((client) => (
+                      <option key={client.id} value={client.id}>
+                        {client.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Contract Type</label>
@@ -808,6 +918,37 @@ export default function ContractManagementPage() {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Contract Analysis Modal */}
+      {showAIAnalysis && aiAnalysisContract && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-6xl shadow-lg rounded-md bg-white">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900 flex items-center">
+                <Zap className="w-6 h-6 mr-2 text-purple-600" />
+                AI Contract Analysis: {aiAnalysisContract.title}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowAIAnalysis(false);
+                  setAIAnalysisContract(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            <div className="max-h-[80vh] overflow-y-auto">
+              <SimpleAIContractAnalysis
+                contractText={`Sample contract text for ${aiAnalysisContract.title}. This would normally be the actual contract content loaded from the database or file storage.`}
+                onAnalysisComplete={handleAIAnalysisComplete}
+              />
             </div>
           </div>
         </div>
