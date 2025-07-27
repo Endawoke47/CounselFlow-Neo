@@ -149,24 +149,150 @@ export default function HelpSupportPage() {
   };
 
   const handleSubmitTicket = () => {
-    alert('Support ticket submitted successfully! You will receive a confirmation email within 5 minutes.');
+    // Create a realistic ticket submission with confirmation
+    const ticketId = 'TKT' + Math.floor(Math.random() * 9999).toString().padStart(3, '0');
+    const currentTime = new Date().toLocaleString();
+    
+    // Show a detailed confirmation message
+    const confirmationModal = document.createElement('div');
+    confirmationModal.innerHTML = `
+      <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 text-center">
+          <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Ticket Submitted Successfully!</h3>
+          <p class="text-gray-600 mb-4">Your support ticket has been created and assigned to our team.</p>
+          <div class="bg-gray-50 rounded-lg p-4 mb-4 text-left">
+            <p><strong>Ticket ID:</strong> ${ticketId}</p>
+            <p><strong>Created:</strong> ${currentTime}</p>
+            <p><strong>Expected Response:</strong> Within 4 hours</p>
+            <p><strong>Status:</strong> Open</p>
+          </div>
+          <button onclick="this.closest('.fixed').remove()" class="w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+            Close
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(confirmationModal);
     setIsContactModalOpen(false);
   };
 
   const handleStartLiveChat = () => {
-    alert('Connecting you to a live support agent... Please wait while we find an available representative.');
+    // Simulate live chat interface
+    const chatModal = document.createElement('div');
+    chatModal.innerHTML = `
+      <div class="fixed bottom-4 right-4 bg-white rounded-lg shadow-xl w-80 h-96 border border-gray-200 z-50 flex flex-col">
+        <div class="bg-primary-600 text-white p-4 rounded-t-lg flex justify-between items-center">
+          <div class="flex items-center">
+            <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+            <span class="font-medium">Live Support</span>
+          </div>
+          <button onclick="this.closest('.fixed').remove()" class="text-white hover:text-gray-200">×</button>
+        </div>
+        <div class="flex-1 p-4 overflow-y-auto bg-gray-50">
+          <div class="space-y-3">
+            <div class="flex">
+              <div class="bg-white rounded-lg p-3 shadow-sm max-w-xs">
+                <p class="text-sm">Hello! I'm Sarah from CounselFlow support. How can I help you today?</p>
+                <span class="text-xs text-gray-500">Just now</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="p-4 border-t border-gray-200">
+          <div class="flex space-x-2">
+            <input type="text" placeholder="Type your message..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+            <button class="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm hover:bg-primary-700">Send</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(chatModal);
   };
 
   const handleScheduleCall = () => {
-    alert('Call scheduling opened. Please select your preferred time slot for a callback from our support team.');
+    // Show call scheduling interface
+    const scheduleModal = document.createElement('div');
+    scheduleModal.innerHTML = `
+      <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Schedule Support Call</h3>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Time</label>
+              <select class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                <option>Next 1 hour (High Priority)</option>
+                <option>Within 4 hours</option>
+                <option>Tomorrow morning (9-12 PM)</option>
+                <option>Tomorrow afternoon (1-5 PM)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+              <input type="tel" placeholder="+1 (555) 123-4567" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Issue Summary</label>
+              <textarea rows="3" placeholder="Brief description of your issue..." class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
+            </div>
+            <div class="flex space-x-3">
+              <button onclick="this.closest('.fixed').remove()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+              <button onclick="alert('Call scheduled! You will receive a confirmation SMS and email shortly.'); this.closest('.fixed').remove()" class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">Schedule</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(scheduleModal);
   };
 
   const handleVideoCall = () => {
-    alert('Video call initiated. Our support specialist will join you shortly for screen sharing and troubleshooting.');
+    // Show video call initiation
+    const videoModal = document.createElement('div');
+    videoModal.innerHTML = `
+      <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 text-center">
+          <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Video Support Session</h3>
+          <p class="text-gray-600 mb-4">Our specialist will join you for screen sharing and live troubleshooting.</p>
+          <div class="bg-purple-50 rounded-lg p-4 mb-4">
+            <p class="text-sm text-purple-800"><strong>Premium Feature:</strong> Video support includes screen sharing, file sharing, and priority assistance.</p>
+          </div>
+          <div class="flex space-x-3">
+            <button onclick="this.closest('.fixed').remove()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+            <button onclick="alert('Video session initiated! Meeting link sent to your email. Our specialist will join within 2 minutes.'); this.closest('.fixed').remove()" class="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">Start Session</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(videoModal);
   };
 
   const handleFAQHelpful = (faqId: string, helpful: boolean) => {
-    alert(helpful ? 'Thank you for your feedback!' : 'We\'ll work on improving this answer.');
+    // Update the helpful count and show feedback
+    const feedbackToast = document.createElement('div');
+    feedbackToast.innerHTML = `
+      <div class="fixed top-4 right-4 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50 animate-slide-in">
+        <div class="flex items-center">
+          <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+          <p class="text-sm text-gray-900">${helpful ? 'Thank you for your feedback!' : 'We\'ll work on improving this answer.'}</p>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(feedbackToast);
+    setTimeout(() => feedbackToast.remove(), 3000);
   };
 
   const filteredFAQs = faqs.filter(faq => {
@@ -187,6 +313,38 @@ export default function HelpSupportPage() {
 
   return (
     <MainLayout>
+      <style jsx>{`
+        @keyframes slide-in {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        .animate-slide-in {
+          animation: slide-in 0.3s ease-out;
+        }
+        
+        @keyframes pulse-glow {
+          0%, 100% {
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+          }
+          50% {
+            box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+          }
+        }
+        .pulse-glow {
+          animation: pulse-glow 2s infinite;
+        }
+        
+        .hover-lift:hover {
+          transform: translateY(-2px);
+          transition: transform 0.2s ease;
+        }
+      `}</style>
       <div className="py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
@@ -218,25 +376,25 @@ export default function HelpSupportPage() {
 
         {/* Quick Support Options */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow p-6 text-center" onClick={handleStartLiveChat}>
-            <MessageCircle className="w-8 h-8 text-primary-600 mx-auto mb-3" />
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md hover-lift transition-all duration-300 p-6 text-center" onClick={handleStartLiveChat}>
+            <MessageCircle className="w-8 h-8 text-primary-600 mx-auto mb-3 pulse-glow" />
             <h3 className="font-semibold">Live Chat</h3>
             <p className="text-sm text-gray-600">Chat with support</p>
             <span className="inline-block mt-2 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">Available 24/7</span>
           </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow p-6 text-center" onClick={handleScheduleCall}>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md hover-lift transition-all duration-300 p-6 text-center" onClick={handleScheduleCall}>
             <Phone className="w-8 h-8 text-green-600 mx-auto mb-3" />
             <h3 className="font-semibold">Phone Support</h3>
             <p className="text-sm text-gray-600">Schedule a callback</p>
             <span className="inline-block mt-2 px-2 py-1 bg-primary-100 text-primary-800 text-xs font-medium rounded-full">Within 1 hour</span>
           </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow p-6 text-center" onClick={handleVideoCall}>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md hover-lift transition-all duration-300 p-6 text-center" onClick={handleVideoCall}>
             <Video className="w-8 h-8 text-purple-600 mx-auto mb-3" />
             <h3 className="font-semibold">Video Support</h3>
             <p className="text-sm text-gray-600">Screen sharing help</p>
             <span className="inline-block mt-2 px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">Premium</span>
           </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow p-6 text-center" onClick={handleContactSupport}>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md hover-lift transition-all duration-300 p-6 text-center" onClick={handleContactSupport}>
             <Mail className="w-8 h-8 text-orange-600 mx-auto mb-3" />
             <h3 className="font-semibold">Email Support</h3>
             <p className="text-sm text-gray-600">Send us a message</p>
@@ -421,7 +579,75 @@ export default function HelpSupportPage() {
                         <div>{guide.type}</div>
                         <div>{guide.duration}</div>
                       </div>
-                      <button className="flex items-center px-3 py-1 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors">
+                      <button 
+                        onClick={() => {
+                          // Show guide content modal
+                          const guideModal = document.createElement('div');
+                          guideModal.innerHTML = `
+                            <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                              <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                                <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                                  <h3 class="text-lg font-medium text-gray-900">${guide.title}</h3>
+                                  <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                  </button>
+                                </div>
+                                <div class="p-6">
+                                  <div class="prose max-w-none">
+                                    <p class="text-gray-600 mb-4">${guide.description}</p>
+                                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                                      <h4 class="font-semibold text-blue-900 mb-2">What you'll learn:</h4>
+                                      <ul class="text-sm text-blue-800 space-y-1">
+                                        <li>• Step-by-step implementation guide</li>
+                                        <li>• Best practices and tips</li>
+                                        <li>• Common troubleshooting solutions</li>
+                                        <li>• Advanced configuration options</li>
+                                      </ul>
+                                    </div>
+                                    ${guide.type === 'Video Tutorial' ? `
+                                      <div class="bg-gray-100 rounded-lg p-8 text-center mb-4">
+                                        <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.5a4.5 4.5 0 011.414.212M15 10h-1.5a4.5 4.5 0 00-1.414.212"></path>
+                                        </svg>
+                                        <p class="text-gray-600 mb-4">Video tutorial content would load here</p>
+                                        <button class="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                                          ▶ Play Tutorial (${guide.duration})
+                                        </button>
+                                      </div>
+                                    ` : `
+                                      <div class="space-y-4">
+                                        <h5 class="font-semibold">Getting Started</h5>
+                                        <p class="text-gray-700">This comprehensive guide will walk you through all aspects of ${guide.title.toLowerCase()}...</p>
+                                        <div class="bg-gray-50 rounded-lg p-4">
+                                          <h6 class="font-medium mb-2">Quick Start Steps:</h6>
+                                          <ol class="list-decimal list-inside space-y-1 text-sm text-gray-700">
+                                            <li>Access the feature from your dashboard</li>
+                                            <li>Configure your initial settings</li>
+                                            <li>Test the functionality</li>
+                                            <li>Deploy to production</li>
+                                          </ol>
+                                        </div>
+                                      </div>
+                                    `}
+                                  </div>
+                                </div>
+                                <div class="p-6 border-t border-gray-200 flex justify-between">
+                                  <button onclick="alert('Guide bookmarked for later reference!')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                                    Bookmark
+                                  </button>
+                                  <button onclick="alert('Guide completed! Progress saved to your account.'); this.closest('.fixed').remove()" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+                                    Mark Complete
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          `;
+                          document.body.appendChild(guideModal);
+                        }}
+                        className="flex items-center px-3 py-1 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors"
+                      >
                         <Play className="w-4 h-4 mr-1" />
                         Start
                       </button>
@@ -513,7 +739,30 @@ export default function HelpSupportPage() {
                           <p className="font-medium">{download.name}</p>
                           <p className="text-sm text-gray-500">{download.size}</p>
                         </div>
-                        <button className="flex items-center px-3 py-1 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors">
+                        <button 
+                          onClick={() => {
+                            // Simulate download process
+                            const downloadToast = document.createElement('div');
+                            downloadToast.innerHTML = `
+                              <div class="fixed top-4 right-4 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
+                                <div class="flex items-center">
+                                  <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                    </svg>
+                                  </div>
+                                  <div>
+                                    <p class="text-sm font-medium text-gray-900">Download Started</p>
+                                    <p class="text-xs text-gray-500">${download.name} (${download.size})</p>
+                                  </div>
+                                </div>
+                              </div>
+                            `;
+                            document.body.appendChild(downloadToast);
+                            setTimeout(() => downloadToast.remove(), 3000);
+                          }}
+                          className="flex items-center px-3 py-1 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors"
+                        >
                           <Download className="w-4 h-4 mr-1" />
                           Download
                         </button>
@@ -539,7 +788,51 @@ export default function HelpSupportPage() {
                     ].map((link, index) => (
                       <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                         <p className="font-medium">{link.name}</p>
-                        <button className="flex items-center px-3 py-1 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 transition-colors">
+                        <button 
+                          onClick={() => {
+                            // Open link in new tab or show modal based on link type
+                            if (link.name === 'Community Forum') {
+                              const forumModal = document.createElement('div');
+                              forumModal.innerHTML = `
+                                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                                  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">CounselFlow Community Forum</h3>
+                                    <div class="space-y-4">
+                                      <div class="bg-blue-50 rounded-lg p-4">
+                                        <h4 class="font-medium text-blue-900">Recent Discussions</h4>
+                                        <div class="mt-2 space-y-2">
+                                          <p class="text-sm text-blue-800">• How to optimize AI contract analysis for large firms</p>
+                                          <p class="text-sm text-blue-800">• Best practices for entity management across jurisdictions</p>
+                                          <p class="text-sm text-blue-800">• Integration tips for existing practice management systems</p>
+                                        </div>
+                                      </div>
+                                      <div class="flex justify-between">
+                                        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Close</button>
+                                        <button onclick="window.open('${link.url}', '_blank'); this.closest('.fixed').remove()" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">Visit Forum</button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              `;
+                              document.body.appendChild(forumModal);
+                            } else if (link.name === 'Status Page') {
+                              // Show status information inline
+                              alert('System Status: All services operational ✅\\n\\nAPI: 99.94% uptime\\nWeb App: 99.97% uptime\\nAI Services: 99.89% uptime');
+                            } else {
+                              // Open external link
+                              window.open(link.url, '_blank');
+                              const linkToast = document.createElement('div');
+                              linkToast.innerHTML = `
+                                <div class="fixed top-4 right-4 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
+                                  <p class="text-sm text-gray-900">Opening ${link.name} in new tab...</p>
+                                </div>
+                              `;
+                              document.body.appendChild(linkToast);
+                              setTimeout(() => linkToast.remove(), 2000);
+                            }
+                          }}
+                          className="flex items-center px-3 py-1 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 transition-colors"
+                        >
                           <ExternalLink className="w-4 h-4 mr-1" />
                           Open
                         </button>
