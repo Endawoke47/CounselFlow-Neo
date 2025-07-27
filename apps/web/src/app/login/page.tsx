@@ -151,7 +151,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login({ email, password }, rememberMe);
+      await login({ email, password, rememberMe });
       // Navigation will be handled by the auth provider
     } catch (err) {
       // Error will be handled by the auth provider

@@ -10,6 +10,10 @@ interface User {
   lastName: string;
   role: string;
   status: string;
+  avatarUrl?: string;
+  phoneNumber?: string;
+  department?: string;
+  joinDate?: string;
 }
 
 interface AuthContextType {

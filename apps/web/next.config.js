@@ -1,11 +1,10 @@
-const crypto = require('crypto');
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["@counselflow/ui", "@counselflow/shared"],
   
-  // Enable standalone output for Docker deployment
-  output: 'standalone',
+  // Enable static export for deployment
+  output: 'export',
+  trailingSlash: true,
   
   // Basic experimental features only
   experimental: {
@@ -20,9 +19,11 @@ const nextConfig = {
     } : false,
   },
 
-  // Simplified image optimization
+  // Image optimization for static export
   images: {
+    unoptimized: true,
     formats: ['image/avif', 'image/webp'],
+    domains: [], // Add any external image domains here if needed
   },
 
   // Minimal webpack configuration
@@ -35,6 +36,11 @@ const nextConfig = {
       };
     }
     return config;
+  },
+
+  // Environment variables for deployment
+  env: {
+    NEXT_TELEMETRY_DISABLED: '1',
   },
 }
 
