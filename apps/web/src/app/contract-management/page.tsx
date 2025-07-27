@@ -1,10 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/layout/MainLayout';
-import { FileText, Plus, Search, Download, Upload, Edit3, Trash2, Eye, CheckCircle, AlertTriangle, BarChart3, Calendar, Brain, TrendingUp, Clock, DollarSign } from 'lucide-react';
+import { SimpleAIContractAnalysis } from '../../components/SimpleAIContractAnalysis';
+import { useAuth } from '../auth-wrapper';
+import { 
+  mockContracts, 
+  mockClients, 
+  type Contract, 
+  type Client 
+} from '@/lib/mock-data';
+import { FileText, Plus, Search, Download, Upload, Edit3, Trash2, Eye, CheckCircle, AlertTriangle, BarChart3, Calendar, Brain, TrendingUp, Clock, DollarSign, Zap } from 'lucide-react';
 
-interface Contract {
+// Frontend display interface for contracts
+interface ContractDisplay {
   id: string;
   title: string;
   counterparty: string;
@@ -23,86 +32,124 @@ interface Contract {
 export default function ContractManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [contracts, setContracts] = useState<Contract[]>([
-    {
-      id: 'CTR001',
-      title: 'Software Licensing Agreement',
-      counterparty: 'TechSoft Solutions Ltd',
-      type: 'Software License',
-      status: 'Active',
-      value: 250000,
-      startDate: '2024-01-15',
-      endDate: '2025-01-14',
-      renewalDate: '2025-01-14',
-      riskScore: 85,
-      compliance: 95,
-      autoRenewal: true,
-      priority: 'High'
-    },
-    {
-      id: 'CTR002',
-      title: 'Office Lease Agreement',
-      counterparty: 'Prime Properties Kenya',
-      type: 'Real Estate',
-      status: 'Active',
-      value: 480000,
-      startDate: '2023-06-01',
-      endDate: '2026-05-31',
-      riskScore: 92,
-      compliance: 88,
-      autoRenewal: false,
-      priority: 'Medium'
-    },
-    {
-      id: 'CTR003',
-      title: 'Supply Chain Agreement',
-      counterparty: 'African Logistics Co',
-      type: 'Supply Chain',
-      status: 'Under Review',
-      value: 150000,
-      startDate: '2024-12-01',
-      endDate: '2025-11-30',
-      riskScore: 78,
-      compliance: 82,
-      autoRenewal: true,
-      priority: 'High'
-    },
-    {
-      id: 'CTR004',
-      title: 'Employment Contract',
-      counterparty: 'Jane Doe',
-      type: 'Employment',
-      status: 'Active',
-      value: 75000,
-      startDate: '2024-03-01',
-      endDate: '2025-02-28',
-      riskScore: 65,
-      compliance: 98,
-      autoRenewal: false,
-      priority: 'Low'
-    }
-  ]);
+  const [contracts, setContracts] = useState<ContractDisplay[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isAddingContract, setIsAddingContract] = useState(false);
-  const [editingContract, setEditingContract] = useState<Contract | null>(null);
-  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+  const [editingContract, setEditingContract] = useState<ContractDisplay | null>(null);
+  const [selectedContract, setSelectedContract] = useState<ContractDisplay | null>(null);
+  const [showAIAnalysis, setShowAIAnalysis] = useState(false);
+  const [aiAnalysisContract, setAIAnalysisContract] = useState<ContractDisplay | null>(null);
+  
+  const { user } = useAuth();
+
+  // Load contracts and clients from API
+  useEffect(() => {
+    loadContracts();
+    loadClients();
+  }, []);
+
+  const loadClients = async () => {
+    try {
+      // Use mock data directly
+      setClients(mockClients);
+    } catch (err: any) {
+      console.error('Failed to load clients:', err);
+      setClients([]);
+    }
+  };
+
+  const loadContracts = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Transform mock contract data to match frontend interface
+      const transformedContracts: ContractDisplay[] = mockContracts.map((contract: Contract) => {
+        const client = mockClients.find(c => c.id === contract.clientId);
+        return {
+          id: contract.id,
+          title: contract.title,
+          counterparty: client?.name || 'Unknown Client',
+          type: contract.contractType,
+          status: contract.status,
+          value: contract.value,
+          startDate: contract.startDate,
+          endDate: contract.endDate,
+          renewalDate: contract.renewalDate,
+          riskScore: contract.riskScore,
+          compliance: contract.complianceStatus === 'compliant' ? 95 : 
+                     contract.complianceStatus === 'under-review' ? 75 : 45,
+          autoRenewal: !!contract.renewalDate,
+          priority: contract.riskScore > 60 ? 'high' : contract.riskScore > 40 ? 'medium' : 'low'
+        };
+      });
+      
+      setContracts(transformedContracts);
+    } catch (err: any) {
+      console.error('Failed to load contracts:', err);
+      setError(err.message || 'Failed to load contracts');
+      // Fallback to mock data for development
+      setContracts([
+        {
+          id: 'CTR001',
+          title: 'Software Licensing Agreement',
+          counterparty: 'TechSoft Solutions Ltd',
+          type: 'Software License',
+          status: 'Active',
+          value: 250000,
+          startDate: '2024-01-15',
+          endDate: '2025-01-14',
+          renewalDate: '2025-01-14',
+          riskScore: 85,
+          compliance: 95,
+          autoRenewal: true,
+          priority: 'High'
+        },
+        {
+          id: 'CTR002',
+          title: 'Office Lease Agreement',
+          counterparty: 'Prime Properties Kenya',
+          type: 'Real Estate',
+          status: 'Active',
+          value: 480000,
+          startDate: '2023-06-01',
+          endDate: '2026-05-31',
+          riskScore: 92,
+          compliance: 88,
+          autoRenewal: false,
+          priority: 'Medium'
+        }
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Handlers for full functionality
   const handleAddContract = () => {
     setIsAddingContract(true);
   };
 
-  const handleEditContract = (contract: Contract) => {
+  const handleEditContract = (contract: ContractDisplay) => {
     setEditingContract(contract);
     setIsAddingContract(true);
   };
 
-  const handleDeleteContract = (contractId: string) => {
+  const handleDeleteContract = async (contractId: string) => {
     if (confirm('Are you sure you want to delete this contract?')) {
-      setContracts(contracts.filter(c => c.id !== contractId));
+      try {
+        // Mock delete operation
+        setContracts(contracts.filter(c => c.id !== contractId));
+      } catch (err: any) {
+        console.error('Failed to delete contract:', err);
+        alert('Failed to delete contract: ' + (err.message || 'Unknown error'));
+      }
     }
   };
 
-  const handleViewContract = (contract: Contract) => {
+  const handleViewContract = (contract: ContractDisplay) => {
     setSelectedContract(contract);
   };
 
@@ -137,47 +184,78 @@ export default function ContractManagementPage() {
   const handleAIReview = (contractId: string) => {
     const contract = contracts.find(c => c.id === contractId);
     if (contract) {
-      alert(`AI Review initiated for "${contract.title}". Analyzing clauses, risk factors, and compliance requirements...`);
+      setAIAnalysisContract(contract);
+      setShowAIAnalysis(true);
     }
   };
 
-  const handleSaveContract = (contractData: Partial<Contract>) => {
-    if (editingContract) {
-      setContracts(contracts.map(c => c.id === editingContract.id ? { ...c, ...contractData } : c));
-    } else {
-      const newContract: Contract = {
-        id: `CTR${String(contracts.length + 1).padStart(3, '0')}`,
-        title: contractData.title || '',
-        counterparty: contractData.counterparty || '',
-        type: contractData.type || '',
-        status: contractData.status || 'Draft',
-        value: contractData.value || 0,
-        startDate: contractData.startDate || new Date().toISOString().split('T')[0],
-        endDate: contractData.endDate || '',
-        renewalDate: contractData.renewalDate,
-        riskScore: contractData.riskScore || 0,
-        compliance: contractData.compliance || 0,
-        autoRenewal: contractData.autoRenewal || false,
-        priority: contractData.priority || 'Medium'
+  const handleAIAnalysisComplete = (analysis: any) => {
+    console.log('AI Analysis completed:', analysis);
+    // Update contract with AI analysis results if needed
+    if (aiAnalysisContract && analysis) {
+      const updatedContract = {
+        ...aiAnalysisContract,
+        riskScore: analysis.overallRiskScore || aiAnalysisContract.riskScore,
+        // Update other fields based on AI analysis
       };
-      setContracts([...contracts, newContract]);
+      setContracts(contracts.map(c => c.id === aiAnalysisContract.id ? updatedContract : c));
     }
+  };
+
+  const handleSaveContract = async (contractData: Partial<ContractDisplay>) => {
+    try {
+      if (editingContract) {
+        // Mock update operation
+        const updatedContract: ContractDisplay = {
+          ...editingContract,
+          ...contractData
+        };
+        setContracts(contracts.map(c => c.id === editingContract.id ? updatedContract : c));
+      } else {
+        // Mock create operation
+        const newContract: ContractDisplay = {
+          id: `contract-${Date.now()}`,
+          title: contractData.title || 'Untitled Contract',
+          counterparty: contractData.counterparty || 'Unknown Client',
+          type: contractData.type || 'service-agreement',
+          status: contractData.status || 'draft',
+          value: contractData.value || 0,
+          startDate: contractData.startDate || new Date().toISOString().split('T')[0],
+          endDate: contractData.endDate || '',
+          renewalDate: contractData.renewalDate,
+          riskScore: contractData.riskScore || 40,
+          compliance: 85,
+          autoRenewal: !!contractData.renewalDate,
+          priority: contractData.priority || 'medium'
+        };
+        setContracts([...contracts, newContract]);
+      }
+    } catch (err: any) {
+      console.error('Failed to save contract:', err);
+      alert('Failed to save contract: ' + (err.message || 'Unknown error'));
+      return; // Don't close modal on error
+    }
+    
     setIsAddingContract(false);
     setEditingContract(null);
   };
 
   const stats = [
-    { label: 'Total Contracts', value: '342', change: '+28', icon: FileText, color: 'text-primary-600' },
-    { label: 'Active Contracts', value: '287', change: '+15', icon: CheckCircle, color: 'text-green-600' },
-    { label: 'Total Value', value: '$2.4M', change: '+12%', icon: DollarSign, color: 'text-purple-600' },
-    { label: 'Expiring Soon', value: '23', change: '+5', icon: Clock, color: 'text-orange-600' }
+    { label: 'Total Contracts', value: contracts.length.toString(), change: '+3', icon: FileText, color: 'text-primary-600' },
+    { label: 'Active Contracts', value: contracts.filter(c => c.status === 'executed').length.toString(), change: '+2', icon: CheckCircle, color: 'text-green-600' },
+    { label: 'Total Value', value: `KES ${(contracts.reduce((sum, c) => sum + c.value, 0) / 1000000000).toFixed(1)}B`, change: '+15%', icon: DollarSign, color: 'text-purple-600' },
+    { label: 'High Risk', value: contracts.filter(c => c.riskScore > 60).length.toString(), change: '-1', icon: AlertTriangle, color: 'text-orange-600' }
   ];
 
-  const renewalAlerts = [
-    { contract: 'Software Licensing Agreement', counterparty: 'TechSoft Solutions Ltd', daysUntilExpiry: 15, value: 250000 },
-    { contract: 'Marketing Services Agreement', counterparty: 'Creative Agency Co', daysUntilExpiry: 30, value: 85000 },
-    { contract: 'Maintenance Contract', counterparty: 'IT Support Services', daysUntilExpiry: 45, value: 120000 },
-  ];
+  const renewalAlerts = contracts
+    .filter(c => c.renewalDate && new Date(c.renewalDate) <= new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)) // 60 days
+    .map(c => ({
+      contract: c.title,
+      counterparty: c.counterparty,
+      daysUntilExpiry: Math.ceil((new Date(c.renewalDate!).getTime() - new Date().getTime()) / (24 * 60 * 60 * 1000)),
+      value: c.value
+    }))
+    .slice(0, 3);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -475,6 +553,7 @@ export default function ContractManagementPage() {
               const contractData = {
                 title: formData.get('title') as string,
                 counterparty: formData.get('counterparty') as string,
+                clientId: formData.get('clientId') as string,
                 type: formData.get('type') as string,
                 status: formData.get('status') as string,
                 value: parseInt(formData.get('value') as string) || 0,
@@ -508,6 +587,20 @@ export default function ContractManagementPage() {
                     defaultValue={editingContract?.counterparty}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Client</label>
+                  <select
+                    name="clientId"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="">Select Client (Optional)</option>
+                    {clients.map((client) => (
+                      <option key={client.id} value={client.id}>
+                        {client.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Contract Type</label>
@@ -808,6 +901,37 @@ export default function ContractManagementPage() {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Contract Analysis Modal */}
+      {showAIAnalysis && aiAnalysisContract && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-6xl shadow-lg rounded-md bg-white">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900 flex items-center">
+                <Zap className="w-6 h-6 mr-2 text-purple-600" />
+                AI Contract Analysis: {aiAnalysisContract.title}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowAIAnalysis(false);
+                  setAIAnalysisContract(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            <div className="max-h-[80vh] overflow-y-auto">
+              <SimpleAIContractAnalysis
+                contractText={`Sample contract text for ${aiAnalysisContract.title}. This would normally be the actual contract content loaded from the database or file storage.`}
+                onAnalysisComplete={handleAIAnalysisComplete}
+              />
             </div>
           </div>
         </div>

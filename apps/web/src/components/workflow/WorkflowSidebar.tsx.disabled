@@ -1,0 +1,376 @@
+import React from 'react';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+
+// Draggable workflow blocks
+const workflowBlocks = {
+  triggers: [
+    {
+      id: 'contract-upload',
+      type: 'trigger',
+      title: 'Contract Upload',
+      description: 'Triggered when a contract is uploaded',
+      icon: '📄',
+      config: { event: 'contract.upload' }
+    },
+    {
+      id: 'client-inquiry',
+      type: 'trigger',
+      title: 'Client Inquiry',
+      description: 'Triggered when new client submits inquiry',
+      icon: '👤',
+      config: { event: 'client.inquiry' }
+    },
+    {
+      id: 'deadline-approaching',
+      type: 'trigger',
+      title: 'Deadline Alert',
+      description: 'Triggered when deadline is approaching',
+      icon: '⏰',
+      config: { event: 'deadline.approaching' }
+    },
+    {
+      id: 'payment-received',
+      type: 'trigger',
+      title: 'Payment Received',
+      description: 'Triggered when payment is processed',
+      icon: '💰',
+      config: { event: 'payment.received' }
+    },
+    {
+      id: 'document-signed',
+      type: 'trigger',
+      title: 'Document Signed',
+      description: 'Triggered when document is e-signed',
+      icon: '✍️',
+      config: { event: 'document.signed' }
+    }
+  ],
+  aiAgents: [
+    {
+      id: 'contract-analyzer',
+      type: 'aiAgent',
+      title: 'Contract Analyzer',
+      description: 'AI-powered contract risk analysis',
+      icon: '🤖',
+      config: { 
+        prompt: 'Analyze this contract for potential risks, missing clauses, and compliance issues',
+        model: 'gpt-4',
+        temperature: 0.1
+      }
+    },
+    {
+      id: 'document-classifier',
+      type: 'aiAgent',
+      title: 'Document Classifier',
+      description: 'Automatically classify document types',
+      icon: '🏷️',
+      config: { 
+        prompt: 'Classify this legal document by type and urgency level',
+        model: 'gpt-4',
+        temperature: 0.0
+      }
+    },
+    {
+      id: 'risk-assessor',
+      type: 'aiAgent',
+      title: 'Risk Assessor',
+      description: 'Evaluate legal and financial risks',
+      icon: '⚖️',
+      config: { 
+        prompt: 'Assess the legal and financial risks in this document and provide a risk score',
+        model: 'gpt-4',
+        temperature: 0.2
+      }
+    },
+    {
+      id: 'clause-extractor',
+      type: 'aiAgent',
+      title: 'Clause Extractor',
+      description: 'Extract key clauses and terms',
+      icon: '📋',
+      config: { 
+        prompt: 'Extract and summarize all key clauses, terms, and obligations from this contract',
+        model: 'gpt-4',
+        temperature: 0.1
+      }
+    },
+    {
+      id: 'compliance-checker',
+      type: 'aiAgent',
+      title: 'Compliance Checker',
+      description: 'Check regulatory compliance',
+      icon: '✅',
+      config: { 
+        prompt: 'Review this document for compliance with relevant regulations and standards',
+        model: 'gpt-4',
+        temperature: 0.0
+      }
+    }
+  ],
+  actions: [
+    {
+      id: 'save-to-matter',
+      type: 'action',
+      title: 'Save to Matter',
+      description: 'Save results to matter file',
+      icon: '💾',
+      config: { action: 'save_to_matter' }
+    },
+    {
+      id: 'create-task',
+      type: 'action',
+      title: 'Create Task',
+      description: 'Create a task for team member',
+      icon: '📝',
+      config: { action: 'create_task' }
+    },
+    {
+      id: 'update-status',
+      type: 'action',
+      title: 'Update Status',
+      description: 'Update case or document status',
+      icon: '🔄',
+      config: { action: 'update_status' }
+    },
+    {
+      id: 'generate-report',
+      type: 'action',
+      title: 'Generate Report',
+      description: 'Create automated report',
+      icon: '📊',
+      config: { action: 'generate_report' }
+    },
+    {
+      id: 'send-email',
+      type: 'action',
+      title: 'Send Email',
+      description: 'Send automated email notification',
+      icon: '📧',
+      config: { action: 'send_email' }
+    },
+    {
+      id: 'schedule-meeting',
+      type: 'action',
+      title: 'Schedule Meeting',
+      description: 'Schedule calendar meeting',
+      icon: '📅',
+      config: { action: 'schedule_meeting' }
+    }
+  ],
+  conditions: [
+    {
+      id: 'risk-threshold',
+      type: 'condition',
+      title: 'Risk Threshold',
+      description: 'Check if risk score exceeds threshold',
+      icon: '⚠️',
+      config: { condition: 'risk_score > 0.7' }
+    },
+    {
+      id: 'amount-check',
+      type: 'condition',
+      title: 'Amount Check',
+      description: 'Check if amount exceeds limit',
+      icon: '💰',
+      config: { condition: 'amount > 10000' }
+    },
+    {
+      id: 'deadline-check',
+      type: 'condition',
+      title: 'Deadline Check',
+      description: 'Check if deadline is approaching',
+      icon: '⏱️',
+      config: { condition: 'days_until_deadline < 7' }
+    },
+    {
+      id: 'document-type',
+      type: 'condition',
+      title: 'Document Type',
+      description: 'Check document type classification',
+      icon: '📄',
+      config: { condition: 'document_type == "contract"' }
+    }
+  ],
+  notifications: [
+    {
+      id: 'email-notification',
+      type: 'notification',
+      title: 'Email Alert',
+      description: 'Send email notification',
+      icon: '📧',
+      config: { recipients: 'legal-team@firm.com' }
+    },
+    {
+      id: 'slack-notification',
+      type: 'notification',
+      title: 'Slack Alert',
+      description: 'Send Slack notification',
+      icon: '💬',
+      config: { channel: '#legal-alerts' }
+    },
+    {
+      id: 'sms-notification',
+      type: 'notification',
+      title: 'SMS Alert',
+      description: 'Send SMS notification',
+      icon: '📱',
+      config: { phone: '+1234567890' }
+    },
+    {
+      id: 'dashboard-alert',
+      type: 'notification',
+      title: 'Dashboard Alert',
+      description: 'Show alert on dashboard',
+      icon: '🔔',
+      config: { priority: 'high' }
+    }
+  ]
+};
+
+interface WorkflowSidebarProps {
+  onAddNode: (type: string, data: any) => void;
+}
+
+export function WorkflowSidebar({ onAddNode }: WorkflowSidebarProps) {
+  const handleDragStart = (event: React.DragEvent, nodeType: string, nodeData: any) => {
+    event.dataTransfer.setData('application/reactflow', nodeType);
+    event.dataTransfer.setData('nodeData', JSON.stringify(nodeData));
+    event.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleAddNode = (nodeType: string, nodeData: any) => {
+    onAddNode(nodeType, nodeData);
+  };
+
+  const BlockItem = ({ block, category }: { block: any; category: string }) => (
+    <div
+      className="p-3 border rounded-lg cursor-move hover:shadow-md transition-shadow bg-white"
+      draggable
+      onDragStart={(e) => handleDragStart(e, block.type, block)}
+      onClick={() => handleAddNode(block.type, block)}
+      title={`Drag to canvas or click to add: ${block.description}`}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">{block.icon}</span>
+        <span className="font-medium text-sm">{block.title}</span>
+      </div>
+      <p className="text-xs text-gray-600 mb-2">{block.description}</p>
+      <div className="text-xs bg-gray-100 px-2 py-1 rounded">
+        {category}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-full overflow-hidden">
+      <div className="p-4 border-b">
+        <h3 className="text-lg font-semibold">Workflow Blocks</h3>
+        <p className="text-sm text-gray-600">Drag blocks to the canvas to build your workflow</p>
+      </div>
+      
+      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        {/* Triggers Section */}
+        <div>
+          <h4 className="font-medium text-green-700 mb-3 flex items-center gap-2">
+            <span>⚡</span> Triggers
+          </h4>
+          <div className="space-y-3">
+            {workflowBlocks.triggers.map(block => (
+              <BlockItem key={block.id} block={block} category="Trigger" />
+            ))}
+          </div>
+        </div>
+
+        {/* AI Agents Section */}
+        <div>
+          <h4 className="font-medium text-purple-700 mb-3 flex items-center gap-2">
+            <span>🤖</span> AI Agents
+          </h4>
+          <div className="space-y-3">
+            {workflowBlocks.aiAgents.map(block => (
+              <BlockItem key={block.id} block={block} category="AI Agent" />
+            ))}
+          </div>
+        </div>
+
+        {/* Actions Section */}
+        <div>
+          <h4 className="font-medium text-blue-700 mb-3 flex items-center gap-2">
+            <span>⚙️</span> Actions
+          </h4>
+          <div className="space-y-3">
+            {workflowBlocks.actions.map(block => (
+              <BlockItem key={block.id} block={block} category="Action" />
+            ))}
+          </div>
+        </div>
+
+        {/* Conditions Section */}
+        <div>
+          <h4 className="font-medium text-yellow-700 mb-3 flex items-center gap-2">
+            <span>❓</span> Conditions
+          </h4>
+          <div className="space-y-3">
+            {workflowBlocks.conditions.map(block => (
+              <BlockItem key={block.id} block={block} category="Condition" />
+            ))}
+          </div>
+        </div>
+
+        {/* Notifications Section */}
+        <div>
+          <h4 className="font-medium text-pink-700 mb-3 flex items-center gap-2">
+            <span>📧</span> Notifications
+          </h4>
+          <div className="space-y-3">
+            {workflowBlocks.notifications.map(block => (
+              <BlockItem key={block.id} block={block} category="Notification" />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="p-4 border-t bg-gray-50">
+        <h4 className="font-medium mb-3">Quick Add</h4>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleAddNode('trigger', workflowBlocks.triggers[0])}
+            className="text-xs"
+          >
+            ⚡ Trigger
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleAddNode('aiAgent', workflowBlocks.aiAgents[0])}
+            className="text-xs"
+          >
+            🤖 AI Agent
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleAddNode('action', workflowBlocks.actions[0])}
+            className="text-xs"
+          >
+            ⚙️ Action
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleAddNode('condition', workflowBlocks.conditions[0])}
+            className="text-xs"
+          >
+            ❓ Condition
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default WorkflowSidebar;

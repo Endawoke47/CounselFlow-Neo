@@ -1,245 +1,315 @@
 'use client';
 
-import React from 'react';
-import MainLayout from '../../components/layout/MainLayout';
-import { 
-  TrendingUp, 
-  FileText, 
-  Scale, 
-  AlertTriangle,
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../auth-wrapper';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  FileText,
+  Building2,
   DollarSign,
-  CheckCircle,
   Clock,
+  TrendingUp,
+  Plus,
+  AlertTriangle,
+  Loader2,
+  Scale,
   BarChart3,
-  Building2
+  Shield,
+  Target,
+  Users,
+  BookOpen,
+  CheckCircle2,
+  TrendingDown,
+  Activity
 } from 'lucide-react';
+import MainLayout from '@/components/layout/MainLayout';
+import { productionApiClient } from '@/lib/production-api-client';
+import { 
+  mockClients, 
+  mockMatters, 
+  mockTasks, 
+  mockContracts,
+  mockDisputes,
+  calculateDashboardMetrics,
+  type Client,
+  type Matter,
+  type Task,
+  type Contract
+} from '@/lib/mock-data';
 
-// Custom Badge Component with Corporate Theme
-const Badge = ({ children, variant = 'default', className = '' }: { children: React.ReactNode; variant?: string; className?: string }) => {
-  const variantClasses = {
-    default: 'bg-neutral-100 text-neutral-800',
-    urgent: 'bg-error-100 text-error-800',
-    high: 'bg-warning-100 text-warning-800',
-    medium: 'bg-secondary-100 text-secondary-800',
-    low: 'bg-success-100 text-success-800',
-    active: 'bg-primary-100 text-primary-800'
-  };
-  
-  return (
-    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${variantClasses[variant as keyof typeof variantClasses] || variantClasses.default} ${className}`}>
-      {children}
-    </span>
-  );
-};
-
-// Custom Card Components with Corporate Theme
-const Card = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
-  <div className={`bg-white rounded-lg border border-neutral-200 shadow-corporate ${className}`}>
-    {children}
-  </div>
-);
-
-const CardHeader = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
-  <div className={`px-6 py-4 ${className}`}>
-    {children}
-  </div>
-);
-
-const CardTitle = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
-  <h3 className={`text-lg font-semibold text-neutral-900 ${className}`}>
-    {children}
-  </h3>
-);
-
-const CardDescription = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
-  <p className={`text-sm text-neutral-600 ${className}`}>
-    {children}
-  </p>
-);
-
-const CardContent = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
-  <div className={`px-6 pb-4 ${className}`}>
-    {children}
-  </div>
-);
-
-// Custom Button Component
-const Button = ({ children, variant = 'default', size = 'default', className = '', onClick }: { 
-  children: React.ReactNode; 
-  variant?: string; 
-  size?: string; 
-  className?: string;
-  onClick?: () => void;
-}) => {
-  const variantClasses = {
-    default: 'bg-primary-600 text-white hover:bg-primary-700',
-    outline: 'border border-primary-300 text-primary-700 hover:bg-primary-50',
-    ghost: 'text-primary-700 hover:bg-primary-50',
-    secondary: 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-  };
-  
-  const sizeClasses = {
-    default: 'px-4 py-2 text-sm',
-    sm: 'px-3 py-1.5 text-xs',
-    lg: 'px-6 py-3 text-base'
-  };
-  
-  return (
-    <button 
-      onClick={onClick}
-      className={`inline-flex items-center justify-center font-medium rounded-md transition-colors focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${variantClasses[variant as keyof typeof variantClasses] || variantClasses.default} ${sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.default} ${className}`}
-    >
-      {children}
-    </button>
-  );
-};
+interface Activity {
+  id: string;
+  title: string;
+  description: string;
+  priority: string;
+  time: string;
+  timestamp: string;
+}
 
 export default function DashboardPage() {
-  const metrics = [
+  const { user } = useAuth();
+  const router = useRouter();
+  
+  // Calculate dynamic metrics from mock data
+  const dashboardMetrics = calculateDashboardMetrics();
+  
+  const [metrics, setMetrics] = useState([
     {
       title: 'Active Matters',
-      value: '24',
-      change: '+12%',
+      value: dashboardMetrics.activeMatters.toString(),
+      change: '+12.5%',
       trend: 'up',
       icon: FileText,
-      color: 'text-primary-600'
+      color: 'text-blue-600'
+    },
+    {
+      title: 'Total Clients',
+      value: dashboardMetrics.totalClients.toString(),
+      change: '+8.3%',
+      trend: 'up',
+      icon: Building2,
+      color: 'text-purple-600'
     },
     {
       title: 'Revenue (YTD)',
-      value: 'KES 2.4M',
-      change: '+18%',
+      value: `KES ${(dashboardMetrics.totalRevenue / 1000000).toFixed(1)}M`,
+      change: '+15.2%',
       trend: 'up',
       icon: DollarSign,
-      color: 'text-success-600'
+      color: 'text-green-600'
     },
     {
       title: 'Pending Tasks',
-      value: '8',
-      change: '-5%',
+      value: dashboardMetrics.pendingTasks.toString(),
+      change: '-5.8%',
       trend: 'down',
       icon: Clock,
-      color: 'text-warning-600'
+      color: 'text-orange-600'
     },
     {
-      title: 'Client Satisfaction',
-      value: '94%',
-      change: '+2%',
+      title: 'High Risk Matters',
+      value: dashboardMetrics.highRiskClients.toString(),
+      change: '-2.1%',
+      trend: 'down',
+      icon: Shield,
+      color: 'text-red-600'
+    },
+    {
+      title: 'Case Success Rate',
+      value: `${dashboardMetrics.caseSuccessRate}%`,
+      change: '+3.2%',
       trend: 'up',
-      icon: CheckCircle,
-      color: 'text-secondary-600'
-    }
-  ];
-
-  const recentActivities = [
+      icon: CheckCircle2,
+      color: 'text-emerald-600'
+    },
     {
-      id: 1,
-      type: 'contract',
-      title: 'New Contract Review Required',
-      description: 'Service Agreement - TechCorp Ltd',
+      title: 'Billing Realization',
+      value: `${dashboardMetrics.billingRealization}%`,
+      change: '+1.8%',
+      trend: 'up',
+      icon: BarChart3,
+      color: 'text-indigo-600'
+    },
+    {
+      title: 'Active Disputes',
+      value: mockDisputes.length.toString(),
+      change: '+0%',
+      trend: 'up',
+      icon: Scale,
+      color: 'text-amber-600'
+    }
+  ]);
+
+  const [clients, setClients] = useState<Client[]>(mockClients);
+  const [contracts, setContracts] = useState<Contract[]>(mockContracts);
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([
+    {
+      id: '1',
+      title: 'New matter opened for Safaricom PLC',
+      description: '5G Regulatory Compliance matter created with high priority',
+      priority: 'high',
       time: '2 hours ago',
-      priority: 'high'
+      timestamp: new Date().toISOString()
     },
     {
-      id: 2,
-      type: 'dispute',
-      title: 'Court Filing Deadline Approaching',
-      description: 'Case #2024-CV-1234 - Response due in 3 days',
-      time: '5 hours ago',
-      priority: 'urgent'
+      id: '2',
+      title: 'Contract review completed',
+      description: 'Digital Banking Platform License reviewed and approved for KCB',
+      priority: 'medium',
+      time: '4 hours ago',
+      timestamp: new Date().toISOString()
     },
     {
-      id: 3,
-      type: 'entity',
-      title: 'Annual Filing Completed',
-      description: 'ABC Holdings Ltd - Annual returns submitted',
+      id: '3',
+      title: 'Court hearing scheduled',
+      description: 'Product liability defense hearing set for EABL case',
+      priority: 'high',
+      time: '6 hours ago',
+      timestamp: new Date().toISOString()
+    },
+    {
+      id: '4',
+      title: 'Client meeting completed',
+      description: 'Strategic planning session with Equity Group Holdings',
+      priority: 'medium',
       time: '1 day ago',
-      priority: 'low'
+      timestamp: new Date().toISOString()
+    },
+    {
+      id: '5',
+      title: 'Compliance audit initiated',
+      description: 'Annual compliance review started for Ministry of Health',
+      priority: 'urgent',
+      time: '1 day ago',
+      timestamp: new Date().toISOString()
+    },
+    {
+      id: '6',
+      title: 'Settlement negotiation concluded',
+      description: 'Successful mediation for Kenya Airways employment dispute',
+      priority: 'medium',
+      time: '2 days ago',
+      timestamp: new Date().toISOString()
     }
-  ];
+  ]);
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'urgent':
-        return <Badge variant="urgent">Urgent</Badge>;
-      case 'high':
-        return <Badge variant="high">High</Badge>;
-      case 'low':
-        return <Badge variant="low">Low</Badge>;
-      default:
-        return <Badge>Normal</Badge>;
+  const loadDashboardData = async () => {
+    // Simulate loading with mock data
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // In a real app, this would be API calls
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+      
+      // Data is already loaded from mock data
+      setIsLoading(false);
+    } catch (err) {
+      setError('Failed to load dashboard data');
+      setIsLoading(false);
     }
   };
 
+  // Event handlers
+  const handleNewMatter = () => {
+    router.push('/matter-management');
+  };
+
+  const handleFileDispute = () => {
+    router.push('/dispute-management');
+  };
+
+  const handleAddEntity = () => {
+    router.push('/client-management');
+  };
+
+  const handleGenerateReport = () => {
+    router.push('/reports');
+  };
+
+  const getPriorityBadge = (priority: string) => {
+    switch (priority.toLowerCase()) {
+      case 'urgent':
+        return <Badge variant="destructive">Urgent</Badge>;
+      case 'high':
+        return <Badge variant="warning">High</Badge>;
+      case 'medium':
+        return <Badge variant="default">Medium</Badge>;
+      case 'low':
+        return <Badge variant="success">Low</Badge>;
+      default:
+        return <Badge variant="default">{priority}</Badge>;
+    }
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
   return (
     <MainLayout>
-      <div className="py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-neutral-900">Dashboard</h1>
-            <p className="mt-2 text-lg text-neutral-600">Welcome back! Here's what's happening with your legal practice.</p>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-neutral-900">Dashboard</h1>
+            <p className="text-neutral-600">Overview of your legal practice metrics and activities</p>
           </div>
+          <Button onClick={handleAddEntity} className="gap-2">
+            <Plus className="h-4 w-4" />
+            New Client
+          </Button>
+        </div>
 
-          {/* Metrics Grid */}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-            {metrics.map((metric) => (
-              <Card key={metric.title} className="hover:shadow-corporate-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <div className={`p-3 rounded-lg bg-opacity-10 ${metric.color.replace('text-', 'bg-')}`}>
-                        <metric.icon className={`h-6 w-6 ${metric.color}`} />
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+            <div className="flex">
+              <AlertTriangle className="h-5 w-5 text-red-400" />
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Error</h3>
+                <p className="mt-1 text-sm text-red-700">{error}</p>
+                <Button variant="outline" size="sm" className="mt-2" onClick={loadDashboardData}>
+                  Retry
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+            <span className="ml-2">Loading dashboard...</span>
+          </div>
+        )}
+
+        {!isLoading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {metrics.map((metric) => {
+              const IconComponent = metric.icon;
+              const TrendIcon = metric.trend === 'up' ? TrendingUp : TrendingDown;
+              return (
+                <Card key={metric.title}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-neutral-600">{metric.title}</p>
+                        <p className="text-2xl font-bold text-neutral-900">{metric.value}</p>
+                        <div className="flex items-center mt-1">
+                          <TrendIcon className={`h-4 w-4 ${metric.trend === 'up' ? 'text-green-500' : 'text-red-500'}`} />
+                          <span className={`text-sm ml-1 ${metric.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                            {metric.change}
+                          </span>
+                        </div>
                       </div>
+                      <IconComponent className={`h-8 w-8 ${metric.color}`} />
                     </div>
-                    <div className="ml-4 w-0 flex-1">
-                      <dl>
-                        <dt className="text-sm font-medium text-neutral-500 truncate">{metric.title}</dt>
-                        <dd className="flex items-baseline">
-                          <div className="text-2xl font-bold text-neutral-900">{metric.value}</div>
-                          <div className={`ml-2 flex items-baseline text-sm font-semibold ${
-                            metric.trend === 'up' ? 'text-success-600' : 'text-error-600'
-                          }`}>
-                            {metric.trend === 'up' ? (
-                              <TrendingUp className="self-center flex-shrink-0 h-4 w-4" />
-                            ) : (
-                              <svg className="self-center flex-shrink-0 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
-                              </svg>
-                            )}
-                            <span className="ml-1">{metric.change}</span>
-                          </div>
-                        </dd>
-                      </dl>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
+        )}
 
-          {/* Recent Activities and Quick Actions */}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="space-y-6">
             {/* Recent Activities */}
             <Card>
               <CardHeader>
                 <CardTitle>Recent Activities</CardTitle>
-                <CardDescription>Latest updates from your legal practice</CardDescription>
+                <CardDescription>Latest updates and actions in your practice</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {recentActivities.map((activity) => (
-                    <div key={activity.id} className="flex items-start space-x-4 p-4 hover:bg-neutral-50 rounded-lg transition-colors">
-                      <div className="flex-shrink-0">
-                        <div className={`p-2 rounded-lg ${
-                          activity.type === 'contract' ? 'bg-primary-100' :
-                          activity.type === 'dispute' ? 'bg-error-100' :
-                          'bg-success-100'
-                        }`}>
-                          {activity.type === 'contract' && <FileText className="h-4 w-4 text-primary-600" />}
-                          {activity.type === 'dispute' && <Scale className="h-4 w-4 text-error-600" />}
-                          {activity.type === 'entity' && <Building2 className="h-4 w-4 text-success-600" />}
-                        </div>
-                      </div>
+                  {recentActivities.map((activity, index) => (
+                    <div key={index} className="flex items-start space-x-3">
+                      <div className="h-2 w-2 bg-primary-600 rounded-full mt-2 flex-shrink-0"></div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-medium text-neutral-900 truncate">{activity.title}</p>
@@ -264,19 +334,35 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
-                  <Button className="h-20 flex-col space-y-2 bg-primary-50 hover:bg-primary-100 text-primary-700 border-primary-200" variant="outline">
+                  <Button 
+                    onClick={handleNewMatter}
+                    className="h-20 flex-col space-y-2 bg-primary-50 hover:bg-primary-100 text-primary-700 border-primary-200" 
+                    variant="outline"
+                  >
                     <FileText className="h-5 w-5" />
                     <span className="text-xs font-medium">New Matter</span>
                   </Button>
-                  <Button className="h-20 flex-col space-y-2 bg-secondary-50 hover:bg-secondary-100 text-secondary-700 border-secondary-200" variant="outline">
+                  <Button 
+                    onClick={handleFileDispute}
+                    className="h-20 flex-col space-y-2 bg-secondary-50 hover:bg-secondary-100 text-secondary-700 border-secondary-200" 
+                    variant="outline"
+                  >
                     <Scale className="h-5 w-5" />
                     <span className="text-xs font-medium">File Dispute</span>
                   </Button>
-                  <Button className="h-20 flex-col space-y-2 bg-success-50 hover:bg-success-100 text-success-700 border-success-200" variant="outline">
+                  <Button 
+                    onClick={handleAddEntity}
+                    className="h-20 flex-col space-y-2 bg-success-50 hover:bg-success-100 text-success-700 border-success-200" 
+                    variant="outline"
+                  >
                     <Building2 className="h-5 w-5" />
                     <span className="text-xs">Add Entity</span>
                   </Button>
-                  <Button className="h-20 flex-col space-y-2" variant="outline">
+                  <Button 
+                    onClick={handleGenerateReport}
+                    className="h-20 flex-col space-y-2" 
+                    variant="outline"
+                  >
                     <BarChart3 className="h-5 w-5" />
                     <span className="text-xs">Generate Report</span>
                   </Button>
@@ -284,6 +370,97 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* High-Value Clients */}
+          <Card>
+            <CardHeader>
+              <CardTitle>High-Value Clients</CardTitle>
+              <CardDescription>Clients with highest revenue contribution</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {clients
+                  .sort((a, b) => b.totalValue - a.totalValue)
+                  .slice(0, 5)
+                  .map((client) => (
+                    <div key={client.id} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                          <Building2 className="h-5 w-5 text-primary-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-neutral-900">{client.name}</p>
+                          <p className="text-xs text-neutral-500">{client.industry}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-neutral-900">
+                          KES {(client.totalValue / 1000000).toFixed(1)}M
+                        </p>
+                        <Badge 
+                          variant={client.riskLevel === 'low' ? 'success' : client.riskLevel === 'medium' ? 'warning' : 'destructive'}
+                          className="text-xs"
+                        >
+                          {client.riskLevel} risk
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Active Matters */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Active Matters</CardTitle>
+              <CardDescription>Current matters requiring attention</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {mockMatters
+                  .filter(matter => matter.status === 'active')
+                  .slice(0, 5)
+                  .map((matter) => (
+                    <div key={matter.id} className="border rounded-lg p-3 hover:bg-neutral-50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-neutral-900">{matter.title}</p>
+                          <p className="text-xs text-neutral-500 mt-1">{matter.matterType}</p>
+                          <div className="flex items-center space-x-2 mt-2">
+                            <Badge 
+                              variant={matter.priority === 'urgent' ? 'destructive' : matter.priority === 'high' ? 'warning' : 'default'}
+                              className="text-xs"
+                            >
+                              {matter.priority}
+                            </Badge>
+                            <span className="text-xs text-neutral-500">
+                              {matter.progress}% complete
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-neutral-500">
+                            KES {(matter.estimatedValue / 1000000).toFixed(1)}M
+                          </p>
+                          {matter.nextDeadline && (
+                            <p className="text-xs text-orange-600 mt-1">
+                              Due: {new Date(matter.nextDeadline).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="w-full bg-neutral-200 rounded-full h-1.5 mt-2">
+                        <div 
+                          className="bg-primary-600 h-1.5 rounded-full transition-all" 
+                          style={{ width: `${matter.progress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </MainLayout>

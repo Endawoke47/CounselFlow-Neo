@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/layout/MainLayout';
+import { mockTasks, mockClients, mockMatters, Task } from '../../lib/mock-data';
 import { CheckSquare, Plus, Search, Download, Upload, Edit3, Trash2, Eye, Clock, Calendar, User, AlertTriangle, TrendingUp, BarChart3, Target, Activity } from 'lucide-react';
 
-interface Task {
+interface TaskDisplay {
   id: string;
   title: string;
   description: string;
@@ -25,86 +26,51 @@ interface Task {
 export default function TaskManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: 'TSK001',
-      title: 'Complete Contract Review for TechCorp',
-      description: 'Review and analyze the merger agreement terms and conditions',
-      priority: 'High',
-      status: 'In Progress',
-      assignee: 'Sarah Johnson',
-      project: 'TechCorp Merger',
-      dueDate: '2024-12-25',
-      createdDate: '2024-12-10',
-      completedDate: '',
-      estimatedHours: 16,
-      actualHours: 8,
-      tags: ['Contract', 'Merger', 'Review'],
-      category: 'Legal Review',
-      progress: 50
-    },
-    {
-      id: 'TSK002',
-      title: 'Draft Employment Policy Updates',
-      description: 'Update employment policies to reflect new labor regulations',
-      priority: 'Medium',
-      status: 'To Do',
-      assignee: 'Michael Chen',
-      project: 'Policy Updates 2024',
-      dueDate: '2024-12-30',
-      createdDate: '2024-12-12',
-      completedDate: '',
-      estimatedHours: 12,
-      actualHours: 0,
-      tags: ['Policy', 'Employment', 'Compliance'],
-      category: 'Policy Development',
-      progress: 0
-    },
-    {
-      id: 'TSK003',
-      title: 'IP Portfolio Audit',
-      description: 'Conduct comprehensive review of intellectual property assets',
-      priority: 'High',
-      status: 'In Review',
-      assignee: 'Grace Kimani',
-      project: 'IP Management',
-      dueDate: '2024-12-28',
-      createdDate: '2024-11-20',
-      completedDate: '',
-      estimatedHours: 24,
-      actualHours: 20,
-      tags: ['IP', 'Audit', 'Portfolio'],
-      category: 'IP Management',
-      progress: 85
-    },
-    {
-      id: 'TSK004',
-      title: 'Regulatory Compliance Report',
-      description: 'Prepare quarterly compliance report for board review',
-      priority: 'Low',
-      status: 'Completed',
-      assignee: 'David Ochieng',
-      project: 'Compliance Monitoring',
-      dueDate: '2024-12-15',
-      createdDate: '2024-12-01',
-      completedDate: '2024-12-14',
-      estimatedHours: 8,
-      actualHours: 6,
-      tags: ['Compliance', 'Report', 'Board'],
-      category: 'Compliance',
-      progress: 100
-    }
-  ]);
+  const [tasks, setTasks] = useState<TaskDisplay[]>([]);
+
+  useEffect(() => {
+    // Transform mock tasks to display format
+    const transformedTasks: TaskDisplay[] = mockTasks.map(task => {
+      const matter = mockMatters.find(m => m.id === task.matterId);
+      const client = mockClients.find(c => c.id === task.clientId);
+      
+      return {
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        priority: task.priority,
+        status: task.status === 'todo' ? 'Pending' :
+               task.status === 'in-progress' ? 'In Progress' :
+               task.status === 'review' ? 'Review' :
+               task.status === 'completed' ? 'Completed' : 'Overdue',
+        assignee: task.assignee,
+        project: matter?.title || client?.name || 'General',
+        dueDate: task.dueDate,
+        createdDate: task.createdDate,
+        completedDate: task.completedDate || '',
+        estimatedHours: task.timeEstimate,
+        actualHours: task.timeSpent,
+        tags: [task.category, matter?.matterType || 'general'],
+        category: task.category,
+        progress: task.status === 'completed' ? 100 :
+                 task.status === 'review' ? 90 :
+                 task.status === 'in-progress' ? Math.floor((task.timeSpent / task.timeEstimate) * 100) :
+                 0
+      };
+    });
+    setTasks(transformedTasks);
+  }, []);
+
   const [isAddingTask, setIsAddingTask] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [editingTask, setEditingTask] = useState<TaskDisplay | null>(null);
+  const [selectedTask, setSelectedTask] = useState<TaskDisplay | null>(null);
 
   // Handlers for full functionality
   const handleAddTask = () => {
     setIsAddingTask(true);
   };
 
-  const handleEditTask = (task: Task) => {
+  const handleEditTask = (task: TaskDisplay) => {
     setEditingTask(task);
     setIsAddingTask(true);
   };
@@ -115,7 +81,7 @@ export default function TaskManagementPage() {
     }
   };
 
-  const handleViewTask = (task: Task) => {
+  const handleViewTask = (task: TaskDisplay) => {
     setSelectedTask(task);
   };
 
@@ -147,16 +113,16 @@ export default function TaskManagementPage() {
     input.click();
   };
 
-  const handleSaveTask = (taskData: Partial<Task>) => {
+  const handleSaveTask = (taskData: Partial<TaskDisplay>) => {
     if (editingTask) {
       setTasks(tasks.map(t => t.id === editingTask.id ? { ...t, ...taskData } : t));
     } else {
-      const newTask: Task = {
+      const newTask: TaskDisplay = {
         id: `TSK${String(tasks.length + 1).padStart(3, '0')}`,
         title: taskData.title || '',
         description: taskData.description || '',
-        priority: taskData.priority || 'Medium',
-        status: taskData.status || 'To Do',
+        priority: taskData.priority || 'medium',
+        status: taskData.status || 'Pending',
         assignee: taskData.assignee || '',
         project: taskData.project || '',
         dueDate: taskData.dueDate || '',
@@ -165,7 +131,7 @@ export default function TaskManagementPage() {
         estimatedHours: taskData.estimatedHours || 0,
         actualHours: taskData.actualHours || 0,
         tags: taskData.tags || [],
-        category: taskData.category || '',
+        category: taskData.category || 'research',
         progress: taskData.progress || 0
       };
       setTasks([...tasks, newTask]);

@@ -67,7 +67,7 @@ export class ApiManagementService {
 
   constructor(
     private configService: ConfigService,
-    private eventEmitter: EventEmitter2,
+    private eventEmitter: EventEmitter2
   ) {
     this.initializeDefaultApiKeys();
   }
@@ -303,10 +303,7 @@ export class ApiManagementService {
             },
           },
         },
-        security: [
-          { bearerAuth: [] },
-          { apiKeyAuth: [] },
-        ],
+        security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
         tags: [
           {
             name: 'Authentication',
@@ -346,23 +343,27 @@ export class ApiManagementService {
     };
 
     const swaggerSpec = swaggerJsdoc(options);
-    
+
     // Setup Swagger UI
-    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-      explorer: true,
-      customCss: '.swagger-ui .topbar { display: none }',
-      customSiteTitle: 'CounselFlow API Documentation',
-      swaggerOptions: {
-        docExpansion: 'none',
-        filter: true,
-        showRequestDuration: true,
-        tryItOutEnabled: true,
-        requestInterceptor: (req: any) => {
-          req.headers['X-API-Version'] = '1.0.0';
-          return req;
+    app.use(
+      '/api-docs',
+      swaggerUi.serve,
+      swaggerUi.setup(swaggerSpec, {
+        explorer: true,
+        customCss: '.swagger-ui .topbar { display: none }',
+        customSiteTitle: 'CounselFlow API Documentation',
+        swaggerOptions: {
+          docExpansion: 'none',
+          filter: true,
+          showRequestDuration: true,
+          tryItOutEnabled: true,
+          requestInterceptor: (req: any) => {
+            req.headers['X-API-Version'] = '1.0.0';
+            return req;
+          },
         },
-      },
-    }));
+      })
+    );
 
     // Provide JSON spec endpoint
     app.get('/api-docs.json', (req, res) => {
@@ -409,7 +410,7 @@ export class ApiManagementService {
 
   async validateApiKey(key: string): Promise<ApiKey | null> {
     const apiKey = this.apiKeys.get(key);
-    
+
     if (!apiKey || !apiKey.isActive) {
       return null;
     }
@@ -450,14 +451,17 @@ export class ApiManagementService {
   }
 
   // Rate Limiting
-  async checkRateLimit(identifier: string, config: RateLimitConfig): Promise<{
+  async checkRateLimit(
+    identifier: string,
+    config: RateLimitConfig
+  ): Promise<{
     allowed: boolean;
     remaining: number;
     resetTime: number;
   }> {
     const now = Date.now();
     const windowKey = Math.floor(now / config.windowMs).toString();
-    
+
     if (!this.rateLimiters.has(identifier)) {
       this.rateLimiters.set(identifier, new Map());
     }
@@ -509,7 +513,7 @@ export class ApiManagementService {
     };
 
     this.usageMetrics.push(apiUsage);
-    
+
     // Keep only last 10000 records in memory
     if (this.usageMetrics.length > 10000) {
       this.usageMetrics = this.usageMetrics.slice(-10000);
@@ -521,7 +525,7 @@ export class ApiManagementService {
   // Analytics and Metrics
   getApiMetrics(timeRange?: { start: Date; end: Date }): ApiMetrics {
     let filteredUsage = this.usageMetrics;
-    
+
     if (timeRange) {
       filteredUsage = this.usageMetrics.filter(
         usage => usage.timestamp >= timeRange.start && usage.timestamp <= timeRange.end
@@ -529,13 +533,15 @@ export class ApiManagementService {
     }
 
     const totalRequests = filteredUsage.length;
-    const successfulRequests = filteredUsage.filter(u => u.statusCode >= 200 && u.statusCode < 400).length;
+    const successfulRequests = filteredUsage.filter(
+      u => u.statusCode >= 200 && u.statusCode < 400
+    ).length;
     const failedRequests = totalRequests - successfulRequests;
-    
+
     const totalResponseTime = filteredUsage.reduce((sum, u) => sum + u.responseTime, 0);
     const averageResponseTime = totalRequests > 0 ? totalResponseTime / totalRequests : 0;
 
-    const timeSpan = timeRange 
+    const timeSpan = timeRange
       ? (timeRange.end.getTime() - timeRange.start.getTime()) / 1000
       : 3600; // Default to 1 hour
     const requestsPerSecond = totalRequests / timeSpan;
@@ -556,8 +562,10 @@ export class ApiManagementService {
     filteredUsage.forEach(usage => {
       statusCounts.set(usage.statusCode, (statusCounts.get(usage.statusCode) || 0) + 1);
     });
-    const errorRates = Array.from(statusCounts.entries())
-      .map(([statusCode, count]) => ({ statusCode, count }));
+    const errorRates = Array.from(statusCounts.entries()).map(([statusCode, count]) => ({
+      statusCode,
+      count,
+    }));
 
     // API key usage
     const keyUsage = new Map<string, number>();
@@ -597,10 +605,12 @@ export class ApiManagementService {
 
   // API Versioning
   getApiVersion(request: any): string {
-    return request.headers['x-api-version'] || 
-           request.headers['accept-version'] || 
-           request.query.version || 
-           '1.0.0';
+    return (
+      request.headers['x-api-version'] ||
+      request.headers['accept-version'] ||
+      request.query.version ||
+      '1.0.0'
+    );
   }
 
   validateApiVersion(version: string): boolean {
@@ -619,7 +629,7 @@ export class ApiManagementService {
   }> {
     const memoryUsage = process.memoryUsage();
     const uptime = process.uptime();
-    
+
     return {
       status: 'healthy',
       version: '1.0.0',

@@ -13,12 +13,12 @@ export class LegalBertProvider extends BaseAIProvider {
     // For now, this is a placeholder for the legal BERT implementation
     // In a real implementation, you would load the HuggingFace model
     const model = request.model || 'legal-bert-base';
-    
+
     try {
       // Placeholder legal analysis using rule-based approach
       // This would be replaced with actual BERT model inference
       const analysis = await this.performLegalAnalysis(request);
-      
+
       return {
         output: analysis,
         model,
@@ -27,12 +27,13 @@ export class LegalBertProvider extends BaseAIProvider {
         metadata: {
           provider: 'legal-bert',
           specialization: 'legal_language_processing',
-          trainingData: 'legal_documents'
-        }
+          trainingData: 'legal_documents',
+        },
       };
-
     } catch (error) {
-      throw new Error(`Legal BERT processing failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Legal BERT processing failed: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -44,10 +45,10 @@ export class LegalBertProvider extends BaseAIProvider {
   async getAvailableModels(): Promise<string[]> {
     return [
       'nlpaueb/legal-bert-base-uncased',
-      'zlucia/legalbert', 
+      'zlucia/legalbert',
       'saibo/legal-roberta-base',
       'counselflow/african-legal-model',
-      'counselflow/middle-east-legal-model'
+      'counselflow/middle-east-legal-model',
     ];
   }
 
@@ -79,9 +80,9 @@ export class LegalBertProvider extends BaseAIProvider {
         keyTerms: this.extractKeyTerms(contract),
         missingClauses: this.identifyMissingClauses(contract),
         complianceIssues: this.identifyComplianceIssues(contract, context),
-        recommendations: this.generateRecommendations(contract)
+        recommendations: this.generateRecommendations(contract),
       },
-      confidence: 0.92
+      confidence: 0.92,
     };
 
     return analysis;
@@ -93,7 +94,7 @@ export class LegalBertProvider extends BaseAIProvider {
       { type: 'termination', content: 'Either party may terminate...', confidence: 0.95 },
       { type: 'liability', content: 'Liability shall be limited to...', confidence: 0.88 },
       { type: 'confidentiality', content: 'Confidential information...', confidence: 0.93 },
-      { type: 'dispute_resolution', content: 'Disputes shall be resolved...', confidence: 0.90 }
+      { type: 'dispute_resolution', content: 'Disputes shall be resolved...', confidence: 0.9 },
     ];
 
     return {
@@ -106,8 +107,8 @@ export class LegalBertProvider extends BaseAIProvider {
         confidentiality: true,
         disputeResolution: true,
         intellectualProperty: false,
-        forceMajeure: false
-      }
+        forceMajeure: false,
+      },
     };
   }
 
@@ -120,27 +121,30 @@ export class LegalBertProvider extends BaseAIProvider {
         { type: 'DATE', value: '2025-01-01', confidence: 0.99 },
         { type: 'MONEY', value: '$100,000', confidence: 0.97 },
         { type: 'LAW', value: 'Companies Act 2019', confidence: 0.92 },
-        { type: 'JURISDICTION', value: 'Lagos State', confidence: 0.89 }
+        { type: 'JURISDICTION', value: 'Lagos State', confidence: 0.89 },
       ],
       relationships: [
         { subject: 'John Smith', predicate: 'is_director_of', object: 'ABC Corporation' },
-        { subject: 'ABC Corporation', predicate: 'incorporated_in', object: 'Lagos State' }
-      ]
+        { subject: 'ABC Corporation', predicate: 'incorporated_in', object: 'Lagos State' },
+      ],
     };
   }
 
   private checkCompliance(document: any, context: any): any {
     const jurisdiction = context?.jurisdiction || 'NG';
-    
+
     // Simulate compliance checking for different African/Middle Eastern jurisdictions
     const complianceChecks = {
-      'NG': this.checkNigerianCompliance(document),
-      'ZA': this.checkSouthAfricanCompliance(document),
-      'AE': this.checkUAECompliance(document),
-      'EG': this.checkEgyptianCompliance(document)
+      NG: this.checkNigerianCompliance(document),
+      ZA: this.checkSouthAfricanCompliance(document),
+      AE: this.checkUAECompliance(document),
+      EG: this.checkEgyptianCompliance(document),
     };
 
-    return complianceChecks[jurisdiction as keyof typeof complianceChecks] || this.checkGeneralCompliance(document);
+    return (
+      complianceChecks[jurisdiction as keyof typeof complianceChecks] ||
+      this.checkGeneralCompliance(document)
+    );
   }
 
   private checkNigerianCompliance(document: any): any {
@@ -149,17 +153,17 @@ export class LegalBertProvider extends BaseAIProvider {
       applicableLaws: [
         'Companies and Allied Matters Act 2020',
         'Nigerian Labour Act',
-        'Federal Competition and Consumer Protection Act 2018'
+        'Federal Competition and Consumer Protection Act 2018',
       ],
       complianceStatus: 'PARTIAL',
       issues: [
         'Missing mandatory CAMA compliance clause',
-        'Dispute resolution clause may not comply with Lagos State requirements'
+        'Dispute resolution clause may not comply with Lagos State requirements',
       ],
       recommendations: [
         'Add CAMA 2020 compliance statement',
-        'Review dispute resolution for Lagos State jurisdiction'
-      ]
+        'Review dispute resolution for Lagos State jurisdiction',
+      ],
     };
   }
 
@@ -169,11 +173,11 @@ export class LegalBertProvider extends BaseAIProvider {
       applicableLaws: [
         'Companies Act 71 of 2008',
         'Labour Relations Act 66 of 1995',
-        'Competition Act 89 of 1998'
+        'Competition Act 89 of 1998',
       ],
       complianceStatus: 'COMPLIANT',
       issues: [],
-      recommendations: ['Document appears compliant with SA law']
+      recommendations: ['Document appears compliant with SA law'],
     };
   }
 
@@ -183,11 +187,11 @@ export class LegalBertProvider extends BaseAIProvider {
       applicableLaws: [
         'UAE Commercial Companies Law',
         'UAE Labour Law',
-        'UAE Consumer Protection Law'
+        'UAE Consumer Protection Law',
       ],
       complianceStatus: 'REVIEW_REQUIRED',
       issues: ['Sharia compliance verification needed'],
-      recommendations: ['Obtain Sharia compliance certification']
+      recommendations: ['Obtain Sharia compliance certification'],
     };
   }
 
@@ -197,11 +201,11 @@ export class LegalBertProvider extends BaseAIProvider {
       applicableLaws: [
         'Egyptian Commercial Law',
         'Egyptian Labour Law No. 12 of 2003',
-        'Egyptian Consumer Protection Law'
+        'Egyptian Consumer Protection Law',
       ],
       complianceStatus: 'COMPLIANT',
       issues: [],
-      recommendations: ['Document complies with Egyptian commercial law']
+      recommendations: ['Document complies with Egyptian commercial law'],
     };
   }
 
@@ -209,7 +213,7 @@ export class LegalBertProvider extends BaseAIProvider {
     return {
       jurisdiction: 'General',
       complianceStatus: 'UNKNOWN',
-      recommendations: ['Specify jurisdiction for detailed compliance analysis']
+      recommendations: ['Specify jurisdiction for detailed compliance analysis'],
     };
   }
 
@@ -220,9 +224,9 @@ export class LegalBertProvider extends BaseAIProvider {
       keyInsights: [
         'Document contains standard legal language patterns',
         'Formal legal structure detected',
-        'Professional legal terminology used'
+        'Professional legal terminology used',
       ],
-      confidence: 0.87
+      confidence: 0.87,
     };
   }
 
@@ -232,7 +236,7 @@ export class LegalBertProvider extends BaseAIProvider {
       !contract.title || contract.title.length < 5,
       !contract.value || contract.value === 0,
       !contract.startDate,
-      !contract.endDate
+      !contract.endDate,
     ];
 
     const riskCount = riskFactors.filter(Boolean).length;
@@ -253,10 +257,15 @@ export class LegalBertProvider extends BaseAIProvider {
   private identifyMissingClauses(contract: any): string[] {
     // Standard clauses to check for
     const standardClauses = [
-      'termination', 'liability', 'confidentiality', 'dispute_resolution',
-      'force_majeure', 'intellectual_property', 'governing_law'
+      'termination',
+      'liability',
+      'confidentiality',
+      'dispute_resolution',
+      'force_majeure',
+      'intellectual_property',
+      'governing_law',
     ];
-    
+
     // In real implementation, use NLP to detect presence of these clauses
     // For now, return mock missing clauses
     console.log('Checking for standard clauses:', standardClauses);
@@ -279,7 +288,7 @@ export class LegalBertProvider extends BaseAIProvider {
       'Add force majeure clause for unforeseen circumstances',
       'Include intellectual property rights section',
       'Specify governing law and jurisdiction',
-      'Review termination conditions for clarity'
+      'Review termination conditions for clarity',
     ];
   }
 

@@ -132,7 +132,7 @@ export class AiLegalAssistantService {
 
   constructor(
     private configService: ConfigService,
-    private eventEmitter: EventEmitter2,
+    private eventEmitter: EventEmitter2
   ) {
     this.initializeOpenAI();
     this.loadLegalKnowledgeBase();
@@ -154,7 +154,9 @@ export class AiLegalAssistantService {
   }
 
   // Legal Query Processing
-  async processLegalQuery(query: Omit<LegalQuery, 'id' | 'timestamp' | 'status'>): Promise<LegalQuery> {
+  async processLegalQuery(
+    query: Omit<LegalQuery, 'id' | 'timestamp' | 'status'>
+  ): Promise<LegalQuery> {
     const legalQuery: LegalQuery = {
       id: crypto.randomUUID(),
       ...query,
@@ -345,12 +347,16 @@ For urgent legal matters, seek immediate legal counsel.`;
   }
 
   // Document Analysis
-  async analyzeDocument(documentId: string, documentContent: string, documentType: string): Promise<DocumentAnalysis> {
+  async analyzeDocument(
+    documentId: string,
+    documentContent: string,
+    documentType: string
+  ): Promise<DocumentAnalysis> {
     const startTime = Date.now();
 
     try {
       const analysis = await this.performDocumentAnalysis(documentContent, documentType);
-      
+
       const documentAnalysis: DocumentAnalysis = {
         id: crypto.randomUUID(),
         documentId,
@@ -373,7 +379,10 @@ For urgent legal matters, seek immediate legal counsel.`;
     }
   }
 
-  private async performDocumentAnalysis(content: string, documentType: string): Promise<DocumentAnalysis['analysis']> {
+  private async performDocumentAnalysis(
+    content: string,
+    documentType: string
+  ): Promise<DocumentAnalysis['analysis']> {
     if (!this.openai) {
       return this.generateFallbackDocumentAnalysis(documentType);
     }
@@ -422,7 +431,7 @@ Provide a comprehensive analysis following the structured format.`;
   private parseDocumentAnalysisResponse(response: string): DocumentAnalysis['analysis'] {
     // Parse the AI response into structured format
     // This is a simplified implementation - in production, use more sophisticated parsing
-    
+
     return {
       summary: this.extractSection(response, 'summary') || 'Document analysis completed',
       keyProvisions: this.extractListItems(response, 'provisions|clauses'),
@@ -438,7 +447,12 @@ Provide a comprehensive analysis following the structured format.`;
   }
 
   // Legal Research
-  async createResearchTask(task: Omit<LegalResearchTask, 'id' | 'timestamp' | 'status' | 'progress' | 'findings' | 'sources'>): Promise<LegalResearchTask> {
+  async createResearchTask(
+    task: Omit<
+      LegalResearchTask,
+      'id' | 'timestamp' | 'status' | 'progress' | 'findings' | 'sources'
+    >
+  ): Promise<LegalResearchTask> {
     const researchTask: LegalResearchTask = {
       id: crypto.randomUUID(),
       ...task,
@@ -475,10 +489,10 @@ Provide a comprehensive analysis following the structured format.`;
 
       for (const [index, phase] of phases.entries()) {
         this.logger.log(`Research task ${taskId}: ${phase.name}`);
-        
+
         // Simulate work
         await new Promise(resolve => setTimeout(resolve, 2000));
-        
+
         task.progress = phases.slice(0, index + 1).reduce((sum, p) => sum + p.weight, 0);
         this.eventEmitter.emit('research-task.progress', task);
       }
@@ -500,14 +514,18 @@ Provide a comprehensive analysis following the structured format.`;
   }
 
   // Utility Methods
-  private async searchLegalSources(query: string, context?: LegalQuery['context']): Promise<LegalSource[]> {
+  private async searchLegalSources(
+    query: string,
+    context?: LegalQuery['context']
+  ): Promise<LegalSource[]> {
     // In production, this would search actual legal databases
     return this.legalKnowledgeBase
       .filter(source => {
-        const matchesQuery = source.title.toLowerCase().includes(query.toLowerCase()) ||
-                           source.excerpt.toLowerCase().includes(query.toLowerCase());
-        const matchesJurisdiction = !context?.jurisdiction || 
-                                  source.jurisdiction === context.jurisdiction;
+        const matchesQuery =
+          source.title.toLowerCase().includes(query.toLowerCase()) ||
+          source.excerpt.toLowerCase().includes(query.toLowerCase());
+        const matchesJurisdiction =
+          !context?.jurisdiction || source.jurisdiction === context.jurisdiction;
         return matchesQuery && matchesJurisdiction;
       })
       .slice(0, 10)
@@ -537,7 +555,7 @@ Provide a comprehensive analysis following the structured format.`;
 
     // Adjust based on source quality
     confidence += Math.min(sources.length * 0.1, 0.3);
-    
+
     // Adjust based on response length and detail
     confidence += Math.min(response.length / 5000, 0.2);
 
@@ -553,7 +571,7 @@ Provide a comprehensive analysis following the structured format.`;
   private assessComplexity(text: string): 'low' | 'medium' | 'high' {
     const words = text.split(/\s+/).length;
     const avgWordsPerSentence = words / text.split(/[.!?]+/).length;
-    
+
     if (avgWordsPerSentence > 25 || words > 1500) return 'high';
     if (avgWordsPerSentence > 15 || words > 800) return 'medium';
     return 'low';
@@ -586,25 +604,24 @@ Provide a comprehensive analysis following the structured format.`;
 
   private identifyWarnings(response: string): string[] {
     const warnings: string[] = [];
-    
+
     if (response.toLowerCase().includes('urgent') || response.toLowerCase().includes('immediate')) {
       warnings.push('Time-sensitive matter requiring prompt attention');
     }
-    
-    if (response.toLowerCase().includes('complex') || response.toLowerCase().includes('complicated')) {
+
+    if (
+      response.toLowerCase().includes('complex') ||
+      response.toLowerCase().includes('complicated')
+    ) {
       warnings.push('Complex legal matter requiring specialized expertise');
     }
-    
+
     return warnings;
   }
 
   private async findRelatedCases(query: LegalQuery): Promise<string[]> {
     // Mock implementation - in production, search case databases
-    return [
-      'Smith v. Jones (2023)',
-      'ABC Corp v. XYZ Inc (2022)',
-      'State v. Brown (2021)',
-    ];
+    return ['Smith v. Jones (2023)', 'ABC Corp v. XYZ Inc (2022)', 'State v. Brown (2021)'];
   }
 
   // Helper methods for document analysis
@@ -617,9 +634,9 @@ Provide a comprehensive analysis following the structured format.`;
   private extractListItems(text: string, category: string): string[] {
     const regex = new RegExp(`${category}[:\\-\\s]+([\\s\\S]*?)(?=\\n\\n|[A-Z][a-z]+:|$)`, 'i');
     const match = text.match(regex);
-    
+
     if (!match) return [];
-    
+
     return match[1]
       .split(/\n|•|-|\d+\./)
       .filter(item => item.trim().length > 5)
@@ -628,9 +645,10 @@ Provide a comprehensive analysis following the structured format.`;
   }
 
   private extractDates(text: string): Date[] {
-    const dateRegex = /\b\d{1,2}\/\d{1,2}\/\d{4}\b|\b\d{4}-\d{2}-\d{2}\b|\b[A-Z][a-z]+ \d{1,2}, \d{4}\b/g;
+    const dateRegex =
+      /\b\d{1,2}\/\d{1,2}\/\d{4}\b|\b\d{4}-\d{2}-\d{2}\b|\b[A-Z][a-z]+ \d{1,2}, \d{4}\b/g;
     const matches = text.match(dateRegex) || [];
-    
+
     return matches
       .map(dateStr => new Date(dateStr))
       .filter(date => !isNaN(date.getTime()))
@@ -639,13 +657,13 @@ Provide a comprehensive analysis following the structured format.`;
 
   private calculateDocumentAnalysisConfidence(analysis: DocumentAnalysis['analysis']): number {
     let confidence = 0.5;
-    
+
     if (analysis.keyProvisions.length > 0) confidence += 0.1;
     if (analysis.riskFactors.length > 0) confidence += 0.1;
     if (analysis.obligations.length > 0) confidence += 0.1;
     if (analysis.summary.length > 50) confidence += 0.1;
     if (analysis.governingLaw !== 'Not specified') confidence += 0.1;
-    
+
     return Math.min(confidence, 0.9);
   }
 

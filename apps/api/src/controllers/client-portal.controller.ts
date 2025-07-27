@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { ClientPortalService } from '../services/client-portal.service';
@@ -11,7 +22,7 @@ import { SecurityService } from '../services/security.service';
 export class ClientPortalController {
   constructor(
     private readonly clientPortalService: ClientPortalService,
-    private readonly securityService: SecurityService,
+    private readonly securityService: SecurityService
   ) {}
 
   @Get('dashboard/:clientId')
@@ -25,20 +36,21 @@ export class ClientPortalController {
   @ApiOperation({ summary: 'Create secure communication thread' })
   @ApiResponse({ status: 201, description: 'Secure communication created successfully' })
   async createSecureCommunication(
-    @Body() body: {
+    @Body()
+    body: {
       clientId: string;
       participantIds: string[];
       subject: string;
       initialMessage: string;
       caseId?: string;
-    },
+    }
   ) {
     return await this.clientPortalService.createSecureCommunication(
       body.clientId,
       body.participantIds,
       body.subject,
       body.initialMessage,
-      body.caseId,
+      body.caseId
     );
   }
 
@@ -55,11 +67,12 @@ export class ClientPortalController {
   @ApiResponse({ status: 201, description: 'Message sent successfully' })
   async sendMessage(
     @Param('threadId') threadId: string,
-    @Body() body: {
+    @Body()
+    body: {
       senderId: string;
       content: string;
       attachments?: string[];
-    },
+    }
   ) {
     // Implementation would send message to thread
     return { success: true, messageId: `msg_${Date.now()}` };
@@ -69,16 +82,12 @@ export class ClientPortalController {
   @ApiOperation({ summary: 'Start document collaboration session' })
   @ApiResponse({ status: 201, description: 'Document collaboration started successfully' })
   async startDocumentCollaboration(
-    @Body() body: {
-      clientId: string;
-      documentId: string;
-      participantIds: string[];
-    },
+    @Body() body: { clientId: string; documentId: string; participantIds: string[] }
   ) {
     return await this.clientPortalService.startDocumentCollaboration(
       body.clientId,
       body.documentId,
-      body.participantIds,
+      body.participantIds
     );
   }
 
@@ -95,12 +104,13 @@ export class ClientPortalController {
   @ApiResponse({ status: 201, description: 'Change submitted successfully' })
   async submitDocumentChange(
     @Param('sessionId') sessionId: string,
-    @Body() body: {
+    @Body()
+    body: {
       userId: string;
       operation: 'insert' | 'delete' | 'replace';
       position: number;
       content: string;
-    },
+    }
   ) {
     // Implementation would track document changes
     return { success: true, changeId: `change_${Date.now()}` };
@@ -111,11 +121,12 @@ export class ClientPortalController {
   @ApiResponse({ status: 201, description: 'Comment added successfully' })
   async addDocumentComment(
     @Param('sessionId') sessionId: string,
-    @Body() body: {
+    @Body()
+    body: {
       userId: string;
       position: number;
       content: string;
-    },
+    }
   ) {
     // Implementation would add comment to document
     return { success: true, commentId: `comment_${Date.now()}` };
@@ -124,17 +135,11 @@ export class ClientPortalController {
   @Post('payment/process')
   @ApiOperation({ summary: 'Process client payment' })
   @ApiResponse({ status: 200, description: 'Payment processed successfully' })
-  async processPayment(
-    @Body() body: {
-      clientId: string;
-      paymentId: string;
-      paymentMethod: any;
-    },
-  ) {
+  async processPayment(@Body() body: { clientId: string; paymentId: string; paymentMethod: any }) {
     return await this.clientPortalService.processPayment(
       body.clientId,
       body.paymentId,
-      body.paymentMethod,
+      body.paymentMethod
     );
   }
 
@@ -160,11 +165,7 @@ export class ClientPortalController {
   @ApiOperation({ summary: 'Add payment method' })
   @ApiResponse({ status: 201, description: 'Payment method added successfully' })
   async addPaymentMethod(
-    @Body() body: {
-      clientId: string;
-      type: 'credit_card' | 'bank_account';
-      data: any;
-    },
+    @Body() body: { clientId: string; type: 'credit_card' | 'bank_account'; data: any }
   ) {
     // Implementation would add payment method
     return { success: true, methodId: `pm_${Date.now()}` };
@@ -181,10 +182,7 @@ export class ClientPortalController {
   @Put('portal-config/:clientId')
   @ApiOperation({ summary: 'Configure client portal settings' })
   @ApiResponse({ status: 200, description: 'Portal configuration updated successfully' })
-  async configurePortal(
-    @Param('clientId') clientId: string,
-    @Body() config: any,
-  ) {
+  async configurePortal(@Param('clientId') clientId: string, @Body() config: any) {
     return await this.clientPortalService.configurePortal(clientId, config);
   }
 
@@ -194,7 +192,7 @@ export class ClientPortalController {
   async getPortalAnalytics(
     @Param('clientId') clientId: string,
     @Query('start') start: string,
-    @Query('end') end: string,
+    @Query('end') end: string
   ) {
     const dateRange = {
       start: new Date(start),
@@ -210,7 +208,7 @@ export class ClientPortalController {
   async getNotifications(
     @Param('clientId') clientId: string,
     @Query('limit') limit: string = '50',
-    @Query('offset') offset: string = '0',
+    @Query('offset') offset: string = '0'
   ) {
     // Implementation would fetch client notifications
     return {
@@ -254,10 +252,7 @@ export class SecurityController {
   @Put('settings/:clientId')
   @ApiOperation({ summary: 'Update security settings' })
   @ApiResponse({ status: 200, description: 'Security settings updated successfully' })
-  async updateSecuritySettings(
-    @Param('clientId') clientId: string,
-    @Body() settings: any,
-  ) {
+  async updateSecuritySettings(@Param('clientId') clientId: string, @Body() settings: any) {
     return await this.securityService.updateSecuritySettings(clientId, settings);
   }
 
@@ -271,10 +266,7 @@ export class SecurityController {
   @Post('2fa/verify/:clientId')
   @ApiOperation({ summary: 'Verify two-factor authentication' })
   @ApiResponse({ status: 200, description: '2FA verified successfully' })
-  async verify2FA(
-    @Param('clientId') clientId: string,
-    @Body() body: { token: string },
-  ) {
+  async verify2FA(@Param('clientId') clientId: string, @Body() body: { token: string }) {
     return await this.securityService.verifyTwoFactorAuth(clientId, body.token);
   }
 
@@ -290,7 +282,8 @@ export class SecurityController {
   @ApiOperation({ summary: 'Create secure session' })
   @ApiResponse({ status: 201, description: 'Secure session created successfully' })
   async createSecureSession(
-    @Body() body: {
+    @Body()
+    body: {
       clientId: string;
       deviceInfo: {
         fingerprint: string;
@@ -299,12 +292,12 @@ export class SecurityController {
         location?: any;
       };
       twoFactorVerified: boolean;
-    },
+    }
   ) {
     return await this.securityService.createSecureSession(
       body.clientId,
       body.deviceInfo,
-      body.twoFactorVerified,
+      body.twoFactorVerified
     );
   }
 
@@ -341,20 +334,13 @@ export class SecurityController {
   @Post('decrypt')
   @ApiOperation({ summary: 'Decrypt data' })
   @ApiResponse({ status: 200, description: 'Data decrypted successfully' })
-  async decryptData(
-    @Body() body: {
-      encryptedData: string;
-      key: string;
-      iv: string;
-      tag: string;
-    },
-  ) {
+  async decryptData(@Body() body: { encryptedData: string; key: string; iv: string; tag: string }) {
     return {
       decrypted: await this.securityService.decryptData(
         body.encryptedData,
         body.key,
         body.iv,
-        body.tag,
+        body.tag
       ),
     };
   }
@@ -372,7 +358,7 @@ export class SecurityController {
   @ApiResponse({ status: 200, description: 'Device trusted successfully' })
   async trustDevice(
     @Param('clientId') clientId: string,
-    @Body() body: { deviceFingerprint: string; deviceName: string },
+    @Body() body: { deviceFingerprint: string; deviceName: string }
   ) {
     // Implementation would trust device
     return { success: true };

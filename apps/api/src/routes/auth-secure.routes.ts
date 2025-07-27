@@ -9,20 +9,22 @@ import { authenticate, AuthenticatedRequest } from '../middleware/auth.middlewar
 import { logger } from '../utils/logger';
 import { UserService, TokenService } from '../services/database.service';
 import { emailService } from '../services/email.service';
-import { 
-  generateTokens, 
+import {
+  generateTokens,
   generatePasswordResetToken,
   LoginSchema,
   RegisterSchema,
-  PasswordResetSchema
+  PasswordResetSchema,
 } from '../utils/auth-security';
 
 const router = Router();
 
 // Environment configuration
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || (() => {
-  throw new Error('JWT_REFRESH_SECRET environment variable is required');
-})();
+const JWT_REFRESH_SECRET =
+  process.env.JWT_REFRESH_SECRET ||
+  (() => {
+    throw new Error('JWT_REFRESH_SECRET environment variable is required');
+  })();
 
 // Rate limiting map for login attempts
 const loginAttempts = new Map<string, { count: number; lastAttempt: Date; lockedUntil?: Date }>();
@@ -67,15 +69,17 @@ const recordSuccessfulLogin = (identifier: string): void => {
 
 // Demo user for development (remove in production)
 const isDevelopment = process.env.NODE_ENV !== 'production';
-const DEMO_USER = isDevelopment ? {
-  id: 'demo-user-id',
-  email: 'demo@counselflow.com',
-  firstName: 'Demo',
-  lastName: 'User',
-  role: 'ADMIN',
-  status: 'ACTIVE',
-  passwordHash: '$2b$12$demo.hash.for.development.only', // This would be a real hash in development
-} : null;
+const DEMO_USER = isDevelopment
+  ? {
+      id: 'demo-user-id',
+      email: 'demo@counselflow.com',
+      firstName: 'Demo',
+      lastName: 'User',
+      role: 'ADMIN',
+      status: 'ACTIVE',
+      passwordHash: '$2b$12$demo.hash.for.development.only', // This would be a real hash in development
+    }
+  : null;
 
 /**
  * @swagger
@@ -166,7 +170,7 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
       logger.warn('Failed login attempt', { email, ip: req.ip });
       return res.status(401).json({
         success: false,
-        error: 'Invalid credentials'
+        error: 'Invalid credentials',
       });
     }
 
@@ -175,7 +179,7 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
       logger.warn('Login attempt for inactive user', { email, status: user.status });
       return res.status(401).json({
         success: false,
-        error: 'Account is not active'
+        error: 'Account is not active',
       });
     }
 
@@ -183,10 +187,10 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
     const tokens = generateTokens(user);
     recordSuccessfulLogin(email);
 
-    logger.info('User login successful', { 
-      userId: user.id, 
+    logger.info('User login successful', {
+      userId: user.id,
       email: user.email,
-      ip: req.ip 
+      ip: req.ip,
     });
 
     return res.json({
@@ -310,7 +314,7 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
     if (!process.env.ENABLE_REGISTRATION || process.env.ENABLE_REGISTRATION === 'false') {
       return res.status(403).json({
         success: false,
-        message: 'Registration is currently disabled'
+        message: 'Registration is currently disabled',
       });
     }
 
@@ -325,7 +329,7 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
       if (existingUser) {
         return res.status(409).json({
           success: false,
-          error: 'User already exists'
+          error: 'User already exists',
         });
       }
 
@@ -337,9 +341,9 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
         password,
       });
 
-      logger.info('User registered successfully', { 
-        userId: user.id, 
-        email: user.email 
+      logger.info('User registered successfully', {
+        userId: user.id,
+        email: user.email,
       });
 
       // Send welcome email
@@ -361,7 +365,7 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
       if (error.message === 'User with this email already exists') {
         return res.status(409).json({
           success: false,
-          error: 'User already exists'
+          error: 'User already exists',
         });
       }
       throw error;
@@ -435,58 +439,62 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.get('/me', authenticate, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  try {
-    // For demo purposes, return the demo user
-    if (isDevelopment && DEMO_USER && req.user?.id === 'demo-user-id') {
+router.get(
+  '/me',
+  authenticate,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      // For demo purposes, return the demo user
+      if (isDevelopment && DEMO_USER && req.user?.id === 'demo-user-id') {
+        return res.json({
+          success: true,
+          user: {
+            id: DEMO_USER.id,
+            email: DEMO_USER.email,
+            firstName: DEMO_USER.firstName,
+            lastName: DEMO_USER.lastName,
+            role: DEMO_USER.role,
+            status: DEMO_USER.status,
+          },
+        });
+      }
+
+      // Check if user ID exists
+      if (!req.user?.id) {
+        return res.status(401).json({
+          success: false,
+          message: 'User ID not found in token',
+        });
+      }
+
+      // Fetch user from database
+      const user = await UserService.getUserById(req.user.id);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found',
+        });
+      }
+
       return res.json({
         success: true,
         user: {
-          id: DEMO_USER.id,
-          email: DEMO_USER.email,
-          firstName: DEMO_USER.firstName,
-          lastName: DEMO_USER.lastName,
-          role: DEMO_USER.role,
-          status: DEMO_USER.status,
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          status: user.status,
+          lastLogin: user.lastLoginAt,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
         },
       });
+    } catch (error) {
+      next(error);
     }
-
-    // Check if user ID exists
-    if (!req.user?.id) {
-      return res.status(401).json({
-        success: false,
-        message: 'User ID not found in token'
-      });
-    }
-
-    // Fetch user from database
-    const user = await UserService.getUserById(req.user.id);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    return res.json({
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        status: user.status,
-        lastLogin: user.lastLoginAt,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      },
-    });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 /**
  * @swagger
@@ -593,13 +601,13 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
     if (!refreshToken) {
       return res.status(400).json({
         success: false,
-        message: 'Refresh token is required'
+        message: 'Refresh token is required',
       });
     }
 
     const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET, {
       issuer: 'CounselFlow',
-      audience: process.env.APP_URL || 'http://localhost:3000'
+      audience: process.env.APP_URL || 'http://localhost:3000',
     }) as any;
 
     // For demo purposes
@@ -617,13 +625,13 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid refresh token'
+        message: 'Invalid refresh token',
       });
     }
 
     // Generate new tokens
     const tokens = generateTokens(user);
-    
+
     logger.info('Token refreshed successfully', { userId: user.id });
 
     return res.json({
@@ -635,7 +643,7 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
   } catch (error) {
     return res.status(401).json({
       success: false,
-      message: 'Invalid refresh token'
+      message: 'Invalid refresh token',
     });
   }
 });
@@ -669,27 +677,31 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
  *         $ref: '#/components/responses/InternalServerError'
  */
 // Logout endpoint
-router.post('/logout', authenticate, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  try {
-    // Get token from header
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(' ')[1];
-    
-    if (token) {
-      // Blacklist the current token
-      TokenService.blacklistToken(token);
-    }
+router.post(
+  '/logout',
+  authenticate,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      // Get token from header
+      const authHeader = req.headers.authorization;
+      const token = authHeader && authHeader.split(' ')[1];
 
-    logger.info('User logout', { userId: req.user?.id });
-    
-    return res.json({
-      success: true,
-      message: 'Logged out successfully',
-    });
-  } catch (error) {
-    next(error);
+      if (token) {
+        // Blacklist the current token
+        TokenService.blacklistToken(token);
+      }
+
+      logger.info('User logout', { userId: req.user?.id });
+
+      return res.json({
+        success: true,
+        message: 'Logged out successfully',
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 /**
  * @swagger
@@ -746,7 +758,7 @@ router.post('/forgot-password', async (req: Request, res: Response, next: NextFu
 
     // Generate password reset token
     const resetToken = generatePasswordResetToken(user.id);
-    
+
     // Send password reset email
     await emailService.sendPasswordResetEmail(email, resetToken);
 

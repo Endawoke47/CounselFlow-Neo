@@ -18,7 +18,7 @@ export class UsageTracker {
         tokens: usage.tokensUsed,
         cost: usage.cost,
         processingTime: usage.processingTime,
-        timestamp: usage.timestamp
+        timestamp: usage.timestamp,
       });
 
       // Store usage data (mock implementation)
@@ -42,12 +42,16 @@ export class UsageTracker {
         cost: 0,
         processingTime: 3500,
         success: true,
-        timestamp: new Date()
-      }
+        timestamp: new Date(),
+      },
     ];
   }
 
-  async getProviderUsage(provider: string, startDate?: Date, endDate?: Date): Promise<{
+  async getProviderUsage(
+    provider: string,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<{
     totalRequests: number;
     totalTokens: number;
     totalCost: number;
@@ -58,7 +62,7 @@ export class UsageTracker {
       totalRequests: 156,
       totalTokens: 45680,
       totalCost: provider === 'ollama' ? 0 : 12.45,
-      averageProcessingTime: 2800
+      averageProcessingTime: 2800,
     };
   }
 
@@ -73,15 +77,15 @@ export class UsageTracker {
       dailyCosts: [
         { date: '2025-07-01', cost: 2.45 },
         { date: '2025-07-02', cost: 3.21 },
-        { date: '2025-07-03', cost: 1.87 }
+        { date: '2025-07-03', cost: 1.87 },
       ],
       providerBreakdown: [
         { provider: 'ollama', cost: 0, percentage: 0 },
-        { provider: 'openai', cost: 8.50, percentage: 68 },
-        { provider: 'anthropic', cost: 4.00, percentage: 32 }
+        { provider: 'openai', cost: 8.5, percentage: 68 },
+        { provider: 'anthropic', cost: 4.0, percentage: 32 },
       ],
-      monthlyTotal: 12.50,
-      projectedMonthly: 25.00
+      monthlyTotal: 12.5,
+      projectedMonthly: 25.0,
     };
   }
 
@@ -101,14 +105,14 @@ export class UsageTracker {
         { type: 'contract_analysis', count: 125 },
         { type: 'legal_research', count: 98 },
         { type: 'compliance_check', count: 67 },
-        { type: 'risk_assessment', count: 52 }
+        { type: 'risk_assessment', count: 52 },
       ],
       providerDistribution: [
         { provider: 'ollama', count: 198 },
         { provider: 'legal_bert', count: 87 },
         { provider: 'openai', count: 34 },
-        { provider: 'anthropic', count: 23 }
-      ]
+        { provider: 'anthropic', count: 23 },
+      ],
     };
   }
 
@@ -125,8 +129,8 @@ export class UsageTracker {
     alertLevel: 'none' | 'warning' | 'critical';
   }> {
     // Mock implementation
-    const budget = 50.00;
-    const spent = 12.50;
+    const budget = 50.0;
+    const spent = 12.5;
     const remaining = budget - spent;
     const percentage = (spent / budget) * 100;
 
@@ -139,7 +143,7 @@ export class UsageTracker {
       spent,
       remaining,
       percentage,
-      alertLevel
+      alertLevel,
     };
   }
 
@@ -157,7 +161,7 @@ export class UsageTracker {
       { jurisdiction: 'EG', tokens: 9650 },
       { jurisdiction: 'KE', tokens: 7340 },
       { jurisdiction: 'AE', tokens: 6210 },
-      { jurisdiction: 'SA', tokens: 5890 }
+      { jurisdiction: 'SA', tokens: 5890 },
     ];
   }
 
@@ -166,7 +170,7 @@ export class UsageTracker {
       { system: 'common_law', usage: 45 },
       { system: 'civil_law', usage: 32 },
       { system: 'islamic_law', usage: 15 },
-      { system: 'mixed_system', usage: 8 }
+      { system: 'mixed_system', usage: 8 },
     ];
   }
 
@@ -175,7 +179,7 @@ export class UsageTracker {
       { language: 'en', percentage: 67 },
       { language: 'ar', percentage: 18 },
       { language: 'fr', percentage: 12 },
-      { language: 'pt', percentage: 3 }
+      { language: 'pt', percentage: 3 },
     ];
   }
 }

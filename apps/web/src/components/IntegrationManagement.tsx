@@ -1,962 +1,764 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Paper,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  Tab,
-  Tabs,
-  Button,
-  Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Switch,
-  FormControlLabel,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  LinearProgress,
-  Alert,
-  Tooltip,
-  CircularProgress,
-} from '@mui/material';
-import {
-  Integration as IntegrationIcon,
-  Api as ApiIcon,
-  Security as SecurityIcon,
-  Analytics as AnalyticsIcon,
-  Settings as SettingsIcon,
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Sync as SyncIcon,
-  Key as KeyIcon,
-  Speed as SpeedIcon,
-  Timeline as TimelineIcon,
-  CheckCircle as CheckCircleIcon,
-  Error as ErrorIcon,
-  Warning as WarningIcon,
-  ExpandMore as ExpandMoreIcon,
-  Refresh as RefreshIcon,
-  Download as DownloadIcon,
-  Upload as UploadIcon,
-} from '@mui/icons-material';
-import { Line, Bar, Doughnut } from 'react-chartjs-2';
-import { format } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert } from '@/components/ui/alert';
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
+// Integration Service Interface
+interface IntegrationService {
+  id: string;
+  name: string;
+  description: string;
+  category: 'document' | 'calendar' | 'email' | 'payment' | 'crm' | 'storage' | 'communication';
+  status: 'connected' | 'disconnected' | 'pending' | 'error';
+  icon: string;
+  provider: string;
+  features: string[];
+  config: Record<string, any>;
+  lastSync?: Date;
+  errorMessage?: string;
 }
 
-function TabPanel({ children, value, index, ...other }: TabPanelProps) {
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`integration-tabpanel-${index}`}
-      aria-labelledby={`integration-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
-    </div>
-  );
-}
+// Available Integration Services
+const AVAILABLE_INTEGRATIONS: IntegrationService[] = [
+  {
+    id: 'docusign',
+    name: 'DocuSign',
+    description: 'Electronic signature and document workflow',
+    category: 'document',
+    status: 'connected',
+    icon: '📝',
+    provider: 'DocuSign',
+    features: ['E-Signatures', 'Document Templates', 'Workflow Automation', 'Status Tracking'],
+    config: {
+      apiKey: '***************',
+      accountId: 'acc_12345',
+      baseUrl: 'https://demo.docusign.net'
+    },
+    lastSync: new Date('2024-01-20T10:30:00')
+  },
+  {
+    id: 'outlook-calendar',
+    name: 'Outlook Calendar',
+    description: 'Calendar integration for scheduling and appointments',
+    category: 'calendar',
+    status: 'connected',
+    icon: '📅',
+    provider: 'Microsoft',
+    features: ['Event Creation', 'Meeting Scheduling', 'Reminder Notifications', 'Availability Checking'],
+    config: {
+      tenantId: 'tenant_67890',
+      clientId: 'client_abcdef',
+      redirectUri: 'https://counselflow.com/auth/callback'
+    },
+    lastSync: new Date('2024-01-20T11:15:00')
+  },
+  {
+    id: 'gmail',
+    name: 'Gmail Integration',
+    description: 'Email management and automation',
+    category: 'email',
+    status: 'connected',
+    icon: '📧',
+    provider: 'Google',
+    features: ['Email Automation', 'Template Management', 'Thread Tracking', 'Attachment Handling'],
+    config: {
+      clientId: 'google_client_123',
+      scope: 'https://www.googleapis.com/auth/gmail.modify',
+      refreshToken: '***************'
+    },
+    lastSync: new Date('2024-01-20T09:45:00')
+  },
+  {
+    id: 'stripe',
+    name: 'Stripe Payments',
+    description: 'Payment processing and invoicing',
+    category: 'payment',
+    status: 'connected',
+    icon: '💳',
+    provider: 'Stripe',
+    features: ['Invoice Generation', 'Payment Processing', 'Subscription Management', 'Financial Reporting'],
+    config: {
+      publishableKey: 'pk_test_***************',
+      secretKey: '***************',
+      webhookSecret: 'whsec_***************'
+    },
+    lastSync: new Date('2024-01-20T08:20:00')
+  },
+  {
+    id: 'salesforce',
+    name: 'Salesforce CRM',
+    description: 'Customer relationship management',
+    category: 'crm',
+    status: 'disconnected',
+    icon: '🏢',
+    provider: 'Salesforce',
+    features: ['Lead Management', 'Contact Sync', 'Opportunity Tracking', 'Pipeline Analytics'],
+    config: {}
+  },
+  {
+    id: 'dropbox',
+    name: 'Dropbox Business',
+    description: 'Cloud storage and file sharing',
+    category: 'storage',
+    status: 'pending',
+    icon: '📁',
+    provider: 'Dropbox',
+    features: ['File Sync', 'Document Sharing', 'Version Control', 'Team Folders'],
+    config: {
+      appKey: 'dropbox_key_456',
+      appSecret: '***************'
+    }
+  },
+  {
+    id: 'slack',
+    name: 'Slack Workspace',
+    description: 'Team communication and notifications',
+    category: 'communication',
+    status: 'error',
+    icon: '💬',
+    provider: 'Slack',
+    features: ['Team Notifications', 'Case Updates', 'File Sharing', 'Direct Messaging'],
+    config: {
+      botToken: 'xoxb-***************',
+      signingSecret: '***************'
+    },
+    errorMessage: 'Authentication token expired'
+  },
+  {
+    id: 'zoom',
+    name: 'Zoom Meetings',
+    description: 'Video conferencing and virtual meetings',
+    category: 'communication',
+    status: 'disconnected',
+    icon: '🎥',
+    provider: 'Zoom',
+    features: ['Meeting Scheduling', 'Recording Management', 'Participant Tracking', 'Integration with Calendar'],
+    config: {}
+  }
+];
 
-const IntegrationManagement: React.FC = () => {
-  const [activeTab, setActiveTab] = useState(0);
-  const [integrations, setIntegrations] = useState<any[]>([]);
-  const [apiKeys, setApiKeys] = useState<any[]>([]);
-  const [metrics, setMetrics] = useState<any>({});
-  const [loading, setLoading] = useState(false);
-  const [openDialog, setOpenDialog] = useState<string | null>(null);
-  const [selectedIntegration, setSelectedIntegration] = useState<any>(null);
+// Integration Statistics
+const INTEGRATION_STATS = {
+  totalIntegrations: AVAILABLE_INTEGRATIONS.length,
+  connectedIntegrations: AVAILABLE_INTEGRATIONS.filter(i => i.status === 'connected').length,
+  pendingIntegrations: AVAILABLE_INTEGRATIONS.filter(i => i.status === 'pending').length,
+  errorIntegrations: AVAILABLE_INTEGRATIONS.filter(i => i.status === 'error').length,
+  lastSyncTime: new Date('2024-01-20T11:15:00'),
+  dataProcessed: '2.4GB',
+  apiCallsToday: 1547
+};
 
-  useEffect(() => {
-    loadIntegrations();
-    loadApiKeys();
-    loadMetrics();
-  }, []);
+// Category configurations
+const CATEGORY_CONFIG = {
+  document: { color: 'bg-blue-100 text-blue-800', label: 'Document Management' },
+  calendar: { color: 'bg-green-100 text-green-800', label: 'Calendar & Scheduling' },
+  email: { color: 'bg-purple-100 text-purple-800', label: 'Email & Communication' },
+  payment: { color: 'bg-yellow-100 text-yellow-800', label: 'Payment Processing' },
+  crm: { color: 'bg-orange-100 text-orange-800', label: 'Customer Relations' },
+  storage: { color: 'bg-indigo-100 text-indigo-800', label: 'File Storage' },
+  communication: { color: 'bg-pink-100 text-pink-800', label: 'Team Communication' }
+};
 
-  const loadIntegrations = async () => {
-    setLoading(true);
-    try {
-      // Mock data - replace with actual API calls
-      setIntegrations([
-        {
-          id: 'clio',
-          name: 'Clio Practice Management',
-          type: 'legal-software',
-          status: 'active',
-          lastSync: new Date('2024-01-15T10:30:00'),
-          health: 'healthy',
-          requestsToday: 1250,
-          errorRate: 0.5,
-        },
-        {
-          id: 'lexisnexis',
-          name: 'LexisNexis',
-          type: 'legal-research',
-          status: 'active',
-          lastSync: new Date('2024-01-15T11:15:00'),
-          health: 'healthy',
-          requestsToday: 850,
-          errorRate: 1.2,
-        },
-        {
-          id: 'docusign',
-          name: 'DocuSign',
-          type: 'document-management',
-          status: 'inactive',
-          lastSync: new Date('2024-01-14T16:20:00'),
-          health: 'degraded',
-          requestsToday: 320,
-          errorRate: 3.8,
-        },
-        {
-          id: 'quickbooks',
-          name: 'QuickBooks Online',
-          type: 'accounting',
-          status: 'active',
-          lastSync: new Date('2024-01-15T09:45:00'),
-          health: 'healthy',
-          requestsToday: 480,
-          errorRate: 0.8,
-        },
-      ]);
-    } catch (error) {
-      console.error('Failed to load integrations:', error);
-    } finally {
-      setLoading(false);
+export function IntegrationManagement() {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [integrations, setIntegrations] = useState<IntegrationService[]>(AVAILABLE_INTEGRATIONS);
+  const [selectedIntegration, setSelectedIntegration] = useState<IntegrationService | null>(null);
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isConfiguring, setIsConfiguring] = useState(false);
+
+  // Filter integrations
+  const filteredIntegrations = integrations.filter(integration => {
+    const matchesCategory = filterCategory === 'all' || integration.category === filterCategory;
+    const matchesStatus = filterStatus === 'all' || integration.status === filterStatus;
+    const matchesSearch = integration.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         integration.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesStatus && matchesSearch;
+  });
+
+  // Connect integration
+  const connectIntegration = async (integrationId: string) => {
+    setIntegrations(prev => prev.map(integration => 
+      integration.id === integrationId 
+        ? { ...integration, status: 'pending' as const }
+        : integration
+    ));
+
+    // Simulate connection process
+    setTimeout(() => {
+      setIntegrations(prev => prev.map(integration => 
+        integration.id === integrationId 
+          ? { 
+              ...integration, 
+              status: 'connected' as const, 
+              lastSync: new Date(),
+              errorMessage: undefined
+            }
+          : integration
+      ));
+    }, 2000);
+  };
+
+  // Disconnect integration
+  const disconnectIntegration = (integrationId: string) => {
+    setIntegrations(prev => prev.map(integration => 
+      integration.id === integrationId 
+        ? { ...integration, status: 'disconnected' as const, errorMessage: undefined }
+        : integration
+    ));
+  };
+
+  // Sync integration
+  const syncIntegration = async (integrationId: string) => {
+    setIntegrations(prev => prev.map(integration => 
+      integration.id === integrationId 
+        ? { ...integration, status: 'pending' as const }
+        : integration
+    ));
+
+    // Simulate sync process
+    setTimeout(() => {
+      setIntegrations(prev => prev.map(integration => 
+        integration.id === integrationId 
+          ? { ...integration, status: 'connected' as const, lastSync: new Date() }
+          : integration
+      ));
+    }, 1500);
+  };
+
+  // Test integration
+  const testIntegration = async (integrationId: string) => {
+    const integration = integrations.find(i => i.id === integrationId);
+    if (!integration) return;
+
+    // Simulate test
+    const testResult = Math.random() > 0.2; // 80% success rate
+    
+    if (testResult) {
+      alert(`✅ ${integration.name} test successful!\n\nAll features are working correctly.`);
+    } else {
+      alert(`❌ ${integration.name} test failed!\n\nPlease check your configuration settings.`);
     }
   };
 
-  const loadApiKeys = async () => {
-    try {
-      // Mock data - replace with actual API calls
-      setApiKeys([
-        {
-          id: '1',
-          name: 'Mobile App',
-          key: 'cf_1234...abcd',
-          permissions: ['clients:read', 'cases:read'],
-          lastUsed: new Date('2024-01-15T11:30:00'),
-          requestsToday: 2500,
-          status: 'active',
-        },
-        {
-          id: '2',
-          name: 'Web Dashboard',
-          key: 'cf_5678...efgh',
-          permissions: ['clients:*', 'cases:*', 'documents:*'],
-          lastUsed: new Date('2024-01-15T11:45:00'),
-          requestsToday: 5200,
-          status: 'active',
-        },
-        {
-          id: '3',
-          name: 'Third Party Integration',
-          key: 'cf_9012...ijkl',
-          permissions: ['webhooks:receive'],
-          lastUsed: new Date('2024-01-14T18:20:00'),
-          requestsToday: 150,
-          status: 'inactive',
-        },
-      ]);
-    } catch (error) {
-      console.error('Failed to load API keys:', error);
-    }
+  // Configure integration
+  const configureIntegration = (integration: IntegrationService) => {
+    setSelectedIntegration(integration);
+    setIsConfiguring(true);
   };
 
-  const loadMetrics = async () => {
-    try {
-      // Mock data - replace with actual API calls
-      setMetrics({
-        totalRequests: 125000,
-        successfulRequests: 122500,
-        failedRequests: 2500,
-        averageResponseTime: 145,
-        requestsPerSecond: 12.5,
-        topEndpoints: [
-          { endpoint: 'GET /api/clients', count: 15000 },
-          { endpoint: 'GET /api/cases', count: 12000 },
-          { endpoint: 'POST /api/documents', count: 8500 },
-          { endpoint: 'GET /api/calendar', count: 6200 },
-          { endpoint: 'PUT /api/cases', count: 4800 },
-        ],
-        errorRates: [
-          { statusCode: 200, count: 110000 },
-          { statusCode: 400, count: 1500 },
-          { statusCode: 401, count: 800 },
-          { statusCode: 500, count: 200 },
-        ],
-      });
-    } catch (error) {
-      console.error('Failed to load metrics:', error);
-    }
-  };
+  // Save configuration
+  const saveConfiguration = (config: Record<string, any>) => {
+    if (!selectedIntegration) return;
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
+    setIntegrations(prev => prev.map(integration => 
+      integration.id === selectedIntegration.id 
+        ? { ...integration, config }
+        : integration
+    ));
 
-  const handleSyncIntegration = async (integrationId: string) => {
-    setLoading(true);
-    try {
-      // Simulate sync operation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      await loadIntegrations();
-    } catch (error) {
-      console.error('Sync failed:', error);
-    } finally {
-      setLoading(false);
-    }
+    setIsConfiguring(false);
+    setSelectedIntegration(null);
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active':
-      case 'healthy':
-        return 'success';
-      case 'inactive':
-      case 'degraded':
-        return 'warning';
-      case 'error':
-      case 'unhealthy':
-        return 'error';
-      default:
-        return 'default';
+      case 'connected': return 'text-green-600 bg-green-100';
+      case 'disconnected': return 'text-gray-600 bg-gray-100';
+      case 'pending': return 'text-yellow-600 bg-yellow-100';
+      case 'error': return 'text-red-600 bg-red-100';
+      default: return 'text-gray-600 bg-gray-100';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'active':
-      case 'healthy':
-        return <CheckCircleIcon color="success" />;
-      case 'inactive':
-      case 'degraded':
-        return <WarningIcon color="warning" />;
-      case 'error':
-      case 'unhealthy':
-        return <ErrorIcon color="error" />;
-      default:
-        return <CircularProgress size={20} />;
+      case 'connected': return '✅';
+      case 'disconnected': return '⚫';
+      case 'pending': return '⏳';
+      case 'error': return '❌';
+      default: return '⚫';
     }
   };
 
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-      },
-      title: {
-        display: true,
-        text: 'API Usage Over Time',
-      },
-    },
-  };
-
-  const requestsChartData = {
-    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
-    datasets: [
-      {
-        label: 'Successful Requests',
-        data: [150, 200, 450, 800, 650, 300],
-        borderColor: 'rgb(75, 192, 192)',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-      },
-      {
-        label: 'Failed Requests',
-        data: [10, 15, 25, 40, 30, 20],
-        borderColor: 'rgb(255, 99, 132)',
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-      },
-    ],
-  };
-
-  const endpointsChartData = {
-    labels: metrics.topEndpoints?.map((e: any) => e.endpoint) || [],
-    datasets: [
-      {
-        label: 'Requests',
-        data: metrics.topEndpoints?.map((e: any) => e.count) || [],
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.8)',
-          'rgba(54, 162, 235, 0.8)',
-          'rgba(255, 205, 86, 0.8)',
-          'rgba(75, 192, 192, 0.8)',
-          'rgba(153, 102, 255, 0.8)',
-        ],
-      },
-    ],
-  };
-
   return (
-    <Box sx={{ width: '100%' }}>
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Integration & API Management
-        </Typography>
-        <Box>
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={() => {
-              loadIntegrations();
-              loadApiKeys();
-              loadMetrics();
-            }}
-            sx={{ mr: 1 }}
-          >
-            Refresh
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setOpenDialog('newIntegration')}
-          >
-            Add Integration
-          </Button>
-        </Box>
-      </Box>
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="mb-6">
+        <h2 className="text-3xl font-bold mb-2">Integration Management</h2>
+        <p className="text-gray-600">Connect and manage third-party services and integrations</p>
+      </div>
 
-      <Paper sx={{ width: '100%', mb: 2 }}>
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          aria-label="integration management tabs"
-          sx={{ borderBottom: 1, borderColor: 'divider' }}
-        >
-          <Tab icon={<IntegrationIcon />} label="Integrations" />
-          <Tab icon={<ApiIcon />} label="API Keys" />
-          <Tab icon={<AnalyticsIcon />} label="Analytics" />
-          <Tab icon={<SecurityIcon />} label="Security" />
-          <Tab icon={<SettingsIcon />} label="Settings" />
-        </Tabs>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="integrations">Integrations</TabsTrigger>
+          <TabsTrigger value="api-management">API Management</TabsTrigger>
+          <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
+          <TabsTrigger value="logs">Activity Logs</TabsTrigger>
+        </TabsList>
 
-        <TabPanel value={activeTab} index={0}>
-          <Grid container spacing={3}>
-            {/* Integration Overview Cards */}
-            <Grid item xs={12} md={3}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Total Integrations
-                  </Typography>
-                  <Typography variant="h4">
-                    {integrations.length}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Active Integrations
-                  </Typography>
-                  <Typography variant="h4" color="success.main">
-                    {integrations.filter(i => i.status === 'active').length}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Total Requests Today
-                  </Typography>
-                  <Typography variant="h4">
-                    {integrations.reduce((sum, i) => sum + i.requestsToday, 0).toLocaleString()}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Average Error Rate
-                  </Typography>
-                  <Typography variant="h4" color="warning.main">
-                    {(integrations.reduce((sum, i) => sum + i.errorRate, 0) / integrations.length).toFixed(1)}%
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+        <TabsContent value="overview" className="mt-6">
+          <div className="space-y-6">
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-2xl font-bold text-blue-600">{INTEGRATION_STATS.connectedIntegrations}</div>
+                <div className="text-2xl">🔗</div>
+              </div>
+              <div className="text-sm text-gray-600">Connected Services</div>
+              <div className="text-xs text-gray-500 mt-1">
+                of {INTEGRATION_STATS.totalIntegrations} available
+              </div>
+            </Card>
 
-            {/* Integrations List */}
-            <Grid item xs={12}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Integration Status
-                  </Typography>
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Integration</TableCell>
-                          <TableCell>Type</TableCell>
-                          <TableCell>Status</TableCell>
-                          <TableCell>Health</TableCell>
-                          <TableCell>Last Sync</TableCell>
-                          <TableCell>Requests Today</TableCell>
-                          <TableCell>Error Rate</TableCell>
-                          <TableCell>Actions</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {integrations.map((integration) => (
-                          <TableRow key={integration.id}>
-                            <TableCell>
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <IntegrationIcon sx={{ mr: 1 }} />
-                                {integration.name}
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              <Chip
-                                label={integration.type}
-                                size="small"
-                                variant="outlined"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Chip
-                                label={integration.status}
-                                color={getStatusColor(integration.status)}
-                                size="small"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                {getStatusIcon(integration.health)}
-                                <Typography variant="body2" sx={{ ml: 1 }}>
-                                  {integration.health}
-                                </Typography>
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              {format(integration.lastSync, 'MMM dd, HH:mm')}
-                            </TableCell>
-                            <TableCell>
-                              {integration.requestsToday.toLocaleString()}
-                            </TableCell>
-                            <TableCell>
-                              <Typography
-                                color={integration.errorRate > 2 ? 'error' : 'textPrimary'}
-                              >
-                                {integration.errorRate.toFixed(1)}%
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Tooltip title="Sync Now">
-                                <IconButton
-                                  onClick={() => handleSyncIntegration(integration.id)}
-                                  disabled={loading}
-                                >
-                                  <SyncIcon />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Edit">
-                                <IconButton
-                                  onClick={() => {
-                                    setSelectedIntegration(integration);
-                                    setOpenDialog('editIntegration');
-                                  }}
-                                >
-                                  <EditIcon />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Delete">
-                                <IconButton color="error">
-                                  <DeleteIcon />
-                                </IconButton>
-                              </Tooltip>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </TabPanel>
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-2xl font-bold text-green-600">{INTEGRATION_STATS.apiCallsToday}</div>
+                <div className="text-2xl">📊</div>
+              </div>
+              <div className="text-sm text-gray-600">API Calls Today</div>
+              <div className="text-xs text-green-500 mt-1">+12% from yesterday</div>
+            </Card>
 
-        <TabPanel value={activeTab} index={1}>
-          <Grid container spacing={3}>
-            {/* API Keys Overview */}
-            <Grid item xs={12} md={4}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Total API Keys
-                  </Typography>
-                  <Typography variant="h4">
-                    {apiKeys.length}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Active Keys
-                  </Typography>
-                  <Typography variant="h4" color="success.main">
-                    {apiKeys.filter(k => k.status === 'active').length}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Total Requests Today
-                  </Typography>
-                  <Typography variant="h4">
-                    {apiKeys.reduce((sum, k) => sum + k.requestsToday, 0).toLocaleString()}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-2xl font-bold text-purple-600">{INTEGRATION_STATS.dataProcessed}</div>
+                <div className="text-2xl">💾</div>
+              </div>
+              <div className="text-sm text-gray-600">Data Processed</div>
+              <div className="text-xs text-gray-500 mt-1">Last 30 days</div>
+            </Card>
 
-            {/* API Keys List */}
-            <Grid item xs={12}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6">
-                      API Keys
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      startIcon={<KeyIcon />}
-                      onClick={() => setOpenDialog('newApiKey')}
-                    >
-                      Generate New Key
-                    </Button>
-                  </Box>
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Name</TableCell>
-                          <TableCell>Key</TableCell>
-                          <TableCell>Permissions</TableCell>
-                          <TableCell>Last Used</TableCell>
-                          <TableCell>Requests Today</TableCell>
-                          <TableCell>Status</TableCell>
-                          <TableCell>Actions</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {apiKeys.map((apiKey) => (
-                          <TableRow key={apiKey.id}>
-                            <TableCell>{apiKey.name}</TableCell>
-                            <TableCell>
-                              <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                                {apiKey.key}
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                {apiKey.permissions.slice(0, 2).map((permission: string) => (
-                                  <Chip
-                                    key={permission}
-                                    label={permission}
-                                    size="small"
-                                    variant="outlined"
-                                  />
-                                ))}
-                                {apiKey.permissions.length > 2 && (
-                                  <Chip
-                                    label={`+${apiKey.permissions.length - 2} more`}
-                                    size="small"
-                                    variant="outlined"
-                                  />
-                                )}
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              {format(apiKey.lastUsed, 'MMM dd, HH:mm')}
-                            </TableCell>
-                            <TableCell>
-                              {apiKey.requestsToday.toLocaleString()}
-                            </TableCell>
-                            <TableCell>
-                              <Chip
-                                label={apiKey.status}
-                                color={getStatusColor(apiKey.status)}
-                                size="small"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Tooltip title="Edit">
-                                <IconButton>
-                                  <EditIcon />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Revoke">
-                                <IconButton color="error">
-                                  <DeleteIcon />
-                                </IconButton>
-                              </Tooltip>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </TabPanel>
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-2xl font-bold text-orange-600">{INTEGRATION_STATS.errorIntegrations}</div>
+                <div className="text-2xl">⚠️</div>
+              </div>
+              <div className="text-sm text-gray-600">Issues to Resolve</div>
+              <div className="text-xs text-orange-500 mt-1">Requires attention</div>
+            </Card>
+          </div>
 
-        <TabPanel value={activeTab} index={2}>
-          <Grid container spacing={3}>
-            {/* Metrics Overview */}
-            <Grid item xs={12} md={3}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Total Requests
-                  </Typography>
-                  <Typography variant="h4">
-                    {metrics.totalRequests?.toLocaleString()}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Success Rate
-                  </Typography>
-                  <Typography variant="h4" color="success.main">
-                    {metrics.totalRequests ? 
-                      ((metrics.successfulRequests / metrics.totalRequests) * 100).toFixed(1) : 0}%
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Avg Response Time
-                  </Typography>
-                  <Typography variant="h4">
-                    {metrics.averageResponseTime}ms
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Requests/Second
-                  </Typography>
-                  <Typography variant="h4">
-                    {metrics.requestsPerSecond}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+          {/* Recent Activity */}
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">Recent Integration Activity</h3>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                <span className="text-lg">📝</span>
+                <div className="flex-1">
+                  <div className="font-medium">DocuSign document signed</div>
+                  <div className="text-sm text-gray-600">Service Agreement - Client #1247</div>
+                </div>
+                <div className="text-sm text-gray-500">2 minutes ago</div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                <span className="text-lg">📅</span>
+                <div className="flex-1">
+                  <div className="font-medium">Meeting scheduled via Outlook</div>
+                  <div className="text-sm text-gray-600">Client consultation - Tomorrow 3:00 PM</div>
+                </div>
+                <div className="text-sm text-gray-500">15 minutes ago</div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
+                <span className="text-lg">💳</span>
+                <div className="flex-1">
+                  <div className="font-medium">Payment processed via Stripe</div>
+                  <div className="text-sm text-gray-600">Invoice #INV-2024-001 - $2,500.00</div>
+                </div>
+                <div className="text-sm text-gray-500">1 hour ago</div>
+              </div>
+            </div>
+          </Card>
 
-            {/* Charts */}
-            <Grid item xs={12} md={8}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    API Usage Over Time
-                  </Typography>
-                  <Line data={requestsChartData} options={chartOptions} />
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Top Endpoints
-                  </Typography>
-                  <Doughnut data={endpointsChartData} />
-                </CardContent>
-              </Card>
-            </Grid>
+          {/* Integration Status by Category */}
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">Integration Status by Category</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Object.entries(CATEGORY_CONFIG).map(([category, config]) => {
+                const categoryIntegrations = integrations.filter(i => i.category === category);
+                const connectedCount = categoryIntegrations.filter(i => i.status === 'connected').length;
+                
+                return (
+                  <div key={category} className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${config.color}`}>
+                        {config.label}
+                      </span>
+                      <span className="text-sm font-medium">
+                        {connectedCount}/{categoryIntegrations.length}
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ width: `${(connectedCount / categoryIntegrations.length) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+          </div>
+        </TabsContent>
 
-            {/* Detailed Metrics */}
-            <Grid item xs={12}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Endpoint Performance
-                  </Typography>
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Endpoint</TableCell>
-                          <TableCell>Requests</TableCell>
-                          <TableCell>Success Rate</TableCell>
-                          <TableCell>Avg Response Time</TableCell>
-                          <TableCell>Performance</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {metrics.topEndpoints?.map((endpoint: any, index: number) => (
-                          <TableRow key={index}>
-                            <TableCell sx={{ fontFamily: 'monospace' }}>
-                              {endpoint.endpoint}
-                            </TableCell>
-                            <TableCell>{endpoint.count.toLocaleString()}</TableCell>
-                            <TableCell>
-                              <Typography color="success.main">
-                                {(95 + Math.random() * 4).toFixed(1)}%
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              {(100 + Math.random() * 200).toFixed(0)}ms
-                            </TableCell>
-                            <TableCell>
-                              <LinearProgress
-                                variant="determinate"
-                                value={85 + Math.random() * 15}
-                                color="success"
-                                sx={{ width: 100 }}
-                              />
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </TabPanel>
+        <TabsContent value="integrations" className="mt-6">
+          {/* Filters */}
+          <div className="mb-6 flex flex-wrap gap-4">
+            <Input
+              placeholder="Search integrations..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 min-w-64"
+            />
+            <Select
+              value={filterCategory}
+              onValueChange={setFilterCategory}
+            >
+              <option value="all">All Categories</option>
+              {Object.entries(CATEGORY_CONFIG).map(([key, config]) => (
+                <option key={key} value={key}>{config.label}</option>
+              ))}
+            </Select>
+            <Select
+              value={filterStatus}
+              onValueChange={setFilterStatus}
+            >
+              <option value="all">All Status</option>
+              <option value="connected">Connected</option>
+              <option value="disconnected">Disconnected</option>
+              <option value="pending">Pending</option>
+              <option value="error">Error</option>
+            </Select>
+          </div>
 
-        <TabPanel value={activeTab} index={3}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Alert severity="info" sx={{ mb: 2 }}>
-                Security monitoring and threat detection for API endpoints and integrations.
-              </Alert>
-            </Grid>
+          {/* Integration Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredIntegrations.map(integration => (
+              <Card key={integration.id} className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{integration.icon}</span>
+                    <div>
+                      <h3 className="font-semibold">{integration.name}</h3>
+                      <p className="text-sm text-gray-600">{integration.provider}</p>
+                    </div>
+                  </div>
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(integration.status)}`}>
+                    {getStatusIcon(integration.status)} {integration.status}
+                  </span>
+                </div>
 
-            {/* Security Metrics */}
-            <Grid item xs={12} md={4}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Security Score
-                  </Typography>
-                  <Typography variant="h4" color="success.main">
-                    95/100
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Failed Auth Attempts
-                  </Typography>
-                  <Typography variant="h4" color="warning.main">
-                    127
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Rate Limit Violations
-                  </Typography>
-                  <Typography variant="h4" color="error.main">
-                    43
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+                <p className="text-sm text-gray-600 mb-4">{integration.description}</p>
 
-            {/* Security Settings */}
-            <Grid item xs={12}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Security Configuration
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} md={6}>
-                      <FormControlLabel
-                        control={<Switch defaultChecked />}
-                        label="Enable API Rate Limiting"
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <FormControlLabel
-                        control={<Switch defaultChecked />}
-                        label="Require API Key Authentication"
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <FormControlLabel
-                        control={<Switch defaultChecked />}
-                        label="Log All API Requests"
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <FormControlLabel
-                        control={<Switch />}
-                        label="Block Suspicious IPs"
-                      />
-                    </Grid>
-                  </Grid>
-                </CardContent>
+                {integration.errorMessage && (
+                  <Alert className="mb-4 bg-red-50 border-red-200">
+                    <span className="text-red-600 text-sm">{integration.errorMessage}</span>
+                  </Alert>
+                )}
+
+                <div className="mb-4">
+                  <span className={`px-2 py-1 rounded text-xs ${CATEGORY_CONFIG[integration.category].color}`}>
+                    {CATEGORY_CONFIG[integration.category].label}
+                  </span>
+                </div>
+
+                {integration.features.length > 0 && (
+                  <div className="mb-4">
+                    <div className="text-xs font-medium text-gray-500 mb-2">Features:</div>
+                    <div className="flex flex-wrap gap-1">
+                      {integration.features.slice(0, 3).map(feature => (
+                        <span key={feature} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                          {feature}
+                        </span>
+                      ))}
+                      {integration.features.length > 3 && (
+                        <span className="text-xs text-gray-500">+{integration.features.length - 3} more</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {integration.lastSync && (
+                  <div className="text-xs text-gray-500 mb-4">
+                    Last sync: {integration.lastSync.toLocaleString()}
+                  </div>
+                )}
+
+                <div className="flex gap-2 flex-wrap">
+                  {integration.status === 'connected' ? (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => syncIntegration(integration.id)}
+                      >
+                        🔄 Sync
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => testIntegration(integration.id)}
+                      >
+                        🧪 Test
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => configureIntegration(integration)}
+                      >
+                        ⚙️ Configure
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => disconnectIntegration(integration.id)}
+                      >
+                        Disconnect
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        size="sm"
+                        onClick={() => connectIntegration(integration.id)}
+                        disabled={integration.status === 'pending'}
+                      >
+                        {integration.status === 'pending' ? 'Connecting...' : 'Connect'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => configureIntegration(integration)}
+                      >
+                        ⚙️ Configure
+                      </Button>
+                    </>
+                  )}
+                </div>
               </Card>
-            </Grid>
-          </Grid>
-        </TabPanel>
+            ))}
+          </div>
 
-        <TabPanel value={activeTab} index={4}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
-                Global Integration Settings
-              </Typography>
-            </Grid>
+          {filteredIntegrations.length === 0 && (
+            <div className="text-center py-12">
+              <div className="text-4xl mb-4">🔍</div>
+              <h3 className="text-lg font-medium mb-2">No integrations found</h3>
+              <p className="text-gray-600">Try adjusting your search or filter criteria</p>
+            </div>
+          )}
+        </TabsContent>
 
-            {/* Global Settings */}
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Default Rate Limits
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label="Requests per Hour"
-                        type="number"
-                        defaultValue={1000}
-                        variant="outlined"
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label="Burst Limit"
-                        type="number"
-                        defaultValue={100}
-                        variant="outlined"
-                      />
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Grid>
+        <TabsContent value="api-management" className="mt-6">
+          <Card className="p-6">
+            <h3 className="text-xl font-semibold mb-4">API Management</h3>
+            <div className="space-y-6">
+              {/* API Keys */}
+              <div>
+                <h4 className="font-medium mb-3">API Keys & Authentication</h4>
+                <div className="space-y-3">
+                  <div className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium">CounselFlow API Key</span>
+                      <Button size="sm" variant="outline">Regenerate</Button>
+                    </div>
+                    <div className="text-sm text-gray-600 mb-2">
+                      Used for authenticating with CounselFlow APIs
+                    </div>
+                    <div className="bg-gray-50 p-2 rounded font-mono text-sm">
+                      cf_live_1234567890abcdef...
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium">Webhook Secret</span>
+                      <Button size="sm" variant="outline">Regenerate</Button>
+                    </div>
+                    <div className="text-sm text-gray-600 mb-2">
+                      Used for verifying webhook signatures
+                    </div>
+                    <div className="bg-gray-50 p-2 rounded font-mono text-sm">
+                      whsec_1234567890abcdef...
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Sync Settings
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                      <FormControl fullWidth>
-                        <InputLabel>Default Sync Interval</InputLabel>
-                        <Select defaultValue="hourly">
-                          <MenuItem value="realtime">Real-time</MenuItem>
-                          <MenuItem value="hourly">Hourly</MenuItem>
-                          <MenuItem value="daily">Daily</MenuItem>
-                          <MenuItem value="weekly">Weekly</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label="Batch Size"
-                        type="number"
-                        defaultValue={100}
-                        variant="outlined"
-                      />
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Grid>
+              {/* Rate Limits */}
+              <div>
+                <h4 className="font-medium mb-3">Rate Limits & Usage</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 border rounded-lg">
+                    <div className="text-lg font-semibold">1,547</div>
+                    <div className="text-sm text-gray-600">API Calls Today</div>
+                    <div className="text-xs text-green-600">Within limits</div>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <div className="text-lg font-semibold">15/100</div>
+                    <div className="text-sm text-gray-600">Calls per minute</div>
+                    <div className="text-xs text-green-600">Normal usage</div>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <div className="text-lg font-semibold">2.4GB</div>
+                    <div className="text-sm text-gray-600">Data transferred</div>
+                    <div className="text-xs text-gray-500">This month</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </TabsContent>
 
-            {/* Export/Import */}
-            <Grid item xs={12}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Configuration Management
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Button
-                      variant="outlined"
-                      startIcon={<DownloadIcon />}
-                    >
-                      Export Configuration
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      startIcon={<UploadIcon />}
-                    >
-                      Import Configuration
-                    </Button>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </TabPanel>
-      </Paper>
+        <TabsContent value="webhooks" className="mt-6">
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold">Webhook Configuration</h3>
+              <Button>+ Add Webhook</Button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="p-4 border rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium">Document Status Updates</span>
+                  <span className="text-green-600 text-sm">✅ Active</span>
+                </div>
+                <div className="text-sm text-gray-600 mb-2">
+                  Triggers when document status changes
+                </div>
+                <div className="bg-gray-50 p-2 rounded font-mono text-sm mb-2">
+                  https://api.counselflow.com/webhooks/document-status
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline">Test</Button>
+                  <Button size="sm" variant="outline">Edit</Button>
+                  <Button size="sm" variant="destructive">Delete</Button>
+                </div>
+              </div>
+              
+              <div className="p-4 border rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium">Payment Notifications</span>
+                  <span className="text-green-600 text-sm">✅ Active</span>
+                </div>
+                <div className="text-sm text-gray-600 mb-2">
+                  Triggers when payments are processed
+                </div>
+                <div className="bg-gray-50 p-2 rounded font-mono text-sm mb-2">
+                  https://api.counselflow.com/webhooks/payments
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline">Test</Button>
+                  <Button size="sm" variant="outline">Edit</Button>
+                  <Button size="sm" variant="destructive">Delete</Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </TabsContent>
 
-      {/* Dialogs would go here - New Integration, Edit Integration, New API Key, etc. */}
-    </Box>
+        <TabsContent value="logs" className="mt-6">
+          <Card className="p-6">
+            <h3 className="text-xl font-semibold mb-4">Integration Activity Logs</h3>
+            <div className="space-y-3">
+              {[
+                { time: '2024-01-20 11:15:32', service: 'DocuSign', action: 'Document Signed', status: 'success', details: 'Service Agreement signed by client' },
+                { time: '2024-01-20 11:10:45', service: 'Outlook', action: 'Meeting Created', status: 'success', details: 'Client consultation scheduled for tomorrow' },
+                { time: '2024-01-20 11:05:12', service: 'Stripe', action: 'Payment Processed', status: 'success', details: 'Invoice #INV-2024-001 payment received' },
+                { time: '2024-01-20 10:58:33', service: 'Gmail', action: 'Email Sent', status: 'success', details: 'Contract review reminder sent to client' },
+                { time: '2024-01-20 10:45:21', service: 'Slack', action: 'Authentication', status: 'error', details: 'Token expired, reconnection required' },
+                { time: '2024-01-20 10:30:15', service: 'Dropbox', action: 'File Sync', status: 'pending', details: 'Syncing contract documents...' }
+              ].map((log, index) => (
+                <div key={index} className="flex items-center gap-4 p-3 border rounded-lg">
+                  <div className="text-sm text-gray-500 w-32">{log.time}</div>
+                  <div className="font-medium w-24">{log.service}</div>
+                  <div className="flex-1">{log.action}</div>
+                  <div className="text-sm text-gray-600 flex-1">{log.details}</div>
+                  <div className={`px-2 py-1 rounded text-xs font-medium ${
+                    log.status === 'success' ? 'bg-green-100 text-green-700' :
+                    log.status === 'error' ? 'bg-red-100 text-red-700' :
+                    'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    {log.status}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Configuration Modal */}
+      {isConfiguring && selectedIntegration && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-screen overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold">Configure {selectedIntegration.name}</h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsConfiguring(false)}
+              >
+                ✕ Close
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">API Key</label>
+                <Input
+                  type="password"
+                  defaultValue={selectedIntegration.config.apiKey || ''}
+                  placeholder="Enter API key..."
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Base URL</label>
+                <Input
+                  defaultValue={selectedIntegration.config.baseUrl || ''}
+                  placeholder="https://api.example.com"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Webhook URL</label>
+                <Input
+                  defaultValue={`https://api.counselflow.com/webhooks/${selectedIntegration.id}`}
+                  placeholder="Webhook endpoint URL..."
+                />
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="enableLogs" defaultChecked />
+                <label htmlFor="enableLogs" className="text-sm">Enable activity logging</label>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="enableNotifications" defaultChecked />
+                <label htmlFor="enableNotifications" className="text-sm">Send notifications on errors</label>
+              </div>
+              
+              <div className="flex gap-2 pt-4">
+                <Button onClick={() => saveConfiguration({})}>
+                  Save Configuration
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsConfiguring(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
-};
-
-export default IntegrationManagement;
+}

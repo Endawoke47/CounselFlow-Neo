@@ -31,9 +31,9 @@ export abstract class BaseAIProvider {
 
   protected formatLegalPrompt(request: ValidatedAIRequest): string {
     const { context, input, type } = request;
-    
+
     let prompt = `You are a legal AI assistant specializing in `;
-    
+
     if (context?.jurisdiction) {
       const countryName = this.getCountryName(context.jurisdiction);
       prompt += `${countryName} law and legal systems. `;
@@ -64,9 +64,18 @@ export abstract class BaseAIProvider {
 
   protected getCountryName(jurisdiction: string): string {
     const countryMap: Record<string, string> = {
-      'NG': 'Nigerian', 'ZA': 'South African', 'EG': 'Egyptian', 'KE': 'Kenyan',
-      'MA': 'Moroccan', 'ET': 'Ethiopian', 'GH': 'Ghanaian', 'TN': 'Tunisian',
-      'AE': 'UAE', 'SA': 'Saudi Arabian', 'IL': 'Israeli', 'TR': 'Turkish',
+      NG: 'Nigerian',
+      ZA: 'South African',
+      EG: 'Egyptian',
+      KE: 'Kenyan',
+      MA: 'Moroccan',
+      ET: 'Ethiopian',
+      GH: 'Ghanaian',
+      TN: 'Tunisian',
+      AE: 'UAE',
+      SA: 'Saudi Arabian',
+      IL: 'Israeli',
+      TR: 'Turkish',
       // Add more as needed
     };
     return countryMap[jurisdiction] || jurisdiction;
@@ -74,8 +83,15 @@ export abstract class BaseAIProvider {
 
   private getLanguageName(language: string): string {
     const languageMap: Record<string, string> = {
-      'ar': 'Arabic', 'fr': 'French', 'pt': 'Portuguese', 'sw': 'Swahili',
-      'am': 'Amharic', 'he': 'Hebrew', 'fa': 'Persian', 'tr': 'Turkish', 'de': 'German'
+      ar: 'Arabic',
+      fr: 'French',
+      pt: 'Portuguese',
+      sw: 'Swahili',
+      am: 'Amharic',
+      he: 'Hebrew',
+      fa: 'Persian',
+      tr: 'Turkish',
+      de: 'German',
     };
     return languageMap[language] || 'English';
   }

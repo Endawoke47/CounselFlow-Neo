@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/layout/MainLayout';
-import { FileText, Plus, Search, Download, Upload, Edit3, Trash2, Eye, CheckCircle, AlertTriangle, Calendar, Clock, Users, TrendingUp, BarChart3, Activity } from 'lucide-react';
+import { mockPolicies } from '../../lib/mock-data';
+import { FileText, Plus, Search, Download, Upload, Edit3, Trash2, Eye, CheckCircle, AlertTriangle, BarChart3, Calendar, Clock, User, Target, Users, TrendingUp, Activity } from 'lucide-react';
 
 interface Policy {
   id: string;

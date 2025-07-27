@@ -1,10 +1,25 @@
-// Authentication Middleware
-// User: Endawoke47
-// Date: 2025-07-12 21:00:00 UTC
+/**
+ * 🛡️ AUTHENTICATION MIDDLEWARE
+ * ============================
+ * JWT token verification and user authentication for protected routes
+ */
 
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { createError } from './error.middleware';
+import { realAuthService } from '../services/real-auth.service';
+import winston from 'winston';
+
+// Extend Express Request type to include user
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string;
+        email: string;
+        role: string;
+      };
+    }
+  }
+}
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -14,49 +29,69 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
-export const authenticate = (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.File({ filename: 'logs/auth-middleware.log' }),
+    new winston.transports.Console(),
+  ],
+});
+
+/**
+ * 🔐 Require Authentication Middleware
+ */
+export const requireAuth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
+    // Extract token from Authorization header
     const authHeader = req.headers.authorization;
-    
-    if (!authHeader) {
-      throw createError('No token provided', 401);
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({
+        success: false,
+        message: 'Access denied. No token provided.',
+      });
+      return;
     }
 
-    const token = authHeader.split(' ')[1]; // Bearer TOKEN
-    
-    if (!token) {
-      throw createError('Invalid token format', 401);
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+
+    // Verify token
+    const verificationResult = await realAuthService.verifyToken(token);
+
+    if (!verificationResult.valid) {
+      res.status(401).json({
+        success: false,
+        message: verificationResult.message || 'Invalid token',
+      });
+      return;
     }
 
-    const secret = process.env.JWT_SECRET || 'your-secret-key';
-    const decoded = jwt.verify(token, secret) as any;
-    
+    // Add user info to request object
     req.user = {
-      id: decoded.id,
-      email: decoded.email,
-      role: decoded.role,
+      id: verificationResult.payload!.userId,
+      email: verificationResult.payload!.email,
+      role: verificationResult.payload!.role,
     };
 
+    logger.info(`Authenticated user: ${req.user.email} for ${req.method} ${req.path}`);
     next();
   } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      next(createError('Invalid token', 401));
-    } else {
-      next(error);
-    }
+    logger.error('Authentication middleware error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Authentication service error',
+    });
   }
 };
 
-export const authorize = (roles: string[]) => {
-  return (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
-    if (!req.user) {
-      return next(createError('User not authenticated', 401));
-    }
-
-    if (!roles.includes(req.user.role)) {
-      return next(createError('Insufficient permissions', 403));
-    }
-
-    next();
-  };
-};
+// Legacy authenticate function for backward compatibility
+export const authenticate = requireAuth;

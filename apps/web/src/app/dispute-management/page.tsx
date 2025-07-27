@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/layout/MainLayout';
+import { mockDisputes, mockClients, Dispute } from '../../lib/mock-data';
 import { Scale, Plus, Search, Download, Upload, Edit3, Trash2, Eye, CheckCircle, AlertTriangle, BarChart3, Calendar, Brain, TrendingUp, Clock, DollarSign, Users, FileText } from 'lucide-react';
 
-interface Dispute {
+interface DisputeDisplay {
   id: string;
   title: string;
   parties: string[];
@@ -24,82 +25,44 @@ interface Dispute {
 export default function DisputeManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [disputes, setDisputes] = useState<Dispute[]>([
-    {
-      id: 'DSP001',
-      title: 'Commercial Contract Dispute - TechSoft Solutions',
-      parties: ['CounselFlow Ltd', 'TechSoft Solutions Ltd'],
-      type: 'Commercial Litigation',
-      status: 'Active',
-      priority: 'High',
-      value: 500000,
-      filingDate: '2024-09-15',
-      expectedResolution: '2025-03-15',
-      attorney: 'Sarah Johnson',
-      courtVenue: 'High Court - Commercial Division',
-      winProbability: 75,
-      costs: 85000,
-      stage: 'Discovery'
-    },
-    {
-      id: 'DSP002',
-      title: 'Employment Dispute - Wrongful Termination',
-      parties: ['Jane Doe', 'African Innovations SA'],
-      type: 'Employment Law',
-      status: 'Mediation',
-      priority: 'Medium',
-      value: 150000,
-      filingDate: '2024-10-01',
-      expectedResolution: '2025-01-30',
-      attorney: 'Michael Chen',
-      courtVenue: 'Labour Court',
-      winProbability: 60,
-      costs: 25000,
-      stage: 'Mediation'
-    },
-    {
-      id: 'DSP003',
-      title: 'Intellectual Property Infringement',
-      parties: ['CounselFlow Ltd', 'Digital Innovations Co'],
-      type: 'IP Litigation',
-      status: 'Pre-trial',
-      priority: 'High',
-      value: 750000,
-      filingDate: '2024-11-20',
-      expectedResolution: '2025-08-15',
-      attorney: 'David Ochieng',
-      courtVenue: 'High Court - IP Division',
-      winProbability: 85,
-      costs: 120000,
-      stage: 'Pleadings'
-    },
-    {
-      id: 'DSP004',
-      title: 'Partnership Dissolution',
-      parties: ['East Africa Ventures', 'Regional Partners Ltd'],
-      type: 'Corporate Dispute',
-      status: 'Settlement',
-      priority: 'Low',
-      value: 300000,
-      filingDate: '2024-08-10',
-      expectedResolution: '2025-02-28',
-      attorney: 'Grace Kimani',
-      courtVenue: 'Commercial Court',
-      winProbability: 90,
-      costs: 45000,
-      stage: 'Settlement Negotiation'
-    }
-  ]);
+  const [disputes, setDisputes] = useState<DisputeDisplay[]>([]);
+
+  useEffect(() => {
+    // Transform mock disputes to display format
+    const transformedDisputes: DisputeDisplay[] = mockDisputes.map(dispute => {
+      const client = mockClients.find(c => c.id === dispute.clientId);
+      return {
+        id: dispute.id,
+        title: dispute.title,
+        parties: [client?.name || 'Unknown Client', dispute.opposingParty],
+        type: dispute.disputeType,
+        status: dispute.status,
+        priority: dispute.priority,
+        value: dispute.claimAmount,
+        filingDate: dispute.filingDate,
+        expectedResolution: dispute.nextHearing || 'TBD',
+        attorney: client?.assignedLawyer || 'Unassigned',
+        courtVenue: dispute.court,
+        winProbability: dispute.probabilityOfSuccess,
+        costs: Math.floor(dispute.claimAmount * 0.15), // Estimated 15% of claim amount
+        stage: dispute.status === 'discovery' ? 'Discovery' : 
+               dispute.status === 'mediation' ? 'Mediation' :
+               dispute.status === 'trial' ? 'Trial' : 'Initial'
+      };
+    });
+    setDisputes(transformedDisputes);
+  }, []);
+
   const [isAddingDispute, setIsAddingDispute] = useState(false);
-  const [editingDispute, setEditingDispute] = useState<Dispute | null>(null);
-  const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
+  const [editingDispute, setEditingDispute] = useState<DisputeDisplay | null>(null);
+  const [selectedDispute, setSelectedDispute] = useState<DisputeDisplay | null>(null);
 
   // Handlers for full functionality
   const handleAddDispute = () => {
     setIsAddingDispute(true);
   };
 
-  const handleEditDispute = (dispute: Dispute) => {
+  const handleEditDispute = (dispute: DisputeDisplay) => {
     setEditingDispute(dispute);
     setIsAddingDispute(true);
   };
@@ -110,7 +73,7 @@ export default function DisputeManagementPage() {
     }
   };
 
-  const handleViewDispute = (dispute: Dispute) => {
+  const handleViewDispute = (dispute: DisputeDisplay) => {
     setSelectedDispute(dispute);
   };
 
@@ -149,17 +112,17 @@ export default function DisputeManagementPage() {
     }
   };
 
-  const handleSaveDispute = (disputeData: Partial<Dispute>) => {
+  const handleSaveDispute = (disputeData: Partial<DisputeDisplay>) => {
     if (editingDispute) {
       setDisputes(disputes.map(d => d.id === editingDispute.id ? { ...d, ...disputeData } : d));
     } else {
-      const newDispute: Dispute = {
+      const newDispute: DisputeDisplay = {
         id: `DSP${String(disputes.length + 1).padStart(3, '0')}`,
         title: disputeData.title || '',
         parties: disputeData.parties || [],
         type: disputeData.type || '',
-        status: disputeData.status || 'Pre-trial',
-        priority: disputeData.priority || 'Medium',
+        status: disputeData.status || 'filed',
+        priority: (disputeData.priority as 'low' | 'medium' | 'high' | 'urgent') || 'medium',
         value: disputeData.value || 0,
         filingDate: disputeData.filingDate || new Date().toISOString().split('T')[0],
         expectedResolution: disputeData.expectedResolution || '',

@@ -20,7 +20,7 @@ export enum LegalArea {
   CONSTITUTIONAL = 'constitutional',
   ADMINISTRATIVE = 'administrative',
   ENVIRONMENTAL = 'environmental',
-  BANKING_FINANCE = 'banking_finance'
+  BANKING_FINANCE = 'banking_finance',
 }
 
 export enum DocumentType {
@@ -35,7 +35,7 @@ export enum DocumentType {
   LEGAL_BRIEF = 'legal_brief',
   ACADEMIC_PAPER = 'academic_paper',
   PRACTICE_GUIDE = 'practice_guide',
-  LEGAL_FORM = 'legal_form'
+  LEGAL_FORM = 'legal_form',
 }
 
 export enum CitationFormat {
@@ -44,14 +44,14 @@ export enum CitationFormat {
   APA = 'apa',
   MLA = 'mla',
   OSCOLA = 'oscola',
-  CUSTOM = 'custom'
+  CUSTOM = 'custom',
 }
 
 export enum ResearchComplexity {
   BASIC = 'basic',
   INTERMEDIATE = 'intermediate',
   ADVANCED = 'advanced',
-  EXPERT = 'expert'
+  EXPERT = 'expert',
 }
 
 // ===== REQUEST INTERFACES =====
@@ -254,7 +254,7 @@ export enum AuthorityLevel {
   ADMINISTRATIVE = 'administrative',
   ACADEMIC = 'academic',
   PRACTITIONER = 'practitioner',
-  UNKNOWN = 'unknown'
+  UNKNOWN = 'unknown',
 }
 
 export enum BindingLevel {
@@ -262,7 +262,7 @@ export enum BindingLevel {
   PERSUASIVE = 'persuasive',
   DISTINGUISHABLE = 'distinguishable',
   OVERRULED = 'overruled',
-  SUPERSEDED = 'superseded'
+  SUPERSEDED = 'superseded',
 }
 
 export enum SourceType {
@@ -273,7 +273,7 @@ export enum SourceType {
   PROFESSIONAL = 'professional',
   NEWS = 'news',
   BLOG = 'blog',
-  CUSTOM = 'custom'
+  CUSTOM = 'custom',
 }
 
 export enum CredibilityRating {
@@ -281,7 +281,7 @@ export enum CredibilityRating {
   HIGH = 'high',
   MEDIUM = 'medium',
   LOW = 'low',
-  UNKNOWN = 'unknown'
+  UNKNOWN = 'unknown',
 }
 
 export enum AccessLevel {
@@ -289,7 +289,7 @@ export enum AccessLevel {
   SUBSCRIPTION = 'subscription',
   PREMIUM = 'premium',
   RESTRICTED = 'restricted',
-  INTERNAL = 'internal'
+  INTERNAL = 'internal',
 }
 
 export enum SearchCapability {
@@ -298,7 +298,7 @@ export enum SearchCapability {
   CITATION = 'citation',
   METADATA = 'metadata',
   BOOLEAN = 'boolean',
-  NATURAL_LANGUAGE = 'natural_language'
+  NATURAL_LANGUAGE = 'natural_language',
 }
 
 export enum TrendDirection {
@@ -307,7 +307,7 @@ export enum TrendDirection {
   STABLE = 'stable',
   FLUCTUATING = 'fluctuating',
   EMERGING = 'emerging',
-  DECLINING = 'declining'
+  DECLINING = 'declining',
 }
 
 export enum ComplianceStatus {
@@ -315,7 +315,7 @@ export enum ComplianceStatus {
   NON_COMPLIANT = 'non_compliant',
   PARTIALLY_COMPLIANT = 'partially_compliant',
   UNKNOWN = 'unknown',
-  NOT_APPLICABLE = 'not_applicable'
+  NOT_APPLICABLE = 'not_applicable',
 }
 
 export enum SuggestionType {
@@ -324,7 +324,7 @@ export enum SuggestionType {
   NARROWER_SEARCH = 'narrower_search',
   ALTERNATIVE_JURISDICTION = 'alternative_jurisdiction',
   RECENT_DEVELOPMENTS = 'recent_developments',
-  EXPERT_CONSULTATION = 'expert_consultation'
+  EXPERT_CONSULTATION = 'expert_consultation',
 }
 
 export enum Priority {
@@ -332,7 +332,7 @@ export enum Priority {
   HIGH = 'high',
   MEDIUM = 'medium',
   LOW = 'low',
-  INFORMATIONAL = 'informational'
+  INFORMATIONAL = 'informational',
 }
 
 export enum EntityType {
@@ -345,7 +345,7 @@ export enum EntityType {
   COURT = 'court',
   DATE = 'date',
   MONEY = 'money',
-  PERCENTAGE = 'percentage'
+  PERCENTAGE = 'percentage',
 }
 
 // ===== VALIDATION SCHEMAS =====
@@ -355,26 +355,26 @@ export const legalResearchRequestSchema = {
   required: ['query', 'jurisdictions', 'legalAreas', 'documentTypes', 'maxResults'],
   properties: {
     query: { type: 'string', minLength: 3, maxLength: 1000 },
-    jurisdictions: { 
-      type: 'array', 
+    jurisdictions: {
+      type: 'array',
       items: { enum: Object.values(LegalJurisdiction) },
       minItems: 1,
-      maxItems: 10
+      maxItems: 10,
     },
-    legalAreas: { 
-      type: 'array', 
+    legalAreas: {
+      type: 'array',
       items: { enum: Object.values(LegalArea) },
       minItems: 1,
-      maxItems: 5
+      maxItems: 5,
     },
-    languages: { 
-      type: 'array', 
-      items: { enum: Object.values(SupportedLanguage) }
+    languages: {
+      type: 'array',
+      items: { enum: Object.values(SupportedLanguage) },
     },
-    documentTypes: { 
-      type: 'array', 
+    documentTypes: {
+      type: 'array',
       items: { enum: Object.values(DocumentType) },
-      minItems: 1
+      minItems: 1,
     },
     maxResults: { type: 'number', minimum: 1, maximum: 100 },
     includeAnalysis: { type: 'boolean' },
@@ -383,6 +383,6 @@ export const legalResearchRequestSchema = {
     complexity: { enum: Object.values(ResearchComplexity) },
     semanticSearch: { type: 'boolean' },
     includeRelatedCases: { type: 'boolean' },
-    confidenceThreshold: { type: 'number', minimum: 0, maximum: 1 }
-  }
+    confidenceThreshold: { type: 'number', minimum: 0, maximum: 1 },
+  },
 };

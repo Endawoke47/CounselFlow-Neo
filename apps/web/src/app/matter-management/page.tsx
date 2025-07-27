@@ -1,10 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Briefcase, Plus, Search, Download, Upload, Edit3, Trash2, Eye, CheckCircle, AlertTriangle, BarChart3, Calendar, Clock, DollarSign, Users, TrendingUp, Target } from 'lucide-react';
 import MainLayout from '../../components/layout/MainLayout';
+import { 
+  mockMatters, 
+  mockClients, 
+  type Matter, 
+  type Client 
+} from '@/lib/mock-data';
 
-interface Matter {
+interface MatterDisplay {
   id: string;
   title: string;
   client: string;
@@ -25,86 +31,43 @@ interface Matter {
 export default function MatterManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [matters, setMatters] = useState<Matter[]>([
-    {
-      id: 'MTR001',
-      title: 'Corporate Restructuring - TechCorp Holdings',
-      client: 'TechCorp Holdings Ltd',
-      type: 'Corporate Law',
-      status: 'Active',
-      priority: 'High',
-      budget: 150000,
-      billed: 85000,
-      timeSpent: 156,
-      estimatedHours: 280,
-      startDate: '2024-10-01',
-      deadline: '2025-02-28',
-      assignedTeam: ['Sarah Johnson', 'Michael Chen', 'Grace Kimani'],
-      practiceArea: 'Corporate Law',
-      progress: 55
-    },
-    {
-      id: 'MTR002',
-      title: 'Employment Contract Review',
-      client: 'African Innovations SA',
-      type: 'Employment Law',
-      status: 'In Progress',
-      priority: 'Medium',
-      budget: 25000,
-      billed: 18500,
-      timeSpent: 32,
-      estimatedHours: 45,
-      startDate: '2024-11-15',
-      deadline: '2025-01-15',
-      assignedTeam: ['David Ochieng'],
-      practiceArea: 'Employment Law',
-      progress: 70
-    },
-    {
-      id: 'MTR003',
-      title: 'IP Portfolio Management',
-      client: 'Digital Solutions Uganda Ltd',
-      type: 'Intellectual Property',
-      status: 'Planning',
-      priority: 'High',
-      budget: 80000,
-      billed: 12000,
-      timeSpent: 18,
-      estimatedHours: 150,
-      startDate: '2024-12-01',
-      deadline: '2025-05-30',
-      assignedTeam: ['Sarah Johnson', 'Alex Mwangi'],
-      practiceArea: 'IP Law',
-      progress: 15
-    },
-    {
-      id: 'MTR004',
-      title: 'Compliance Audit',
-      client: 'East Africa Ventures',
-      type: 'Regulatory',
-      status: 'Review',
-      priority: 'Low',
-      budget: 45000,
-      billed: 42000,
-      timeSpent: 78,
-      estimatedHours: 85,
-      startDate: '2024-09-15',
-      deadline: '2024-12-30',
-      assignedTeam: ['Grace Kimani', 'James Kiprotich'],
-      practiceArea: 'Regulatory Law',
-      progress: 92
-    }
-  ]);
+  const [matters, setMatters] = useState<MatterDisplay[]>([]);
+
+  // Load matters from mock data on component mount
+  useEffect(() => {
+    const transformedMatters: MatterDisplay[] = mockMatters.map((matter: Matter) => {
+      const client = mockClients.find(c => c.id === matter.clientId);
+      return {
+        id: matter.id,
+        title: matter.title,
+        client: client?.name || 'Unknown Client',
+        type: matter.matterType,
+        status: matter.status,
+        priority: matter.priority,
+        budget: matter.estimatedValue,
+        billed: matter.totalFees,
+        timeSpent: matter.billedHours,
+        estimatedHours: Math.ceil(matter.estimatedValue / 2500), // Estimated based on value
+        startDate: matter.openDate,
+        deadline: matter.nextDeadline || '',
+        assignedTeam: matter.assignedTeam,
+        practiceArea: matter.matterType,
+        progress: matter.progress
+      };
+    });
+    setMatters(transformedMatters);
+  }, []);
+
   const [isAddingMatter, setIsAddingMatter] = useState(false);
-  const [editingMatter, setEditingMatter] = useState<Matter | null>(null);
-  const [selectedMatter, setSelectedMatter] = useState<Matter | null>(null);
+  const [editingMatter, setEditingMatter] = useState<MatterDisplay | null>(null);
+  const [selectedMatter, setSelectedMatter] = useState<MatterDisplay | null>(null);
 
   // Handlers for full functionality
   const handleAddMatter = () => {
     setIsAddingMatter(true);
   };
 
-  const handleEditMatter = (matter: Matter) => {
+  const handleEditMatter = (matter: MatterDisplay) => {
     setEditingMatter(matter);
     setIsAddingMatter(true);
   };
@@ -115,7 +78,7 @@ export default function MatterManagementPage() {
     }
   };
 
-  const handleViewMatter = (matter: Matter) => {
+  const handleViewMatter = (matter: MatterDisplay) => {
     setSelectedMatter(matter);
   };
 
@@ -147,17 +110,17 @@ export default function MatterManagementPage() {
     input.click();
   };
 
-  const handleSaveMatter = (matterData: Partial<Matter>) => {
+  const handleSaveMatter = (matterData: Partial<MatterDisplay>) => {
     if (editingMatter) {
       setMatters(matters.map(m => m.id === editingMatter.id ? { ...m, ...matterData } : m));
     } else {
-      const newMatter: Matter = {
+      const newMatter: MatterDisplay = {
         id: `MTR${String(matters.length + 1).padStart(3, '0')}`,
         title: matterData.title || '',
         client: matterData.client || '',
         type: matterData.type || '',
-        status: matterData.status || 'Planning',
-        priority: matterData.priority || 'Medium',
+        status: (matterData.status as 'active' | 'pending' | 'closed' | 'on-hold') || 'active',
+        priority: (matterData.priority as 'low' | 'medium' | 'high' | 'urgent') || 'medium',
         budget: matterData.budget || 0,
         billed: matterData.billed || 0,
         timeSpent: matterData.timeSpent || 0,

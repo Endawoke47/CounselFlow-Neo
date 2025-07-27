@@ -14,7 +14,15 @@ import {
   Req,
   Res,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth, ApiKeyAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiBearerAuth,
+  ApiKeyAuth,
+} from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { IntegrationService } from '../services/integration.service';
 import { ApiManagementService } from '../services/api-management.service';
@@ -120,7 +128,7 @@ export class UpdateApiKeyDto {
 export class IntegrationController {
   constructor(
     private readonly integrationService: IntegrationService,
-    private readonly apiManagementService: ApiManagementService,
+    private readonly apiManagementService: ApiManagementService
   ) {}
 
   @Get()
@@ -157,7 +165,7 @@ export class IntegrationController {
     } catch (error) {
       throw new HttpException(
         `Failed to retrieve integrations: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -209,7 +217,7 @@ export class IntegrationController {
     } catch (error) {
       throw new HttpException(
         `Failed to create integration: ${error.message}`,
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST
       );
     }
   }
@@ -235,7 +243,7 @@ export class IntegrationController {
   @Roles('admin', 'integration-manager')
   async updateIntegration(
     @Param('id') id: string,
-    @Body() updateIntegrationDto: UpdateIntegrationDto,
+    @Body() updateIntegrationDto: UpdateIntegrationDto
   ) {
     try {
       return await this.integrationService.updateIntegration(id, updateIntegrationDto);
@@ -245,7 +253,7 @@ export class IntegrationController {
       }
       throw new HttpException(
         `Failed to update integration: ${error.message}`,
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST
       );
     }
   }
@@ -279,7 +287,7 @@ export class IntegrationController {
       }
       throw new HttpException(
         `Failed to delete integration: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -312,10 +320,7 @@ export class IntegrationController {
     },
   })
   @Roles('admin', 'integration-manager', 'user')
-  async syncIntegrationData(
-    @Param('id') id: string,
-    @Body() syncDataDto: SyncDataDto,
-  ) {
+  async syncIntegrationData(@Param('id') id: string, @Body() syncDataDto: SyncDataDto) {
     try {
       return await this.integrationService.syncData(id, syncDataDto.endpoint, {
         method: syncDataDto.method,
@@ -326,7 +331,7 @@ export class IntegrationController {
     } catch (error) {
       throw new HttpException(
         `Failed to sync data: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -361,7 +366,7 @@ export class IntegrationController {
     } catch (error) {
       throw new HttpException(
         `Failed to check health: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -387,7 +392,7 @@ export class IntegrationController {
     } catch (error) {
       throw new HttpException(
         `Failed to retrieve metrics: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -410,20 +415,15 @@ export class IntegrationController {
     @Param('id') id: string,
     @Body() payload: any,
     @Headers('x-webhook-signature') signature?: string,
-    @Query('event') event?: string,
+    @Query('event') event?: string
   ) {
     try {
-      await this.integrationService.processWebhook(
-        id,
-        event || 'webhook',
-        payload,
-        signature,
-      );
+      await this.integrationService.processWebhook(id, event || 'webhook', payload, signature);
       return { message: 'Webhook processed successfully' };
     } catch (error) {
       throw new HttpException(
         `Failed to process webhook: ${error.message}`,
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST
       );
     }
   }
@@ -482,10 +482,7 @@ export class ApiManagementController {
     try {
       return await this.apiManagementService.generateApiKey(createApiKeyDto);
     } catch (error) {
-      throw new HttpException(
-        `Failed to create API key: ${error.message}`,
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException(`Failed to create API key: ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -508,10 +505,7 @@ export class ApiManagementController {
     description: 'API key not found',
   })
   @Roles('admin', 'api-manager')
-  async updateApiKey(
-    @Param('key') key: string,
-    @Body() updateApiKeyDto: UpdateApiKeyDto,
-  ) {
+  async updateApiKey(@Param('key') key: string, @Body() updateApiKeyDto: UpdateApiKeyDto) {
     try {
       const result = await this.apiManagementService.updateApiKey(key, updateApiKeyDto);
       if (!result) {
@@ -522,10 +516,7 @@ export class ApiManagementController {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new HttpException(
-        `Failed to update API key: ${error.message}`,
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException(`Failed to update API key: ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -551,7 +542,7 @@ export class ApiManagementController {
     } catch (error) {
       throw new HttpException(
         `Failed to revoke API key: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -606,21 +597,21 @@ export class ApiManagementController {
     },
   })
   @Roles('admin', 'api-manager', 'analytics-viewer')
-  async getApiMetrics(
-    @Query('start') start?: string,
-    @Query('end') end?: string,
-  ) {
+  async getApiMetrics(@Query('start') start?: string, @Query('end') end?: string) {
     try {
-      const timeRange = start && end ? {
-        start: new Date(start),
-        end: new Date(end),
-      } : undefined;
+      const timeRange =
+        start && end
+          ? {
+              start: new Date(start),
+              end: new Date(end),
+            }
+          : undefined;
 
       return this.apiManagementService.getApiMetrics(timeRange);
     } catch (error) {
       throw new HttpException(
         `Failed to retrieve metrics: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -640,7 +631,7 @@ export class ApiManagementController {
     } catch (error) {
       throw new HttpException(
         `Failed to check health: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -675,7 +666,7 @@ export class ApiManagementController {
       }
       throw new HttpException(
         `Failed to validate API key: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }

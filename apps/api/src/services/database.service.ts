@@ -71,9 +71,9 @@ export class UserService {
         },
       });
 
-      logger.info('User created successfully', { 
-        userId: user.id, 
-        email: user.email 
+      logger.info('User created successfully', {
+        userId: user.id,
+        email: user.email,
       });
 
       return user;
@@ -83,7 +83,7 @@ export class UserService {
         logger.warn('Attempted to create user with existing email', { email: userData.email });
         throw new Error('User with this email already exists');
       }
-      
+
       logger.error('Error creating user', { error, email: userData.email });
       throw new Error('Failed to create user');
     }
@@ -151,15 +151,18 @@ export class UserService {
   /**
    * Update user profile
    */
-  static async updateUser(userId: string, updates: Partial<{
-    firstName: string;
-    lastName: string;
-    phoneNumber: string;
-    bio: string;
-    avatarUrl: string;
-    timezone: string;
-    languagePreference: string;
-  }>): Promise<User> {
+  static async updateUser(
+    userId: string,
+    updates: Partial<{
+      firstName: string;
+      lastName: string;
+      phoneNumber: string;
+      bio: string;
+      avatarUrl: string;
+      timezone: string;
+      languagePreference: string;
+    }>
+  ): Promise<User> {
     try {
       const user = await prisma.user.update({
         where: { id: userId },
@@ -184,7 +187,7 @@ export class UserService {
     try {
       await prisma.user.update({
         where: { id: userId },
-        data: { 
+        data: {
           status: 'INACTIVE',
           updatedAt: new Date(),
         },
@@ -200,14 +203,17 @@ export class UserService {
   /**
    * Get all users (admin only)
    */
-  static async getAllUsers(page: number = 1, limit: number = 50): Promise<{
+  static async getAllUsers(
+    page: number = 1,
+    limit: number = 50
+  ): Promise<{
     users: User[];
     total: number;
     pages: number;
   }> {
     try {
       const skip = (page - 1) * limit;
-      
+
       const [users, total] = await Promise.all([
         prisma.user.findMany({
           skip,
@@ -240,9 +246,12 @@ export class TokenService {
    */
   static initialize(): void {
     // Clean up expired tokens every hour
-    this.cleanupInterval = setInterval(() => {
-      this.cleanup();
-    }, 60 * 60 * 1000);
+    this.cleanupInterval = setInterval(
+      () => {
+        this.cleanup();
+      },
+      60 * 60 * 1000
+    );
   }
 
   /**

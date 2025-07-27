@@ -22,12 +22,17 @@ import {
   DocumentInfo,
   TermType,
   RecommendationType,
-  Priority
+  Priority,
 } from '../types/contract-intelligence.types';
 import { AIGatewayService } from './ai-gateway.service';
 import { CacheService } from './cache.service';
 import { UsageTracker } from './usage-tracker.service';
-import { LegalJurisdiction, SupportedLanguage, AIProvider, AIAnalysisType } from '../types/ai.types';
+import {
+  LegalJurisdiction,
+  SupportedLanguage,
+  AIProvider,
+  AIAnalysisType,
+} from '../types/ai.types';
 import winston from 'winston';
 
 export class ContractIntelligenceService {
@@ -57,8 +62,8 @@ export class ContractIntelligenceService {
       ),
       transports: [
         new winston.transports.File({ filename: 'logs/contract-intelligence.log' }),
-        new winston.transports.Console()
-      ]
+        new winston.transports.Console(),
+      ],
     });
   }
 
@@ -71,30 +76,35 @@ export class ContractIntelligenceService {
 
   private setupAfricanContractTemplates() {
     const africanJurisdictions = [
-      LegalJurisdiction.NIGERIA, LegalJurisdiction.SOUTH_AFRICA, 
-      LegalJurisdiction.KENYA, LegalJurisdiction.GHANA, LegalJurisdiction.EGYPT
+      LegalJurisdiction.NIGERIA,
+      LegalJurisdiction.SOUTH_AFRICA,
+      LegalJurisdiction.KENYA,
+      LegalJurisdiction.GHANA,
+      LegalJurisdiction.EGYPT,
     ];
 
     africanJurisdictions.forEach(jurisdiction => {
       this.contractTemplates.set(`${jurisdiction}_employment`, {
         requiredClauses: [ClauseType.PARTIES, ClauseType.SCOPE_OF_WORK, ClauseType.PAYMENT_TERMS],
         riskProfile: { overall: RiskLevel.MEDIUM },
-        complianceRequirements: [ComplianceStandard.LOCAL_LABOR_LAW]
+        complianceRequirements: [ComplianceStandard.LOCAL_LABOR_LAW],
       });
     });
   }
 
   private setupMiddleEasternContractTemplates() {
     const middleEastJurisdictions = [
-      LegalJurisdiction.UAE, LegalJurisdiction.SAUDI_ARABIA,
-      LegalJurisdiction.ISRAEL, LegalJurisdiction.TURKEY
+      LegalJurisdiction.UAE,
+      LegalJurisdiction.SAUDI_ARABIA,
+      LegalJurisdiction.ISRAEL,
+      LegalJurisdiction.TURKEY,
     ];
 
     middleEastJurisdictions.forEach(jurisdiction => {
       this.contractTemplates.set(`${jurisdiction}_commercial`, {
         requiredClauses: [ClauseType.GOVERNING_LAW, ClauseType.DISPUTE_RESOLUTION],
         riskProfile: { overall: RiskLevel.MEDIUM },
-        complianceRequirements: [ComplianceStandard.LOCAL_COMMERCIAL_LAW]
+        complianceRequirements: [ComplianceStandard.LOCAL_COMMERCIAL_LAW],
       });
     });
   }
@@ -102,11 +112,13 @@ export class ContractIntelligenceService {
   private setupInternationalTemplates() {
     this.contractTemplates.set('international_trade', {
       requiredClauses: [
-        ClauseType.GOVERNING_LAW, ClauseType.DISPUTE_RESOLUTION,
-        ClauseType.FORCE_MAJEURE, ClauseType.COMPLIANCE
+        ClauseType.GOVERNING_LAW,
+        ClauseType.DISPUTE_RESOLUTION,
+        ClauseType.FORCE_MAJEURE,
+        ClauseType.COMPLIANCE,
       ],
       riskProfile: { overall: RiskLevel.HIGH },
-      complianceRequirements: [ComplianceStandard.INTERNATIONAL_TRADE]
+      complianceRequirements: [ComplianceStandard.INTERNATIONAL_TRADE],
     });
   }
 
@@ -115,13 +127,13 @@ export class ContractIntelligenceService {
     this.complianceRules.set(ComplianceStandard.GDPR, {
       applicableJurisdictions: [LegalJurisdiction.INTERNATIONAL],
       requiredClauses: [ClauseType.DATA_PROTECTION, ClauseType.CONFIDENTIALITY],
-      keyRequirements: ['data processing basis', 'data subject rights', 'breach notification']
+      keyRequirements: ['data processing basis', 'data subject rights', 'breach notification'],
     });
 
     this.complianceRules.set(ComplianceStandard.LOCAL_LABOR_LAW, {
       applicableJurisdictions: 'all',
       requiredClauses: [ClauseType.TERMINATION, ClauseType.PAYMENT_TERMS],
-      keyRequirements: ['minimum wage compliance', 'working hours', 'termination notice']
+      keyRequirements: ['minimum wage compliance', 'working hours', 'termination notice'],
     });
   }
 
@@ -133,10 +145,10 @@ export class ContractIntelligenceService {
     const analysisId = this.generateAnalysisId();
 
     try {
-      this.logger.info(`Starting contract analysis`, { 
-        analysisId, 
+      this.logger.info(`Starting contract analysis`, {
+        analysisId,
         jurisdiction: request.jurisdiction,
-        analysisTypes: request.analysisTypes 
+        analysisTypes: request.analysisTypes,
       });
 
       // Validate request
@@ -152,38 +164,54 @@ export class ContractIntelligenceService {
 
       // Process document
       const documentInfo = await this.processDocument(request.document);
-      
+
       // Detect contract type if not provided
-      const contractType = request.contractType || await this.detectContractType(documentInfo, request);
+      const contractType =
+        request.contractType || (await this.detectContractType(documentInfo, request));
 
       // Execute analysis based on requested types
       const results = await Promise.all([
-        request.analysisTypes.includes(ContractAnalysisType.CLAUSE_EXTRACTION) 
-          ? this.extractClauses(documentInfo, contractType, request) 
+        request.analysisTypes.includes(ContractAnalysisType.CLAUSE_EXTRACTION)
+          ? this.extractClauses(documentInfo, contractType, request)
           : Promise.resolve([]),
-        request.analysisTypes.includes(ContractAnalysisType.RISK_ASSESSMENT) 
-          ? this.assessRisks(documentInfo, contractType, request) 
+        request.analysisTypes.includes(ContractAnalysisType.RISK_ASSESSMENT)
+          ? this.assessRisks(documentInfo, contractType, request)
           : Promise.resolve([]),
-        request.analysisTypes.includes(ContractAnalysisType.COMPLIANCE_CHECK) 
-          ? this.checkCompliance(documentInfo, request.complianceStandards, request) 
+        request.analysisTypes.includes(ContractAnalysisType.COMPLIANCE_CHECK)
+          ? this.checkCompliance(documentInfo, request.complianceStandards, request)
           : Promise.resolve([]),
-        request.analysisTypes.includes(ContractAnalysisType.TERM_EXTRACTION) 
-          ? this.extractTerms(documentInfo, request) 
+        request.analysisTypes.includes(ContractAnalysisType.TERM_EXTRACTION)
+          ? this.extractTerms(documentInfo, request)
           : Promise.resolve([]),
-        request.analysisTypes.includes(ContractAnalysisType.RED_FLAG_DETECTION) 
-          ? this.detectRedFlags(documentInfo, contractType, request) 
-          : Promise.resolve([])
+        request.analysisTypes.includes(ContractAnalysisType.RED_FLAG_DETECTION)
+          ? this.detectRedFlags(documentInfo, contractType, request)
+          : Promise.resolve([]),
       ]);
 
-      const [extractedClauses, identifiedRisks, complianceChecks, extractedTerms, redFlags] = results;
+      const [extractedClauses, identifiedRisks, complianceChecks, extractedTerms, redFlags] =
+        results;
 
       // Generate additional analysis components
-      const missingClauses = await this.identifyMissingClauses(extractedClauses, contractType, request);
-      const recommendations = request.includeRecommendations 
-        ? await this.generateRecommendations(extractedClauses, identifiedRisks, complianceChecks, request)
+      const missingClauses = await this.identifyMissingClauses(
+        extractedClauses,
+        contractType,
+        request
+      );
+      const recommendations = request.includeRecommendations
+        ? await this.generateRecommendations(
+            extractedClauses,
+            identifiedRisks,
+            complianceChecks,
+            request
+          )
         : [];
       const negotiationPoints = await this.identifyNegotiationPoints(extractedClauses, request);
-      const contractScore = await this.calculateContractScore(extractedClauses, identifiedRisks, complianceChecks, request);
+      const contractScore = await this.calculateContractScore(
+        extractedClauses,
+        identifiedRisks,
+        complianceChecks,
+        request
+      );
 
       // Compile final result
       const result: ContractAnalysisResult = {
@@ -207,7 +235,7 @@ export class ContractIntelligenceService {
           complianceIssues: complianceChecks.filter(c => c.status === 'non_compliant').length,
           recommendationsGenerated: recommendations.length,
           confidenceLevel: this.calculateOverallConfidence(extractedClauses, identifiedRisks),
-          completeness: this.calculateCompleteness(extractedClauses, contractType)
+          completeness: this.calculateCompleteness(extractedClauses, contractType),
         },
         metadata: {
           modelsUsed: ['contract-bert', 'legal-ner', 'risk-classifier'],
@@ -219,11 +247,11 @@ export class ContractIntelligenceService {
             riskAssessment: 0.87,
             termExtraction: 0.94,
             complianceCheck: 0.89,
-            overall: 0.91
+            overall: 0.91,
           },
           reviewStatus: 'pending',
-          lastModified: new Date()
-        }
+          lastModified: new Date(),
+        },
       };
 
       // Cache result
@@ -241,18 +269,17 @@ export class ContractIntelligenceService {
         cost: 0,
         success: true,
         processingTime: result.summary.executionTime,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
 
-      this.logger.info(`Contract analysis completed`, { 
-        analysisId, 
+      this.logger.info(`Contract analysis completed`, {
+        analysisId,
         clausesFound: extractedClauses.length,
         risksIdentified: identifiedRisks.length,
-        executionTime: result.summary.executionTime 
+        executionTime: result.summary.executionTime,
       });
 
       return result;
-
     } catch (error) {
       this.logger.error(`Contract analysis failed`, { analysisId, error });
       throw new Error(`Contract analysis failed: ${error}`);
@@ -265,7 +292,7 @@ export class ContractIntelligenceService {
   private async processDocument(document: any): Promise<DocumentInfo> {
     // In production, this would handle various document formats (PDF, DOCX, etc.)
     const content = document.content || 'Sample contract content';
-    
+
     return {
       fileName: document.fileName || 'contract.pdf',
       fileSize: content.length,
@@ -275,14 +302,17 @@ export class ContractIntelligenceService {
       detectedType: ContractType.SERVICE_AGREEMENT, // Would be detected by AI
       confidence: 0.85,
       processedAt: new Date(),
-      checksum: Buffer.from(content).toString('base64').substring(0, 32)
+      checksum: Buffer.from(content).toString('base64').substring(0, 32),
     };
   }
 
   /**
    * Detect contract type using AI
    */
-  private async detectContractType(documentInfo: DocumentInfo, request: ContractAnalysisRequest): Promise<ContractType> {
+  private async detectContractType(
+    documentInfo: DocumentInfo,
+    request: ContractAnalysisRequest
+  ): Promise<ContractType> {
     const prompt = `
     Analyze this contract document and identify its type:
     
@@ -298,18 +328,21 @@ export class ContractIntelligenceService {
     `;
 
     try {
-      const response = await this.aiGateway.processRequest({
-        input: prompt,
-        type: AIAnalysisType.CONTRACT_ANALYSIS,
-        context: {
-          jurisdiction: request.jurisdiction,
-          legalSystem: 'mixed' as any,
-          language: request.language,
-          practiceArea: 'contract_analysis',
-          confidentialityLevel: request.confidentialityLevel
+      const response = await this.aiGateway.processRequest(
+        {
+          input: prompt,
+          type: AIAnalysisType.CONTRACT_ANALYSIS,
+          context: {
+            jurisdiction: request.jurisdiction,
+            legalSystem: 'mixed' as any,
+            language: request.language,
+            practiceArea: 'contract_analysis',
+            confidentialityLevel: request.confidentialityLevel,
+          },
+          provider: AIProvider.LEGAL_BERT,
         },
-        provider: AIProvider.LEGAL_BERT
-      }, 'contract-user');
+        'contract-user'
+      );
 
       // Parse AI response to extract contract type
       const detectedType = this.parseContractType(response.output);
@@ -324,8 +357,8 @@ export class ContractIntelligenceService {
    * Extract clauses from contract using AI
    */
   private async extractClauses(
-    documentInfo: DocumentInfo, 
-    contractType: ContractType, 
+    documentInfo: DocumentInfo,
+    contractType: ContractType,
     request: ContractAnalysisRequest
   ): Promise<ExtractedClause[]> {
     const prompt = `
@@ -346,18 +379,21 @@ export class ContractIntelligenceService {
     `;
 
     try {
-      const response = await this.aiGateway.processRequest({
-        input: prompt,
-        type: AIAnalysisType.CLAUSE_EXTRACTION,
-        context: {
-          jurisdiction: request.jurisdiction,
-          legalSystem: 'mixed' as any,
-          language: request.language,
-          practiceArea: contractType,
-          confidentialityLevel: request.confidentialityLevel
+      const response = await this.aiGateway.processRequest(
+        {
+          input: prompt,
+          type: AIAnalysisType.CLAUSE_EXTRACTION,
+          context: {
+            jurisdiction: request.jurisdiction,
+            legalSystem: 'mixed' as any,
+            language: request.language,
+            practiceArea: contractType,
+            confidentialityLevel: request.confidentialityLevel,
+          },
+          provider: AIProvider.OLLAMA,
         },
-        provider: AIProvider.OLLAMA
-      }, 'contract-user');
+        'contract-user'
+      );
 
       // Parse AI response and create extracted clauses
       return this.parseExtractedClauses(response.output, documentInfo, request);
@@ -371,8 +407,8 @@ export class ContractIntelligenceService {
    * Assess risks in the contract
    */
   private async assessRisks(
-    documentInfo: DocumentInfo, 
-    contractType: ContractType, 
+    documentInfo: DocumentInfo,
+    contractType: ContractType,
     request: ContractAnalysisRequest
   ): Promise<IdentifiedRisk[]> {
     const riskPrompt = `
@@ -396,18 +432,21 @@ export class ContractIntelligenceService {
     `;
 
     try {
-      const response = await this.aiGateway.processRequest({
-        input: riskPrompt,
-        type: AIAnalysisType.RISK_ASSESSMENT,
-        context: {
-          jurisdiction: request.jurisdiction,
-          legalSystem: 'mixed' as any,
-          language: request.language,
-          practiceArea: contractType,
-          confidentialityLevel: request.confidentialityLevel
+      const response = await this.aiGateway.processRequest(
+        {
+          input: riskPrompt,
+          type: AIAnalysisType.RISK_ASSESSMENT,
+          context: {
+            jurisdiction: request.jurisdiction,
+            legalSystem: 'mixed' as any,
+            language: request.language,
+            practiceArea: contractType,
+            confidentialityLevel: request.confidentialityLevel,
+          },
+          provider: AIProvider.OLLAMA,
         },
-        provider: AIProvider.OLLAMA
-      }, 'contract-user');
+        'contract-user'
+      );
 
       return this.parseIdentifiedRisks(response.output, request);
     } catch (error) {
@@ -440,20 +479,20 @@ export class ContractIntelligenceService {
             mandatory: true,
             status: 'partially_met',
             evidence: ['Contract contains relevant clauses'],
-            jurisdiction: request.jurisdiction
-          }
+            jurisdiction: request.jurisdiction,
+          },
         ],
         issues: [
           {
             requirement: `${standard} data protection`,
             issue: 'Incomplete data processing clause',
             severity: 'medium',
-            remediation: ['Add explicit data processing basis', 'Include data subject rights']
-          }
+            remediation: ['Add explicit data processing basis', 'Include data subject rights'],
+          },
         ],
         recommendations: [`Enhance ${standard} compliance clauses`],
         lastChecked: new Date(),
-        jurisdiction: request.jurisdiction
+        jurisdiction: request.jurisdiction,
       });
     }
 
@@ -463,7 +502,10 @@ export class ContractIntelligenceService {
   /**
    * Extract key terms from contract
    */
-  private async extractTerms(documentInfo: DocumentInfo, request: ContractAnalysisRequest): Promise<ExtractedTerm[]> {
+  private async extractTerms(
+    documentInfo: DocumentInfo,
+    request: ContractAnalysisRequest
+  ): Promise<ExtractedTerm[]> {
     // Mock implementation - in production, would use NER models
     return [
       {
@@ -476,7 +518,7 @@ export class ContractIntelligenceService {
         context: 'First party to the agreement',
         relatedTerms: ['contractor', 'client'],
         validationStatus: 'valid',
-        jurisdiction: request.jurisdiction
+        jurisdiction: request.jurisdiction,
       },
       {
         id: 'term_2',
@@ -488,8 +530,8 @@ export class ContractIntelligenceService {
         context: 'Total contract value',
         relatedTerms: ['payment', 'consideration'],
         validationStatus: 'valid',
-        jurisdiction: request.jurisdiction
-      }
+        jurisdiction: request.jurisdiction,
+      },
     ];
   }
 
@@ -497,8 +539,8 @@ export class ContractIntelligenceService {
    * Detect red flags in the contract
    */
   private async detectRedFlags(
-    documentInfo: DocumentInfo, 
-    contractType: ContractType, 
+    documentInfo: DocumentInfo,
+    contractType: ContractType,
     request: ContractAnalysisRequest
   ): Promise<RedFlag[]> {
     return [
@@ -511,7 +553,10 @@ export class ContractIntelligenceService {
         location: { page: 3, paragraph: 2, sentence: 1, startChar: 50, endChar: 150 },
         potentialImpact: ['Unlimited financial exposure', 'Insurance coverage gaps'],
         immediateActions: ['Add liability limitations', 'Review insurance coverage'],
-        longTermImplications: ['Potential significant financial loss', 'Increased insurance premiums']
+        longTermImplications: [
+          'Potential significant financial loss',
+          'Increased insurance premiums',
+        ],
       },
       {
         id: 'redflag_2',
@@ -522,8 +567,8 @@ export class ContractIntelligenceService {
         location: { page: 0, paragraph: 0, sentence: 0, startChar: 0, endChar: 0 },
         potentialImpact: ['Legal uncertainty', 'Dispute resolution complications'],
         immediateActions: ['Add governing law clause', 'Specify dispute resolution mechanism'],
-        longTermImplications: ['Increased litigation costs', 'Unpredictable legal outcomes']
-      }
+        longTermImplications: ['Increased litigation costs', 'Unpredictable legal outcomes'],
+      },
     ];
   }
 
@@ -551,7 +596,7 @@ export class ContractIntelligenceService {
       analysisTypes: request.analysisTypes.sort(),
       jurisdiction: request.jurisdiction,
       contractType: request.contractType,
-      analysisDepth: request.analysisDepth
+      analysisDepth: request.analysisDepth,
     });
     return `contract:${Buffer.from(key).toString('base64')}`;
   }
@@ -566,7 +611,11 @@ export class ContractIntelligenceService {
     return null;
   }
 
-  private parseExtractedClauses(aiOutput: string, documentInfo: DocumentInfo, request: ContractAnalysisRequest): ExtractedClause[] {
+  private parseExtractedClauses(
+    aiOutput: string,
+    documentInfo: DocumentInfo,
+    request: ContractAnalysisRequest
+  ): ExtractedClause[] {
     // Mock parsing - in production, would parse structured AI output
     return [
       {
@@ -581,7 +630,7 @@ export class ContractIntelligenceService {
         standardCompliance: true,
         jurisdiction: request.jurisdiction,
         relatedClauses: [],
-        keyTerms: []
+        keyTerms: [],
       },
       {
         id: 'clause_2',
@@ -595,12 +644,15 @@ export class ContractIntelligenceService {
         standardCompliance: true,
         jurisdiction: request.jurisdiction,
         relatedClauses: [],
-        keyTerms: []
-      }
+        keyTerms: [],
+      },
     ];
   }
 
-  private parseIdentifiedRisks(aiOutput: string, request: ContractAnalysisRequest): IdentifiedRisk[] {
+  private parseIdentifiedRisks(
+    aiOutput: string,
+    request: ContractAnalysisRequest
+  ): IdentifiedRisk[] {
     return [
       {
         id: 'risk_1',
@@ -613,7 +665,7 @@ export class ContractIntelligenceService {
           operational: ['Cash flow constraints'],
           legal: ['Collection difficulties'],
           reputational: [],
-          timeline: '30-60 days'
+          timeline: '30-60 days',
         },
         likelihood: 0.3,
         severity: 0.6,
@@ -623,18 +675,21 @@ export class ContractIntelligenceService {
             implementation: ['Propose 15-day terms', 'Offer early payment discount'],
             cost: 'low',
             effectiveness: 0.8,
-            timeframe: 'immediate'
-          }
+            timeframe: 'immediate',
+          },
         ],
         relatedClauses: ['clause_2'],
         complianceIssues: [],
         recommendedActions: ['Renegotiate payment terms', 'Add collection provisions'],
-        jurisdiction: request.jurisdiction
-      }
+        jurisdiction: request.jurisdiction,
+      },
     ];
   }
 
-  private generateMockClauses(contractType: ContractType, request: ContractAnalysisRequest): ExtractedClause[] {
+  private generateMockClauses(
+    contractType: ContractType,
+    request: ContractAnalysisRequest
+  ): ExtractedClause[] {
     // Fallback mock clauses when AI processing fails
     return [
       {
@@ -642,19 +697,22 @@ export class ContractIntelligenceService {
         type: ClauseType.PARTIES,
         content: 'Standard parties clause for ' + contractType,
         location: { page: 1, paragraph: 1, sentence: 1, startChar: 0, endChar: 50 },
-        confidence: 0.70,
+        confidence: 0.7,
         riskLevel: RiskLevel.LOW,
         riskFactors: [],
         suggestions: [],
         standardCompliance: true,
         jurisdiction: request.jurisdiction,
         relatedClauses: [],
-        keyTerms: []
-      }
+        keyTerms: [],
+      },
     ];
   }
 
-  private generateMockRisks(contractType: ContractType, request: ContractAnalysisRequest): IdentifiedRisk[] {
+  private generateMockRisks(
+    contractType: ContractType,
+    request: ContractAnalysisRequest
+  ): IdentifiedRisk[] {
     return [
       {
         id: 'mock_risk_1',
@@ -667,7 +725,7 @@ export class ContractIntelligenceService {
           operational: [],
           legal: ['Standard legal risks'],
           reputational: [],
-          timeline: 'unknown'
+          timeline: 'unknown',
         },
         likelihood: 0.5,
         severity: 0.5,
@@ -675,19 +733,20 @@ export class ContractIntelligenceService {
         relatedClauses: [],
         complianceIssues: [],
         recommendedActions: ['Manual review recommended'],
-        jurisdiction: request.jurisdiction
-      }
+        jurisdiction: request.jurisdiction,
+      },
     ];
   }
 
   private async identifyMissingClauses(
-    extractedClauses: ExtractedClause[], 
-    contractType: ContractType, 
+    extractedClauses: ExtractedClause[],
+    contractType: ContractType,
     request: ContractAnalysisRequest
   ): Promise<MissingClause[]> {
-    const template = this.contractTemplates.get(`${request.jurisdiction}_${contractType}`) ||
-                    this.contractTemplates.get(`default_${contractType}`);
-    
+    const template =
+      this.contractTemplates.get(`${request.jurisdiction}_${contractType}`) ||
+      this.contractTemplates.get(`default_${contractType}`);
+
     if (!template) return [];
 
     const foundClauseTypes = new Set(extractedClauses.map(c => c.type));
@@ -702,7 +761,7 @@ export class ContractIntelligenceService {
           suggestedContent: [`Add standard ${requiredClause} clause for ${request.jurisdiction}`],
           jurisdiction: request.jurisdiction,
           alternatives: [],
-          reason: `Required for ${contractType} contracts in ${request.jurisdiction}`
+          reason: `Required for ${contractType} contracts in ${request.jurisdiction}`,
         });
       }
     }
@@ -732,7 +791,7 @@ export class ContractIntelligenceService {
           estimatedImpact: 'high' as any,
           relatedClauses: risk.relatedClauses,
           jurisdiction: request.jurisdiction,
-          implementationComplexity: 'medium'
+          implementationComplexity: 'medium',
         });
       }
     });
@@ -756,7 +815,7 @@ export class ContractIntelligenceService {
         importance: Priority.HIGH,
         alternativeOptions: clause.suggestions,
         marketStandard: 'Industry standard terms typically more favorable',
-        riskIfUnchanged: clause.riskLevel
+        riskIfUnchanged: clause.riskLevel,
       }));
   }
 
@@ -766,9 +825,15 @@ export class ContractIntelligenceService {
     compliance: ComplianceCheck[],
     request: ContractAnalysisRequest
   ): Promise<ContractScore> {
-    const clauseScore = Math.max(0, 100 - (clauses.filter(c => c.riskLevel === RiskLevel.HIGH).length * 10));
-    const riskScore = Math.max(0, 100 - (risks.filter(r => r.level === RiskLevel.HIGH).length * 15));
-    const complianceScore = Math.max(0, 100 - (compliance.filter(c => c.status === 'non_compliant').length * 20));
+    const clauseScore = Math.max(
+      0,
+      100 - clauses.filter(c => c.riskLevel === RiskLevel.HIGH).length * 10
+    );
+    const riskScore = Math.max(0, 100 - risks.filter(r => r.level === RiskLevel.HIGH).length * 15);
+    const complianceScore = Math.max(
+      0,
+      100 - compliance.filter(c => c.status === 'non_compliant').length * 20
+    );
 
     const overall = Math.round((clauseScore + riskScore + complianceScore) / 3);
 
@@ -780,7 +845,7 @@ export class ContractIntelligenceService {
         compliance: complianceScore,
         clarity: 85,
         completeness: 80,
-        enforceability: 90
+        enforceability: 90,
       },
       benchmarkComparison: {
         industry: 'general',
@@ -788,7 +853,7 @@ export class ContractIntelligenceService {
         jurisdiction: request.jurisdiction,
         percentile: 75,
         averageScore: 72,
-        bestPracticeGap: 15
+        bestPracticeGap: 15,
       },
       improvementAreas: [
         {
@@ -796,20 +861,21 @@ export class ContractIntelligenceService {
           currentScore: riskScore,
           targetScore: 90,
           priority: Priority.HIGH,
-          recommendations: ['Add liability limitations', 'Improve indemnification clauses']
-        }
+          recommendations: ['Add liability limitations', 'Improve indemnification clauses'],
+        },
       ],
       strengths: ['Well-defined parties', 'Clear payment terms'],
-      weaknesses: ['High risk clauses present', 'Missing governance provisions']
+      weaknesses: ['High risk clauses present', 'Missing governance provisions'],
     };
   }
 
   private calculateOverallConfidence(clauses: ExtractedClause[], risks: IdentifiedRisk[]): number {
     if (clauses.length === 0) return 0;
-    
+
     const clauseConfidences = clauses.map(c => c.confidence);
-    const avgClauseConfidence = clauseConfidences.reduce((sum, conf) => sum + conf, 0) / clauses.length;
-    
+    const avgClauseConfidence =
+      clauseConfidences.reduce((sum, conf) => sum + conf, 0) / clauses.length;
+
     return Math.min(1.0, avgClauseConfidence);
   }
 
@@ -817,7 +883,7 @@ export class ContractIntelligenceService {
     // Calculate completeness based on expected clauses for contract type
     const expectedClauses = 10; // Typical number of expected clauses
     const foundClauses = clauses.length;
-    
+
     return Math.min(1.0, foundClauses / expectedClauses);
   }
 }

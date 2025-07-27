@@ -1,27 +1,21 @@
-// Authentication Provider
+// Authentication Provider - REAL IMPLEMENTATION
 // User: Endawoke47
-// Date: 2025-07-11 20:46:45 UTC
+// Date: 2025-07-13 Updated with Real API Integration
 
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  avatar?: string;
-}
+import { realApiClient, type User, type AuthCredentials } from '@/lib/real-api-client';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
-  login: (credentials: { email: string; password: string }, rememberMe?: boolean) => Promise<void>;
+  login: (credentials: AuthCredentials, rememberMe?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (user: User) => void;
+  error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,6 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -37,59 +32,126 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
+      setLoading(true);
+      setError(null);
+      
       const token = localStorage.getItem('counselflow_token');
-      if (token) {
-        // Mock user data for demo
-        const userData: User = {
-          id: '1',
-          email: 'demo@counselflow.com',
-          name: 'Demo User',
-          role: 'admin',
-          avatar: undefined
-        };
-        setUser(userData);
+      if (!token) {
+        // In development mode, create a demo user if no token exists
+        if (process.env.NODE_ENV === 'development') {
+          const demoUser: User = {
+            id: '1',
+            email: 'demo@counselflow.com',
+            firstName: 'Demo',
+            lastName: 'User',
+            role: 'admin',
+            status: 'active',
+          };
+          setUser(demoUser);
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Verify token with backend
+      const response = await realApiClient.verifyToken();
+      
+      if (response.success && response.data?.user) {
+        setUser(response.data.user);
+      } else {
+        // Token is invalid, remove it
+        localStorage.removeItem('counselflow_token');
+        realApiClient.setToken(null);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
+      // Token verification failed, remove it
       localStorage.removeItem('counselflow_token');
+      realApiClient.setToken(null);
+      setError('Session expired. Please login again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const login = async (credentials: { email: string; password: string }, rememberMe?: boolean) => {
-    // Mock login for demo
-    const user: User = {
-      id: '1',
-      email: credentials.email,
-      name: 'Demo User',
-      role: 'admin'
-    };
-    
-    const token = 'mock-jwt-token';
-    
-    if (rememberMe) {
-      localStorage.setItem('counselflow_token', token);
-    } else {
-      sessionStorage.setItem('counselflow_token', token);
+  const login = async (credentials: AuthCredentials, rememberMe?: boolean) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await realApiClient.login(credentials);
+      
+      if (response.success && response.data?.user && response.data?.token) {
+        setUser(response.data.user);
+        
+        // Store token based on rememberMe preference
+        if (rememberMe) {
+          localStorage.setItem('counselflow_token', response.data.token);
+        } else {
+          sessionStorage.setItem('counselflow_token', response.data.token);
+        }
+        
+        realApiClient.setToken(response.data.token);
+        
+        // Redirect to dashboard
+        router.push('/dashboard');
+      } else {
+        throw new Error(response.message || 'Login failed');
+      }
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      setError(error.message || 'Login failed. Please try again.');
+      throw error;
+    } finally {
+      setLoading(false);
     }
-    
-    setUser(user);
   };
 
   const logout = async () => {
-    localStorage.removeItem('counselflow_token');
-    sessionStorage.removeItem('counselflow_token');
-    setUser(null);
-    router.push('/login');
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Call logout endpoint
+      await realApiClient.logout();
+      
+      // Clear local state
+      setUser(null);
+      
+      // Clear storage
+      localStorage.removeItem('counselflow_token');
+      sessionStorage.removeItem('counselflow_token');
+      
+      // Redirect to home page
+      router.push('/');
+    } catch (error: any) {
+      console.error('Logout failed:', error);
+      // Even if logout fails, clear local state
+      setUser(null);
+      localStorage.removeItem('counselflow_token');
+      sessionStorage.removeItem('counselflow_token');
+      router.push('/');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updateUser = (updatedUser: User) => {
     setUser(updatedUser);
   };
 
+  const value: AuthContextType = {
+    user,
+    loading,
+    isAuthenticated: !!user,
+    login,
+    logout,
+    updateUser,
+    error
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthenticated: !!user, login, logout, updateUser }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

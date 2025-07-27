@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/layout/MainLayout';
+import { mockRiskAssessments, mockClients, mockMatters } from '../../lib/mock-data';
 import { Shield, Plus, Search, Download, Upload, Edit3, Trash2, Eye, AlertTriangle, TrendingUp, BarChart3, Target, Activity, ChevronDown, CheckCircle } from 'lucide-react';
 
 interface Risk {
@@ -174,11 +175,18 @@ export default function RiskManagementPage() {
     setEditingRisk(null);
   };
 
+  // Calculate stats from mock data
+  const totalRisks = mockRiskAssessments.length;
+  const highSeverityRisks = mockRiskAssessments.filter(r => r.severity === 'high' || r.severity === 'critical').length;
+  const avgRiskScore = mockRiskAssessments.length > 0 ? 
+    Math.round(mockRiskAssessments.reduce((sum, r) => sum + (r.probability * r.impact / 100), 0) / mockRiskAssessments.length) : 0;
+  const mitigatedRisks = mockRiskAssessments.filter(r => r.status === 'mitigating' || r.status === 'resolved').length;
+
   const stats = [
-    { label: 'Total Risks', value: '24', change: '+3', icon: Shield, color: 'text-red-600' },
-    { label: 'High Severity', value: '8', change: '-2', icon: AlertTriangle, color: 'text-orange-600' },
-    { label: 'Avg Risk Score', value: '67', change: '-5', icon: TrendingUp, color: 'text-primary-600' },
-    { label: 'Mitigated Risks', value: '15', change: '+4', icon: CheckCircle, color: 'text-green-600' }
+    { label: 'Total Risks', value: totalRisks.toString(), change: '+3', icon: Shield, color: 'text-red-600' },
+    { label: 'High Severity', value: highSeverityRisks.toString(), change: '-2', icon: AlertTriangle, color: 'text-orange-600' },
+    { label: 'Avg Risk Score', value: avgRiskScore.toString(), change: '-5', icon: TrendingUp, color: 'text-primary-600' },
+    { label: 'Mitigated Risks', value: mitigatedRisks.toString(), change: '+4', icon: CheckCircle, color: 'text-green-600' }
   ];
 
   const riskTrends = [

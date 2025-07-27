@@ -4,6 +4,43 @@
 ![Global Coverage](https://img.shields.io/badge/Global-71%20Jurisdictions-0ea5e9?style=for-the-badge&logo=globe&logoColor=white)
 ![AI Powered](https://img.shields.io/badge/AI%20Ready-Phase%201%20Complete-16a34a?style=for-the-badge&logo=openai&logoColor=white)
 
+## 🚀 **QUICK START**
+
+### Prerequisites
+- Node.js v18+ 
+- npm or yarn
+- Git
+
+### 1-Minute Setup (Windows)
+```powershell
+# Clone the repository
+git clone https://github.com/Endawoke47/CounselFlow-Neo.git
+cd CounselFlow-Neo
+
+# Run automated setup (Windows)
+.\setup-dev.ps1
+
+# Start development servers
+npm run dev
+```
+
+### 1-Minute Setup (Linux/macOS)
+```bash
+# Clone the repository
+git clone https://github.com/Endawoke47/CounselFlow-Neo.git
+cd CounselFlow-Neo
+
+# Run automated setup
+chmod +x setup-dev.sh && ./setup-dev.sh
+
+# Start development servers
+npm run dev
+```
+
+**🌐 Access your app at: http://localhost:3000**
+
+---
+
 ## 🎉 **MAJOR MILESTONE: PHASE 1 AI INFRASTRUCTURE COMPLETE** ✅
 
 **CounselFlow-Neo** now features a **complete AI-powered legal platform** serving **71 jurisdictions** across Africa and the Middle East, with self-hosted AI capabilities and hybrid premium API integration.
@@ -35,6 +72,48 @@ POST /api/v1/ai/document/review      # Automated document analysis
 GET  /api/v1/ai/health              # System health monitoring
 GET  /api/v1/ai/jurisdictions       # Available jurisdictions
 GET  /api/v1/ai/languages           # Supported languages
+```
+
+---
+
+## 🛠️ **DEVELOPMENT COMMANDS**
+
+### Core Development
+```bash
+npm run dev          # Start both web and API servers
+npm run dev:web      # Start only web server (port 3000)
+npm run dev:api      # Start only API server (port 8080)
+```
+
+### Building & Testing
+```bash
+npm run build        # Build all workspaces
+npm run test         # Run all tests
+npm run lint         # Check code quality
+npm run format       # Format code with Prettier
+npm run typecheck    # TypeScript type checking
+```
+
+### Database Management
+```bash
+npm run db:reset     # Reset database with fresh schema
+npm run db:seed      # Seed database with sample data
+npm run db:studio    # Open Prisma Studio (database GUI)
+```
+
+### Utilities
+```bash
+npm run clean        # Clean all build artifacts
+npm run reset        # Full dependency reinstall (Unix)
+npm run reset:win    # Full dependency reinstall (Windows)
+npm run security:audit  # Security vulnerability check
+```
+
+### Docker Deployment
+```bash
+npm run deploy       # Local Docker deployment
+npm run deploy:staging  # Staging environment
+npm run deploy:prod     # Production deployment
 ```
 
 ---

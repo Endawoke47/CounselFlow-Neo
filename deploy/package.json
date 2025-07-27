@@ -1,0 +1,20 @@
+{
+  "name": "counselflow-ultimate",
+  "version": "1.0.0",
+  "description": "Complete Legal Practice Management System",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve -s .",
+    "deploy": "surge ."
+  },
+  "keywords": [
+    "legal",
+    "practice",
+    "management",
+    "law",
+    "case-management",
+    "client-management"
+  ],
+  "author": "Endawoke47",
+  "license": "MIT"
+}

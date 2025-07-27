@@ -15,7 +15,7 @@ import {
   WorkflowComplexity,
   TriggerType,
   StepType,
-  AnalyticsPeriod
+  AnalyticsPeriod,
 } from '../types/workflow-automation.types';
 import { LegalJurisdiction } from '../types/ai.types';
 import { LegalArea } from '../types/legal-research.types';
@@ -41,68 +41,94 @@ const createWorkflowSchema = z.object({
     tags: z.array(z.string()).optional().default([]),
     isActive: z.boolean().optional().default(true),
     isPublic: z.boolean().optional().default(false),
-    steps: z.array(z.object({
-      id: z.string(),
-      name: z.string(),
-      description: z.string().optional(),
-      type: z.nativeEnum(StepType),
-      isRequired: z.boolean().optional().default(true),
-      estimatedDuration: z.number().optional(),
-      dependencies: z.array(z.string()).optional(),
-      successors: z.array(z.string()).optional(),
-      assignedTo: z.array(z.string()).optional(),
-      assignedRoles: z.array(z.string()).optional(),
-      conditions: z.array(z.object({
-        id: z.string(),
-        expression: z.string(),
-        description: z.string().optional()
-      })).optional(),
-      config: z.record(z.any()).optional()
-    })).min(1),
-    triggers: z.array(z.object({
-      id: z.string(),
-      type: z.nativeEnum(TriggerType),
-      config: z.record(z.any()).optional()
-    })).optional(),
-    variables: z.array(z.object({
-      id: z.string(),
-      name: z.string(),
-      type: z.enum(['STRING', 'NUMBER', 'BOOLEAN', 'DATE', 'OBJECT', 'ARRAY']),
-      defaultValue: z.any().optional(),
-      isRequired: z.boolean().optional().default(false),
-      description: z.string().optional(),
-      validation: z.object({
-        pattern: z.string().optional(),
-        minLength: z.number().optional(),
-        maxLength: z.number().optional(),
-        min: z.number().optional(),
-        max: z.number().optional(),
-        allowedValues: z.array(z.any()).optional()
-      }).optional()
-    })).optional(),
-    notifications: z.object({
-      onStart: z.boolean().optional().default(false),
-      onComplete: z.boolean().optional().default(true),
-      onError: z.boolean().optional().default(true),
-      onApprovalRequired: z.boolean().optional().default(true),
-      channels: z.array(z.enum(['EMAIL', 'SMS', 'SLACK', 'TEAMS', 'WEBHOOK'])).optional()
-    }).optional(),
-    sla: z.object({
-      maxDuration: z.number().optional(),
-      escalationRules: z.array(z.object({
-        condition: z.string(),
-        action: z.string(),
-        delay: z.number()
-      })).optional()
-    }).optional()
-  })
+    steps: z
+      .array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          description: z.string().optional(),
+          type: z.nativeEnum(StepType),
+          isRequired: z.boolean().optional().default(true),
+          estimatedDuration: z.number().optional(),
+          dependencies: z.array(z.string()).optional(),
+          successors: z.array(z.string()).optional(),
+          assignedTo: z.array(z.string()).optional(),
+          assignedRoles: z.array(z.string()).optional(),
+          conditions: z
+            .array(
+              z.object({
+                id: z.string(),
+                expression: z.string(),
+                description: z.string().optional(),
+              })
+            )
+            .optional(),
+          config: z.record(z.any()).optional(),
+        })
+      )
+      .min(1),
+    triggers: z
+      .array(
+        z.object({
+          id: z.string(),
+          type: z.nativeEnum(TriggerType),
+          config: z.record(z.any()).optional(),
+        })
+      )
+      .optional(),
+    variables: z
+      .array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          type: z.enum(['STRING', 'NUMBER', 'BOOLEAN', 'DATE', 'OBJECT', 'ARRAY']),
+          defaultValue: z.any().optional(),
+          isRequired: z.boolean().optional().default(false),
+          description: z.string().optional(),
+          validation: z
+            .object({
+              pattern: z.string().optional(),
+              minLength: z.number().optional(),
+              maxLength: z.number().optional(),
+              min: z.number().optional(),
+              max: z.number().optional(),
+              allowedValues: z.array(z.any()).optional(),
+            })
+            .optional(),
+        })
+      )
+      .optional(),
+    notifications: z
+      .object({
+        onStart: z.boolean().optional().default(false),
+        onComplete: z.boolean().optional().default(true),
+        onError: z.boolean().optional().default(true),
+        onApprovalRequired: z.boolean().optional().default(true),
+        channels: z.array(z.enum(['EMAIL', 'SMS', 'SLACK', 'TEAMS', 'WEBHOOK'])).optional(),
+      })
+      .optional(),
+    sla: z
+      .object({
+        maxDuration: z.number().optional(),
+        escalationRules: z
+          .array(
+            z.object({
+              condition: z.string(),
+              action: z.string(),
+              delay: z.number(),
+            })
+          )
+          .optional(),
+      })
+      .optional(),
+  }),
 });
 
 const updateWorkflowSchema = z.object({
   params: z.object({
-    workflowId: z.string()
+    workflowId: z.string(),
   }),
-  body: createWorkflowSchema.shape.body.partial()
+  body: createWorkflowSchema.shape.body.partial(),
 });
 
 const executeWorkflowSchema = z.object({
@@ -112,21 +138,23 @@ const executeWorkflowSchema = z.object({
     priority: z.nativeEnum(WorkflowPriority).optional().default('MEDIUM'),
     variables: z.record(z.any()).optional().default({}),
     metadata: z.record(z.any()).optional(),
-    context: z.object({
-      userId: z.string().optional(),
-      userRoles: z.array(z.string()).optional(),
-      organizationId: z.string().optional(),
-      teamId: z.string().optional(),
-      caseId: z.string().optional(),
-      clientId: z.string().optional(),
-      matterId: z.string().optional(),
-      documentIds: z.array(z.string()).optional(),
-      sessionId: z.string().optional(),
-      ipAddress: z.string().optional(),
-      userAgent: z.string().optional(),
-      customData: z.record(z.any()).optional()
-    }).optional()
-  })
+    context: z
+      .object({
+        userId: z.string().optional(),
+        userRoles: z.array(z.string()).optional(),
+        organizationId: z.string().optional(),
+        teamId: z.string().optional(),
+        caseId: z.string().optional(),
+        clientId: z.string().optional(),
+        matterId: z.string().optional(),
+        documentIds: z.array(z.string()).optional(),
+        sessionId: z.string().optional(),
+        ipAddress: z.string().optional(),
+        userAgent: z.string().optional(),
+        customData: z.record(z.any()).optional(),
+      })
+      .optional(),
+  }),
 });
 
 const getWorkflowsSchema = z.object({
@@ -137,19 +165,39 @@ const getWorkflowsSchema = z.object({
     jurisdiction: z.nativeEnum(LegalJurisdiction).optional(),
     legalArea: z.nativeEnum(LegalArea).optional(),
     createdBy: z.string().optional(),
-    isActive: z.string().transform(val => val === 'true').optional(),
-    limit: z.string().transform(val => parseInt(val)).optional(),
-    offset: z.string().transform(val => parseInt(val)).optional()
-  })
+    isActive: z
+      .string()
+      .transform(val => val === 'true')
+      .optional(),
+    limit: z
+      .string()
+      .transform(val => parseInt(val))
+      .optional(),
+    offset: z
+      .string()
+      .transform(val => parseInt(val))
+      .optional(),
+  }),
 });
 
 const getAnalyticsSchema = z.object({
   query: z.object({
-    workflowIds: z.string().transform(val => val.split(',')).optional(),
+    workflowIds: z
+      .string()
+      .transform(val => val.split(','))
+      .optional(),
     period: z.nativeEnum(AnalyticsPeriod).optional().default('LAST_30_DAYS'),
-    includeStepAnalytics: z.string().transform(val => val === 'true').optional().default(false),
-    includeTrends: z.string().transform(val => val === 'true').optional().default(false)
-  })
+    includeStepAnalytics: z
+      .string()
+      .transform(val => val === 'true')
+      .optional()
+      .default(false),
+    includeTrends: z
+      .string()
+      .transform(val => val === 'true')
+      .optional()
+      .default(false),
+  }),
 });
 
 // ============================================================================
@@ -160,13 +208,13 @@ const getAnalyticsSchema = z.object({
 const workflowRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
-  message: 'Too many workflow requests from this IP, please try again later'
+  message: 'Too many workflow requests from this IP, please try again later',
 });
 
 const executionRateLimit = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 20, // Limit each IP to 20 executions per windowMs
-  message: 'Too many workflow executions from this IP, please try again later'
+  message: 'Too many workflow executions from this IP, please try again later',
 });
 
 // ============================================================================
@@ -192,18 +240,18 @@ router.post(
       const workflow = await workflowService.createWorkflow({
         ...body,
         createdBy: userId,
-        organizationId: (req as any).user?.organizationId
+        organizationId: (req as any).user?.organizationId,
       });
 
       res.status(201).json({
         success: true,
         data: workflow,
-        message: 'Workflow created successfully'
+        message: 'Workflow created successfully',
       });
     } catch (error) {
       res.status(400).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create workflow'
+        error: error instanceof Error ? error.message : 'Failed to create workflow',
       });
     }
   }
@@ -226,7 +274,7 @@ router.get(
 
       const result = await workflowService.listWorkflows({
         ...query,
-        createdBy: query.createdBy || (req as any).user?.id // Filter by user if not admin
+        createdBy: query.createdBy || (req as any).user?.id, // Filter by user if not admin
       });
 
       res.json({
@@ -235,13 +283,13 @@ router.get(
         meta: {
           total: result.total,
           limit: query.limit,
-          offset: query.offset
-        }
+          offset: query.offset,
+        },
       });
     } catch (error) {
       res.status(400).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch workflows'
+        error: error instanceof Error ? error.message : 'Failed to fetch workflows',
       });
     }
   }
@@ -264,18 +312,18 @@ router.get(
       if (!workflow) {
         return res.status(404).json({
           success: false,
-          error: 'Workflow not found'
+          error: 'Workflow not found',
         });
       }
 
       res.json({
         success: true,
-        data: workflow
+        data: workflow,
       });
     } catch (error) {
       res.status(400).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch workflow'
+        error: error instanceof Error ? error.message : 'Failed to fetch workflow',
       });
     }
   }
@@ -302,12 +350,12 @@ router.put(
       res.json({
         success: true,
         data: workflow,
-        message: 'Workflow updated successfully'
+        message: 'Workflow updated successfully',
       });
     } catch (error) {
       res.status(400).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update workflow'
+        error: error instanceof Error ? error.message : 'Failed to update workflow',
       });
     }
   }
@@ -330,18 +378,18 @@ router.delete(
       if (!success) {
         return res.status(404).json({
           success: false,
-          error: 'Workflow not found'
+          error: 'Workflow not found',
         });
       }
 
       res.json({
         success: true,
-        message: 'Workflow deleted successfully'
+        message: 'Workflow deleted successfully',
       });
     } catch (error) {
       res.status(400).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete workflow'
+        error: error instanceof Error ? error.message : 'Failed to delete workflow',
       });
     }
   }
@@ -378,8 +426,8 @@ router.post(
           userRoles,
           organizationId,
           ipAddress: req.ip,
-          userAgent: req.get('User-Agent')
-        }
+          userAgent: req.get('User-Agent'),
+        },
       };
 
       const result = await workflowService.executeWorkflow(executionRequest);
@@ -387,12 +435,13 @@ router.post(
       res.status(201).json({
         success: true,
         data: result,
-        message: result.status === 'ERROR' ? 'Workflow execution failed' : 'Workflow execution started'
+        message:
+          result.status === 'ERROR' ? 'Workflow execution failed' : 'Workflow execution started',
       });
     } catch (error) {
       res.status(400).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to execute workflow'
+        error: error instanceof Error ? error.message : 'Failed to execute workflow',
       });
     }
   }
@@ -415,18 +464,18 @@ router.get(
       if (!execution) {
         return res.status(404).json({
           success: false,
-          error: 'Execution not found'
+          error: 'Execution not found',
         });
       }
 
       res.json({
         success: true,
-        data: execution
+        data: execution,
       });
     } catch (error) {
       res.status(400).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch execution status'
+        error: error instanceof Error ? error.message : 'Failed to fetch execution status',
       });
     }
   }
@@ -449,18 +498,18 @@ router.post(
       if (!success) {
         return res.status(404).json({
           success: false,
-          error: 'Execution not found or cannot be cancelled'
+          error: 'Execution not found or cannot be cancelled',
         });
       }
 
       res.json({
         success: true,
-        message: 'Execution cancelled successfully'
+        message: 'Execution cancelled successfully',
       });
     } catch (error) {
       res.status(400).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to cancel execution'
+        error: error instanceof Error ? error.message : 'Failed to cancel execution',
       });
     }
   }
@@ -483,12 +532,12 @@ router.post(
       res.json({
         success: true,
         data: result,
-        message: result.status === 'ERROR' ? 'Retry failed' : 'Execution retried successfully'
+        message: result.status === 'ERROR' ? 'Retry failed' : 'Execution retried successfully',
       });
     } catch (error) {
       res.status(400).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to retry execution'
+        error: error instanceof Error ? error.message : 'Failed to retry execution',
       });
     }
   }
@@ -511,24 +560,24 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const { query } = req as any;
-      
+
       const analyticsRequest = {
         workflowIds: query.workflowIds,
         period: query.period,
         includeStepAnalytics: query.includeStepAnalytics,
-        includeTrends: query.includeTrends
+        includeTrends: query.includeTrends,
       };
 
       const analytics = await workflowService.getWorkflowAnalytics(analyticsRequest);
 
       res.json({
         success: true,
-        data: analytics
+        data: analytics,
       });
     } catch (error) {
       res.status(400).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch analytics'
+        error: error instanceof Error ? error.message : 'Failed to fetch analytics',
       });
     }
   }
@@ -550,24 +599,24 @@ router.get(
 
       const analytics = await workflowService.getWorkflowAnalytics({
         workflowIds: [workflowId],
-        period
+        period,
       });
 
       if (!analytics.analytics || analytics.analytics.length === 0) {
         return res.status(404).json({
           success: false,
-          error: 'Workflow analytics not found'
+          error: 'Workflow analytics not found',
         });
       }
 
       res.json({
         success: true,
-        data: analytics.analytics[0]
+        data: analytics.analytics[0],
       });
     } catch (error) {
       res.status(400).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch workflow analytics'
+        error: error instanceof Error ? error.message : 'Failed to fetch workflow analytics',
       });
     }
   }
@@ -593,12 +642,12 @@ router.get(
       res.json({
         success: true,
         data: [],
-        message: 'Templates feature will be available in the next update'
+        message: 'Templates feature will be available in the next update',
       });
     } catch (error) {
       res.status(400).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch templates'
+        error: error instanceof Error ? error.message : 'Failed to fetch templates',
       });
     }
   }
@@ -619,7 +668,7 @@ router.get('/health', (req: Request, res: Response) => {
     service: 'Workflow Automation Service',
     status: 'operational',
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.0.0',
   });
 });
 

@@ -17,10 +17,10 @@ export const rateLimitMiddleware = rateLimit({
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   handler: (req, res) => {
-    logger.warn('Rate limit exceeded', { 
-      ip: req.ip, 
+    logger.warn('Rate limit exceeded', {
+      ip: req.ip,
       path: req.path,
-      userAgent: req.get('User-Agent') 
+      userAgent: req.get('User-Agent'),
     });
     res.status(429).json({
       success: false,
@@ -40,10 +40,10 @@ export const authRateLimitMiddleware = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
-    logger.warn('Auth rate limit exceeded', { 
-      ip: req.ip, 
+    logger.warn('Auth rate limit exceeded', {
+      ip: req.ip,
       path: req.path,
-      userAgent: req.get('User-Agent') 
+      userAgent: req.get('User-Agent'),
     });
     res.status(429).json({
       success: false,
@@ -63,10 +63,10 @@ export const passwordResetRateLimitMiddleware = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
-    logger.warn('Password reset rate limit exceeded', { 
-      ip: req.ip, 
+    logger.warn('Password reset rate limit exceeded', {
+      ip: req.ip,
       path: req.path,
-      userAgent: req.get('User-Agent') 
+      userAgent: req.get('User-Agent'),
     });
     res.status(429).json({
       success: false,

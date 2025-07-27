@@ -32,7 +32,7 @@ import {
   ComplianceViolation,
   SectionSource,
   VariableSource,
-  ConfidentialityLevel
+  ConfidentialityLevel,
 } from '../types/document-automation.types';
 import { AIGatewayService } from './ai-gateway.service';
 import { LegalJurisdiction, SupportedLanguage, AIProvider } from '../types/ai.types';
@@ -55,7 +55,9 @@ export class DocumentAutomationService {
 
   // ================== MAIN GENERATION METHOD ==================
 
-  public async generateDocument(request: DocumentGenerationRequest): Promise<DocumentGenerationResult> {
+  public async generateDocument(
+    request: DocumentGenerationRequest
+  ): Promise<DocumentGenerationResult> {
     const startTime = Date.now();
     const generationId = this.generateId();
 
@@ -96,7 +98,7 @@ export class DocumentAutomationService {
       const compliance = await this.assessCompliance(documents, request);
 
       // 7. Generate alternatives if requested
-      const alternatives = request.features.generateAlternatives 
+      const alternatives = request.features.generateAlternatives
         ? await this.generateAlternatives(request, template, context)
         : [];
 
@@ -117,14 +119,13 @@ export class DocumentAutomationService {
         alternatives,
         recommendations,
         warnings,
-        metadata: this.createGenerationMetadata(generationId, request, startTime)
+        metadata: this.createGenerationMetadata(generationId, request, startTime),
       };
 
       // Cache result
       this.generationHistory.set(generationId, result);
 
       return result;
-
     } catch (error: any) {
       throw new Error(`Document generation failed: ${error?.message || 'Unknown error'}`);
     }
@@ -147,7 +148,7 @@ export class DocumentAutomationService {
       jurisdiction: request.jurisdiction,
       legalArea: request.legalArea,
       complexity: request.complexity,
-      language: request.language
+      language: request.language,
     });
 
     if (templates.length === 0) {
@@ -157,14 +158,17 @@ export class DocumentAutomationService {
     // Score templates and return best match
     const scoredTemplates = templates.map(template => ({
       template,
-      score: this.scoreTemplateMatch(template, request)
+      score: this.scoreTemplateMatch(template, request),
     }));
 
     scoredTemplates.sort((a, b) => b.score - a.score);
     return scoredTemplates[0].template;
   }
 
-  private scoreTemplateMatch(template: DocumentTemplate, request: DocumentGenerationRequest): number {
+  private scoreTemplateMatch(
+    template: DocumentTemplate,
+    request: DocumentGenerationRequest
+  ): number {
     let score = 0;
 
     // Exact matches
@@ -179,7 +183,7 @@ export class DocumentAutomationService {
 
   public async getTemplates(filters: TemplateFilters = {}): Promise<DocumentTemplate[]> {
     const allTemplates = Array.from(this.templateCache.values());
-    
+
     return allTemplates.filter(template => {
       if (filters.type && template.type !== filters.type) return false;
       if (filters.jurisdiction && template.jurisdiction !== filters.jurisdiction) return false;
@@ -204,7 +208,7 @@ export class DocumentAutomationService {
           type: 'SYNTAX_ERROR',
           severity: 'ERROR',
           description: 'Template must have at least one section',
-          location: 'sections'
+          location: 'sections',
         });
         syntaxValid = false;
       }
@@ -216,7 +220,7 @@ export class DocumentAutomationService {
             type: 'VARIABLE_ERROR',
             severity: 'ERROR',
             description: `Invalid variable definition: ${variable.name}`,
-            location: `variables.${variable.name}`
+            location: `variables.${variable.name}`,
           });
           variablesValid = false;
         }
@@ -229,7 +233,7 @@ export class DocumentAutomationService {
             type: 'LOGIC_ERROR',
             severity: 'WARNING',
             description: `Invalid conditional rule: ${rule.name}`,
-            location: `conditionalLogic.${rule.id}`
+            location: `conditionalLogic.${rule.id}`,
           });
           logicValid = false;
         }
@@ -242,18 +246,19 @@ export class DocumentAutomationService {
             type: 'COMPLIANCE_ERROR',
             severity: 'WARNING',
             description: `Compliance requirement not met: ${requirement.name}`,
-            location: `complianceRequirements.${requirement.id}`
+            location: `complianceRequirements.${requirement.id}`,
           });
           complianceValid = false;
         }
-      }        } catch (error: any) {
-          issues.push({
-            type: 'SYNTAX_ERROR',
-            severity: 'ERROR',
-            description: `Template validation error: ${error?.message || 'Unknown error'}`,
-            location: 'template'
-          });
-        }
+      }
+    } catch (error: any) {
+      issues.push({
+        type: 'SYNTAX_ERROR',
+        severity: 'ERROR',
+        description: `Template validation error: ${error?.message || 'Unknown error'}`,
+        location: 'template',
+      });
+    }
 
     return {
       syntaxValid,
@@ -261,7 +266,7 @@ export class DocumentAutomationService {
       variablesValid,
       complianceValid,
       lastValidated: new Date(),
-      issues
+      issues,
     };
   }
 
@@ -287,7 +292,7 @@ export class DocumentAutomationService {
     context: any
   ): Promise<GeneratedDocument[]> {
     const prompt = this.buildAIGenerationPrompt(request, context);
-    
+
     // Simplified AI generation - would integrate with actual AI service
     const content = this.generateBasicDocument(request, prompt);
 
@@ -308,10 +313,10 @@ export class DocumentAutomationService {
   ): Promise<GeneratedDocument[]> {
     // Start with template-based generation
     const templateDocuments = await this.generateFromTemplate(request, template, context);
-    
+
     // Enhance with AI for complex sections
     const enhancedDocuments: GeneratedDocument[] = [];
-    
+
     for (const doc of templateDocuments) {
       const enhancedContent = await this.enhanceWithAI(doc.content, request);
       enhancedDocuments.push({
@@ -319,8 +324,8 @@ export class DocumentAutomationService {
         content: enhancedContent,
         sections: doc.sections.map(section => ({
           ...section,
-          source: this.shouldEnhanceSection(section) ? SectionSource.AI_GENERATED : section.source
-        }))
+          source: this.shouldEnhanceSection(section) ? SectionSource.AI_GENERATED : section.source,
+        })),
       });
     }
 
@@ -333,12 +338,12 @@ export class DocumentAutomationService {
   ): Promise<GeneratedDocument[]> {
     const selectedClauses = request.customClauses || [];
     const additionalClauses = await this.selectRelevantClauses(request);
-    
+
     const allClauses = [...selectedClauses, ...additionalClauses];
     const assembledContent = await this.assembleClauses(allClauses, context);
-    
+
     const documents: GeneratedDocument[] = [];
-    
+
     for (const format of request.outputFormat) {
       const document = await this.formatAssembledContent(assembledContent, request, format);
       documents.push(document);
@@ -390,7 +395,7 @@ export class DocumentAutomationService {
       wordCount: this.countWords(formattedContent),
       sections,
       variables,
-      checksum: this.calculateChecksum(formattedContent)
+      checksum: this.calculateChecksum(formattedContent),
     };
   }
 
@@ -421,7 +426,7 @@ export class DocumentAutomationService {
       pageEnd: 1,
       variables: section.variables,
       included: true,
-      source: SectionSource.TEMPLATE
+      source: SectionSource.TEMPLATE,
     };
   }
 
@@ -429,7 +434,7 @@ export class DocumentAutomationService {
 
   private buildAIGenerationPrompt(request: DocumentGenerationRequest, context: any): string {
     const parties = request.parties.map(p => `${p.name} (${p.role})`).join(', ');
-    
+
     return `Generate a comprehensive ${request.documentType} for the jurisdiction of ${request.jurisdiction} in ${request.language}.
 
 Document Details:
@@ -456,7 +461,10 @@ Special Instructions: ${request.specialInstructions || 'None'}
 Generate a complete, legally sound document with proper structure and formatting.`;
   }
 
-  private async enhanceWithAI(content: string, request: DocumentGenerationRequest): Promise<string> {
+  private async enhanceWithAI(
+    content: string,
+    request: DocumentGenerationRequest
+  ): Promise<string> {
     const enhancementPrompt = `Review and enhance the following legal document content for ${request.jurisdiction}:
 
 ${content}
@@ -477,7 +485,7 @@ Enhanced content:`;
       maxTokens: 6000,
       temperature: 0.2,
       jurisdiction: request.jurisdiction,
-      language: request.language
+      language: request.language,
     });
 
     return response.completion;
@@ -527,7 +535,9 @@ Enhanced content:`;
     }
 
     const docCount = documents.length;
-    const overall = (completeness + consistency + accuracy + readability + compliance + legalSoundness) / (6 * docCount);
+    const overall =
+      (completeness + consistency + accuracy + readability + compliance + legalSoundness) /
+      (6 * docCount);
 
     return {
       overall,
@@ -537,32 +547,37 @@ Enhanced content:`;
       readability: readability / docCount,
       compliance: compliance / docCount,
       legalSoundness: legalSoundness / docCount,
-      issues
+      issues,
     };
   }
 
-  private assessCompleteness(document: GeneratedDocument, request: DocumentGenerationRequest): number {
+  private assessCompleteness(
+    document: GeneratedDocument,
+    request: DocumentGenerationRequest
+  ): number {
     const expectedSections = this.getExpectedSections(request.documentType);
     const presentSections = document.sections.map(s => s.type);
-    const missingEssential = expectedSections.filter(s => s.required && !presentSections.includes(s.type));
-    
-    return Math.max(0, 1 - (missingEssential.length * 0.2));
+    const missingEssential = expectedSections.filter(
+      s => s.required && !presentSections.includes(s.type)
+    );
+
+    return Math.max(0, 1 - missingEssential.length * 0.2);
   }
 
   private assessConsistency(document: GeneratedDocument): number {
     // Check for consistent terminology, numbering, formatting
     const terms = this.extractLegalTerms(document.content);
     const inconsistencies = this.findTermInconsistencies(terms);
-    
-    return Math.max(0, 1 - (inconsistencies.length * 0.1));
+
+    return Math.max(0, 1 - inconsistencies.length * 0.1);
   }
 
   private assessAccuracy(document: GeneratedDocument, request: DocumentGenerationRequest): number {
     // Check variable substitutions, legal references, dates
     const variableErrors = document.variables.filter(v => !v.resolved).length;
     const maxVariables = document.variables.length;
-    
-    return maxVariables > 0 ? Math.max(0, 1 - (variableErrors / maxVariables)) : 1;
+
+    return maxVariables > 0 ? Math.max(0, 1 - variableErrors / maxVariables) : 1;
   }
 
   private assessReadability(document: GeneratedDocument): number {
@@ -570,21 +585,27 @@ Enhanced content:`;
     const sentences = document.content.split(/[.!?]+/).length;
     const words = this.countWords(document.content);
     const avgWordsPerSentence = words / sentences;
-    
+
     // Legal documents should have 15-25 words per sentence for optimal readability
     const optimal = avgWordsPerSentence >= 15 && avgWordsPerSentence <= 25;
     return optimal ? 0.9 : Math.max(0.5, 1 - Math.abs(avgWordsPerSentence - 20) * 0.02);
   }
 
-  private async assessDocumentCompliance(document: GeneratedDocument, request: DocumentGenerationRequest): Promise<number> {
+  private async assessDocumentCompliance(
+    document: GeneratedDocument,
+    request: DocumentGenerationRequest
+  ): Promise<number> {
     // Check jurisdiction-specific requirements
     const requirements = this.getComplianceRequirements(request.jurisdiction, request.documentType);
     const violations = await this.findComplianceViolations(document, requirements);
-    
-    return Math.max(0, 1 - (violations.length * 0.15));
+
+    return Math.max(0, 1 - violations.length * 0.15);
   }
 
-  private async assessLegalSoundness(document: GeneratedDocument, request: DocumentGenerationRequest): Promise<number> {
+  private async assessLegalSoundness(
+    document: GeneratedDocument,
+    request: DocumentGenerationRequest
+  ): Promise<number> {
     // Use AI to assess legal soundness
     const assessmentPrompt = `Assess the legal soundness of this ${request.documentType} for ${request.jurisdiction}:
 
@@ -606,7 +627,7 @@ Provide only a numeric score (0.0-1.0):`;
         maxTokens: 100,
         temperature: 0.1,
         jurisdiction: request.jurisdiction,
-        language: request.language
+        language: request.language,
       });
 
       const score = parseFloat(response.completion.trim());
@@ -625,7 +646,7 @@ Provide only a numeric score (0.0-1.0):`;
     const requirements = this.getComplianceRequirements(request.jurisdiction, request.documentType);
     const violations: ComplianceViolation[] = [];
     const recommendations: any[] = [];
-    
+
     let totalCompliance = 0;
     let jurisdictionalCompliance = 0;
     let regulatoryCompliance = 0;
@@ -634,11 +655,14 @@ Provide only a numeric score (0.0-1.0):`;
       const docViolations = await this.findComplianceViolations(document, requirements);
       violations.push(...docViolations);
 
-      const docCompliance = Math.max(0, 1 - (docViolations.length * 0.1));
+      const docCompliance = Math.max(0, 1 - docViolations.length * 0.1);
       totalCompliance += docCompliance;
 
       // Assess jurisdiction-specific compliance
-      const jurisdictionScore = await this.assessJurisdictionCompliance(document, request.jurisdiction);
+      const jurisdictionScore = await this.assessJurisdictionCompliance(
+        document,
+        request.jurisdiction
+      );
       jurisdictionalCompliance += jurisdictionScore;
 
       // Assess regulatory compliance
@@ -658,7 +682,7 @@ Provide only a numeric score (0.0-1.0):`;
       regulatoryCompliance: regulatoryCompliance / docCount,
       requirements,
       violations,
-      recommendations
+      recommendations,
     };
   }
 
@@ -691,8 +715,8 @@ Provide only a numeric score (0.0-1.0):`;
             spacing: 12,
             bold: true,
             italic: false,
-            underline: false
-          }
+            underline: false,
+          },
         },
         {
           id: 'parties',
@@ -700,17 +724,24 @@ Provide only a numeric score (0.0-1.0):`;
           order: 2,
           required: true,
           type: SectionType.PARTIES,
-          content: 'This Service Agreement ("Agreement") is entered into on {{agreement_date}} between {{client_name}}, a {{client_entity_type}} ("Client") and {{service_provider_name}}, a {{provider_entity_type}} ("Service Provider").',
-          variables: ['agreement_date', 'client_name', 'client_entity_type', 'service_provider_name', 'provider_entity_type'],
+          content:
+            'This Service Agreement ("Agreement") is entered into on {{agreement_date}} between {{client_name}}, a {{client_entity_type}} ("Client") and {{service_provider_name}}, a {{provider_entity_type}} ("Service Provider").',
+          variables: [
+            'agreement_date',
+            'client_name',
+            'client_entity_type',
+            'service_provider_name',
+            'provider_entity_type',
+          ],
           styling: {
             style: 'NORMAL' as any,
             indentation: 0,
             spacing: 6,
             bold: false,
             italic: false,
-            underline: false
-          }
-        }
+            underline: false,
+          },
+        },
       ],
       variables: [
         {
@@ -718,15 +749,15 @@ Provide only a numeric score (0.0-1.0):`;
           type: VariableType.DATE,
           description: 'Date when the agreement is signed',
           required: true,
-          validation: { required: true }
+          validation: { required: true },
         },
         {
           name: 'client_name',
           type: VariableType.TEXT,
           description: 'Full legal name of the client',
           required: true,
-          validation: { required: true, minLength: 2 }
-        }
+          validation: { required: true, minLength: 2 },
+        },
       ],
       conditionalLogic: [],
       author: 'System',
@@ -736,7 +767,7 @@ Provide only a numeric score (0.0-1.0):`;
         lastUsed: new Date(),
         averageRating: 0,
         successRate: 0,
-        popularVariables: []
+        popularVariables: [],
       },
       validation: {
         syntaxValid: true,
@@ -744,11 +775,11 @@ Provide only a numeric score (0.0-1.0):`;
         variablesValid: true,
         complianceValid: true,
         lastValidated: new Date(),
-        issues: []
+        issues: [],
       },
       precedentSources: [],
       complianceRequirements: [],
-      riskFactors: []
+      riskFactors: [],
     };
 
     this.templateCache.set(sampleTemplate.id, sampleTemplate);
@@ -759,14 +790,17 @@ Provide only a numeric score (0.0-1.0):`;
     const sampleClause: ClauseSelection = {
       clauseId: 'force-majeure-001',
       clauseType: 'FORCE_MAJEURE',
-      content: 'Neither party shall be liable for any failure or delay in performance under this Agreement which is due to an earthquake, flood, fire, storm, natural disaster, act of God, war, terrorism, armed conflict, labor strike, lockout, or boycott.',
-      variables: {}
+      content:
+        'Neither party shall be liable for any failure or delay in performance under this Agreement which is due to an earthquake, flood, fire, storm, natural disaster, act of God, war, terrorism, armed conflict, labor strike, lockout, or boycott.',
+      variables: {},
     };
 
     this.clauseLibrary.set(sampleClause.clauseId, sampleClause);
   }
 
-  private async createDynamicTemplate(request: DocumentGenerationRequest): Promise<DocumentTemplate> {
+  private async createDynamicTemplate(
+    request: DocumentGenerationRequest
+  ): Promise<DocumentTemplate> {
     // Create a basic template structure using AI
     const prompt = `Create a template structure for a ${request.documentType} in ${request.jurisdiction}. 
     Provide the essential sections in JSON format with section names, types, and required variables.`;
@@ -778,7 +812,7 @@ Provide only a numeric score (0.0-1.0):`;
       maxTokens: 2000,
       temperature: 0.3,
       jurisdiction: request.jurisdiction,
-      language: request.language
+      language: request.language,
     });
 
     // Parse AI response and create template
@@ -803,7 +837,7 @@ Provide only a numeric score (0.0-1.0):`;
         lastUsed: new Date(),
         averageRating: 0,
         successRate: 0,
-        popularVariables: []
+        popularVariables: [],
       },
       validation: {
         syntaxValid: true,
@@ -811,11 +845,11 @@ Provide only a numeric score (0.0-1.0):`;
         variablesValid: true,
         complianceValid: true,
         lastValidated: new Date(),
-        issues: []
+        issues: [],
       },
       precedentSources: [],
       complianceRequirements: [],
-      riskFactors: []
+      riskFactors: [],
     };
   }
 
@@ -835,8 +869,8 @@ Provide only a numeric score (0.0-1.0):`;
           spacing: 12,
           bold: true,
           italic: false,
-          underline: false
-        }
+          underline: false,
+        },
       },
       {
         id: 'parties',
@@ -852,9 +886,9 @@ Provide only a numeric score (0.0-1.0):`;
           spacing: 6,
           bold: false,
           italic: false,
-          underline: false
-        }
-      }
+          underline: false,
+        },
+      },
     ];
 
     return commonSections;
@@ -865,7 +899,10 @@ Provide only a numeric score (0.0-1.0):`;
     return rule.condition && rule.actions && rule.actions.length > 0;
   }
 
-  private validateComplianceRequirement(requirement: ComplianceRequirement, jurisdiction: LegalJurisdiction): boolean {
+  private validateComplianceRequirement(
+    requirement: ComplianceRequirement,
+    jurisdiction: LegalJurisdiction
+  ): boolean {
     return requirement.jurisdiction === jurisdiction;
   }
 
@@ -884,38 +921,41 @@ Provide only a numeric score (0.0-1.0):`;
     return section.type === SectionType.TERMS || section.type === SectionType.CONDITIONS;
   }
 
-  private async buildGenerationContext(request: DocumentGenerationRequest, template: DocumentTemplate): Promise<any> {
+  private async buildGenerationContext(
+    request: DocumentGenerationRequest,
+    template: DocumentTemplate
+  ): Promise<any> {
     return {
       request,
       template,
       variables: request.variables,
       parties: request.parties,
       jurisdiction: request.jurisdiction,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
   }
 
   private resolveVariable(variable: any, context: any): ResolvedVariable {
     const value = context.variables[variable.name] || variable.defaultValue;
-    
+
     return {
       name: variable.name,
       value,
       type: variable.type,
       source: value ? VariableSource.USER_INPUT : VariableSource.DEFAULT_VALUE,
       resolved: !!value,
-      validation: { valid: !!value, errors: [], warnings: [] }
+      validation: { valid: !!value, errors: [], warnings: [] },
     };
   }
 
   private applyVariableSubstitutions(content: string, variables: ResolvedVariable[]): string {
     let result = content;
-    
+
     for (const variable of variables) {
       const placeholder = `{{${variable.name}}}`;
       result = result.replace(new RegExp(placeholder, 'g'), variable.value || '');
     }
-    
+
     return result;
   }
 
@@ -967,7 +1007,7 @@ Provide only a numeric score (0.0-1.0):`;
     let hash = 0;
     for (let i = 0; i < content.length; i++) {
       const char = content.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32bit integer
     }
     return Math.abs(hash).toString(16);
@@ -977,19 +1017,30 @@ Provide only a numeric score (0.0-1.0):`;
     return `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  private createGenerationSummary(documents: GeneratedDocument[], template: DocumentTemplate, startTime: number): GenerationSummary {
+  private createGenerationSummary(
+    documents: GeneratedDocument[],
+    template: DocumentTemplate,
+    startTime: number
+  ): GenerationSummary {
     return {
       documentsGenerated: documents.length,
       sectionsIncluded: documents.reduce((sum, doc) => sum + doc.sections.length, 0),
-      variablesResolved: documents.reduce((sum, doc) => sum + doc.variables.filter(v => v.resolved).length, 0),
+      variablesResolved: documents.reduce(
+        (sum, doc) => sum + doc.variables.filter(v => v.resolved).length,
+        0
+      ),
       clausesUsed: 0, // Would track clause usage
       templateVersion: template.version,
       generationTime: Date.now() - startTime,
-      complexity: template.complexity
+      complexity: template.complexity,
     };
   }
 
-  private createGenerationMetadata(generationId: string, request: DocumentGenerationRequest, startTime: number): GenerationMetadata {
+  private createGenerationMetadata(
+    generationId: string,
+    request: DocumentGenerationRequest,
+    startTime: number
+  ): GenerationMetadata {
     return {
       requestId: `req_${Date.now()}`,
       generationId,
@@ -1001,12 +1052,14 @@ Provide only a numeric score (0.0-1.0):`;
       version: '1.0.0',
       environment: 'production',
       user: 'system',
-      session: 'session_' + Date.now()
+      session: 'session_' + Date.now(),
     };
   }
 
   // Placeholder methods for various assessments and operations
-  private async selectRelevantClauses(request: DocumentGenerationRequest): Promise<ClauseSelection[]> {
+  private async selectRelevantClauses(
+    request: DocumentGenerationRequest
+  ): Promise<ClauseSelection[]> {
     // Would implement clause selection logic
     return [];
   }
@@ -1015,9 +1068,13 @@ Provide only a numeric score (0.0-1.0):`;
     return clauses.map(clause => clause.content).join('\n\n');
   }
 
-  private async formatAssembledContent(content: string, request: DocumentGenerationRequest, format: OutputFormat): Promise<GeneratedDocument> {
+  private async formatAssembledContent(
+    content: string,
+    request: DocumentGenerationRequest,
+    format: OutputFormat
+  ): Promise<GeneratedDocument> {
     const formattedContent = await this.formatContent(content, format);
-    
+
     return {
       id: this.generateId(),
       name: `${request.documentType}.${format.toLowerCase()}`,
@@ -1029,13 +1086,17 @@ Provide only a numeric score (0.0-1.0):`;
       wordCount: this.countWords(content),
       sections: [],
       variables: [],
-      checksum: this.calculateChecksum(content)
+      checksum: this.calculateChecksum(content),
     };
   }
 
-  private async formatAIContent(content: string, request: DocumentGenerationRequest, format: OutputFormat): Promise<GeneratedDocument> {
+  private async formatAIContent(
+    content: string,
+    request: DocumentGenerationRequest,
+    format: OutputFormat
+  ): Promise<GeneratedDocument> {
     const formattedContent = await this.formatContent(content, format);
-    
+
     return {
       id: this.generateId(),
       name: `${request.documentType}_AI.${format.toLowerCase()}`,
@@ -1047,7 +1108,7 @@ Provide only a numeric score (0.0-1.0):`;
       wordCount: this.countWords(content),
       sections: [],
       variables: [],
-      checksum: this.calculateChecksum(content)
+      checksum: this.calculateChecksum(content),
     };
   }
 
@@ -1056,7 +1117,7 @@ Provide only a numeric score (0.0-1.0):`;
     return [
       { type: SectionType.TITLE, required: true },
       { type: SectionType.PARTIES, required: true },
-      { type: SectionType.TERMS, required: true }
+      { type: SectionType.TERMS, required: true },
     ];
   }
 
@@ -1070,45 +1131,75 @@ Provide only a numeric score (0.0-1.0):`;
     return [];
   }
 
-  private getComplianceRequirements(jurisdiction: LegalJurisdiction, documentType: DocumentType): ComplianceRequirement[] {
+  private getComplianceRequirements(
+    jurisdiction: LegalJurisdiction,
+    documentType: DocumentType
+  ): ComplianceRequirement[] {
     // Return jurisdiction-specific compliance requirements
     return [];
   }
 
-  private async findComplianceViolations(document: GeneratedDocument, requirements: ComplianceRequirement[]): Promise<ComplianceViolation[]> {
+  private async findComplianceViolations(
+    document: GeneratedDocument,
+    requirements: ComplianceRequirement[]
+  ): Promise<ComplianceViolation[]> {
     // Find compliance violations
     return [];
   }
 
-  private generateComplianceRecommendations(document: GeneratedDocument, violations: ComplianceViolation[]): any[] {
+  private generateComplianceRecommendations(
+    document: GeneratedDocument,
+    violations: ComplianceViolation[]
+  ): any[] {
     // Generate compliance recommendations
     return [];
   }
 
-  private async assessJurisdictionCompliance(document: GeneratedDocument, jurisdiction: LegalJurisdiction): Promise<number> {
+  private async assessJurisdictionCompliance(
+    document: GeneratedDocument,
+    jurisdiction: LegalJurisdiction
+  ): Promise<number> {
     return 0.85; // Placeholder score
   }
 
-  private async assessRegulatoryCompliance(document: GeneratedDocument, request: DocumentGenerationRequest): Promise<number> {
-    return 0.80; // Placeholder score
+  private async assessRegulatoryCompliance(
+    document: GeneratedDocument,
+    request: DocumentGenerationRequest
+  ): Promise<number> {
+    return 0.8; // Placeholder score
   }
 
-  private identifyQualityIssues(document: GeneratedDocument, request: DocumentGenerationRequest): QualityIssue[] {
+  private identifyQualityIssues(
+    document: GeneratedDocument,
+    request: DocumentGenerationRequest
+  ): QualityIssue[] {
     // Identify quality issues
     return [];
   }
 
-  private async generateRecommendations(documents: GeneratedDocument[], quality: QualityAssessment, compliance: ComplianceAssessment): Promise<GenerationRecommendation[]> {
+  private async generateRecommendations(
+    documents: GeneratedDocument[],
+    quality: QualityAssessment,
+    compliance: ComplianceAssessment
+  ): Promise<GenerationRecommendation[]> {
     // Generate recommendations based on quality and compliance
     return [];
   }
 
-  private async identifyWarnings(documents: GeneratedDocument[], request: DocumentGenerationRequest, context: any): Promise<GenerationWarning[]> {
+  private async identifyWarnings(
+    documents: GeneratedDocument[],
+    request: DocumentGenerationRequest,
+    context: any
+  ): Promise<GenerationWarning[]> {
     // Identify warnings
     return [];
   }
 
-  private async generateAlternatives(request: DocumentGenerationRequest, template: DocumentTemplate, context: any): Promise<DocumentAlternative[]> {
+  private async generateAlternatives(
+    request: DocumentGenerationRequest,
+    template: DocumentTemplate,
+    context: any
+  ): Promise<DocumentAlternative[]> {
     // Generate alternative document versions
     return [];
   }
@@ -1116,15 +1207,43 @@ Provide only a numeric score (0.0-1.0):`;
   // Analysis methods
   public async analyzeComplexity(request: DocumentGenerationRequest): Promise<ComplexityAnalysis> {
     const factors: any[] = [
-      { name: 'Document Type', weight: 0.3, contribution: this.getTypeComplexity(request.documentType), description: 'Complexity based on document type' },
-      { name: 'Jurisdiction', weight: 0.2, contribution: this.getJurisdictionComplexity(request.jurisdiction), description: 'Legal complexity of jurisdiction' },
-      { name: 'Party Count', weight: 0.15, contribution: Math.min(1, request.parties.length * 0.2), description: 'Number of parties involved' },
-      { name: 'Variable Count', weight: 0.15, contribution: Math.min(1, Object.keys(request.variables).length * 0.1), description: 'Number of variables to resolve' },
-      { name: 'Custom Features', weight: 0.2, contribution: this.getFeatureComplexity(request.features), description: 'Complexity of requested features' }
+      {
+        name: 'Document Type',
+        weight: 0.3,
+        contribution: this.getTypeComplexity(request.documentType),
+        description: 'Complexity based on document type',
+      },
+      {
+        name: 'Jurisdiction',
+        weight: 0.2,
+        contribution: this.getJurisdictionComplexity(request.jurisdiction),
+        description: 'Legal complexity of jurisdiction',
+      },
+      {
+        name: 'Party Count',
+        weight: 0.15,
+        contribution: Math.min(1, request.parties.length * 0.2),
+        description: 'Number of parties involved',
+      },
+      {
+        name: 'Variable Count',
+        weight: 0.15,
+        contribution: Math.min(1, Object.keys(request.variables).length * 0.1),
+        description: 'Number of variables to resolve',
+      },
+      {
+        name: 'Custom Features',
+        weight: 0.2,
+        contribution: this.getFeatureComplexity(request.features),
+        description: 'Complexity of requested features',
+      },
     ];
 
-    const totalScore = factors.reduce((sum, factor) => sum + (factor.weight * factor.contribution), 0);
-    
+    const totalScore = factors.reduce(
+      (sum, factor) => sum + factor.weight * factor.contribution,
+      0
+    );
+
     let level: DocumentComplexity;
     let estimatedTime: number;
     let recommendedApproach: GenerationMethod;
@@ -1152,42 +1271,61 @@ Provide only a numeric score (0.0-1.0):`;
       factors,
       estimatedTime,
       recommendedApproach,
-      requiredResources: this.getRequiredResources(level)
+      requiredResources: this.getRequiredResources(level),
     };
   }
 
   public async estimateGeneration(request: DocumentGenerationRequest): Promise<GenerationEstimate> {
     const complexity = await this.analyzeComplexity(request);
-    
+
     const factors: any[] = [
-      { name: 'Complexity', impact: complexity.estimatedTime * 0.4, description: 'Base complexity time' },
-      { name: 'AI Processing', impact: request.generationMethod === GenerationMethod.AI_GENERATED ? 60 : 20, description: 'AI processing overhead' },
-      { name: 'Format Conversion', impact: request.outputFormat.length * 10, description: 'Time for format conversion' },
-      { name: 'Quality Checks', impact: request.features.qualityAssurance ? 30 : 5, description: 'Quality assessment time' }
+      {
+        name: 'Complexity',
+        impact: complexity.estimatedTime * 0.4,
+        description: 'Base complexity time',
+      },
+      {
+        name: 'AI Processing',
+        impact: request.generationMethod === GenerationMethod.AI_GENERATED ? 60 : 20,
+        description: 'AI processing overhead',
+      },
+      {
+        name: 'Format Conversion',
+        impact: request.outputFormat.length * 10,
+        description: 'Time for format conversion',
+      },
+      {
+        name: 'Quality Checks',
+        impact: request.features.qualityAssurance ? 30 : 5,
+        description: 'Quality assessment time',
+      },
     ];
 
     const estimatedDuration = factors.reduce((sum, factor) => sum + factor.impact, 0);
-    const confidence = Math.max(0.6, 1 - (complexity.level === DocumentComplexity.ENTERPRISE ? 0.3 : 0.1));
+    const confidence = Math.max(
+      0.6,
+      1 - (complexity.level === DocumentComplexity.ENTERPRISE ? 0.3 : 0.1)
+    );
 
     const alternatives: any[] = [
       {
         approach: GenerationMethod.TEMPLATE_BASED,
         duration: estimatedDuration * 0.6,
         quality: 0.8,
-        description: 'Fastest option using pre-built templates'
+        description: 'Fastest option using pre-built templates',
       },
       {
         approach: GenerationMethod.AI_GENERATED,
         duration: estimatedDuration * 1.2,
         quality: 0.9,
-        description: 'Highest quality with AI customization'
+        description: 'Highest quality with AI customization',
       },
       {
         approach: GenerationMethod.HYBRID,
         duration: estimatedDuration,
         quality: 0.95,
-        description: 'Balanced approach combining templates and AI'
-      }
+        description: 'Balanced approach combining templates and AI',
+      },
     ];
 
     return {
@@ -1197,9 +1335,9 @@ Provide only a numeric score (0.0-1.0):`;
       recommendations: [
         'Consider using hybrid approach for optimal balance',
         'Enable quality assurance for critical documents',
-        'Use template-based generation for time-sensitive requests'
+        'Use template-based generation for time-sensitive requests',
       ],
-      alternatives
+      alternatives,
     };
   }
 
@@ -1258,7 +1396,7 @@ Provide only a numeric score (0.0-1.0):`;
       [DocumentType.POWER_OF_ATTORNEY]: 0.5,
       [DocumentType.WILL]: 0.8,
       [DocumentType.TRUST_AGREEMENT]: 0.9,
-      [DocumentType.CUSTOM_DOCUMENT]: 0.7
+      [DocumentType.CUSTOM_DOCUMENT]: 0.7,
     };
 
     return complexityMap[type] || 0.5;
@@ -1274,7 +1412,7 @@ Provide only a numeric score (0.0-1.0):`;
       [LegalJurisdiction.KENYA]: 0.5,
       [LegalJurisdiction.GHANA]: 0.5,
       [LegalJurisdiction.EGYPT]: 0.7,
-      [LegalJurisdiction.MOROCCO]: 0.6
+      [LegalJurisdiction.MOROCCO]: 0.6,
     };
 
     return complexityMap[jurisdiction] || 0.5;
@@ -1289,7 +1427,7 @@ Provide only a numeric score (0.0-1.0):`;
     if (features.complianceCheck) complexity += 0.3;
     if (features.qualityAssurance) complexity += 0.2;
     if (features.generateAlternatives) complexity += 0.4;
-    
+
     return Math.min(1, complexity);
   }
 
@@ -1297,8 +1435,19 @@ Provide only a numeric score (0.0-1.0):`;
     const resourceMap: Record<DocumentComplexity, string[]> = {
       [DocumentComplexity.SIMPLE]: ['Basic Template Engine', 'Standard AI Model'],
       [DocumentComplexity.STANDARD]: ['Template Engine', 'Enhanced AI Model', 'Compliance Checker'],
-      [DocumentComplexity.COMPLEX]: ['Advanced Template Engine', 'Premium AI Model', 'Legal Expert Review', 'Compliance Suite'],
-      [DocumentComplexity.ENTERPRISE]: ['Enterprise Template Suite', 'Advanced AI Models', 'Legal Expert Panel', 'Full Compliance Suite', 'Risk Assessment Tools']
+      [DocumentComplexity.COMPLEX]: [
+        'Advanced Template Engine',
+        'Premium AI Model',
+        'Legal Expert Review',
+        'Compliance Suite',
+      ],
+      [DocumentComplexity.ENTERPRISE]: [
+        'Enterprise Template Suite',
+        'Advanced AI Models',
+        'Legal Expert Panel',
+        'Full Compliance Suite',
+        'Risk Assessment Tools',
+      ],
     };
 
     return resourceMap[level] || [];
@@ -1308,19 +1457,19 @@ Provide only a numeric score (0.0-1.0):`;
     if (!request.documentType) {
       throw new Error('Document type is required');
     }
-    
+
     if (!request.jurisdiction) {
       throw new Error('Jurisdiction is required');
     }
-    
+
     if (!request.legalArea) {
       throw new Error('Legal area is required');
     }
-    
+
     if (!request.parties || request.parties.length === 0) {
       throw new Error('At least one party is required');
     }
-    
+
     if (!request.outputFormat || request.outputFormat.length === 0) {
       throw new Error('At least one output format is required');
     }

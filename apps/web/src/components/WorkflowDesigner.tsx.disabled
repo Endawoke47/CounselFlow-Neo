@@ -1,0 +1,959 @@
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { Button } from '../components/ui/button';
+import { Card } from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import { Select } from '../components/ui/select';
+import { Alert } from '../components/ui/alert';
+
+// Enhanced Workflow Node Interface
+interface WorkflowNode {
+  id: string;
+  type: 'trigger' | 'condition' | 'action' | 'ai-analysis' | 'approval' | 'notification' | 'integration' | 'data-transform';
+  title: string;
+  description: string;
+  config: Record<string, any>;
+  position: { x: number; y: number };
+  connections: string[];
+  status?: 'idle' | 'running' | 'completed' | 'error';
+}
+
+// Workflow Template Interface
+interface WorkflowTemplate {
+  name: string;
+  description: string;
+  category: string;
+  nodes: WorkflowNode[];
+  estimatedTime: string;
+  complexity: 'low' | 'medium' | 'high';
+}
+
+// Comprehensive Workflow Templates
+const ADVANCED_WORKFLOW_TEMPLATES: Record<string, WorkflowTemplate> = {
+  'litigation-management': {
+    name: 'Litigation Case Management',
+    description: 'Complete litigation workflow from filing to resolution',
+    category: 'Litigation',
+    estimatedTime: '30-90 days',
+    complexity: 'high',
+    nodes: [
+      {
+        id: 'trigger-lit-1',
+        type: 'trigger',
+        title: 'Case Filed',
+        description: 'Triggered when new litigation case is filed',
+        config: { event: 'case.filed', priority: 'high' },
+        position: { x: 50, y: 100 },
+        connections: ['ai-lit-1']
+      },
+      {
+        id: 'ai-lit-1',
+        type: 'ai-analysis',
+        title: 'Case Complexity Analysis',
+        description: 'AI analyzes case complexity and resource requirements',
+        config: { 
+          analysisTypes: ['complexity-assessment', 'resource-estimation', 'timeline-prediction'],
+          confidence: 0.88 
+        },
+        position: { x: 250, y: 100 },
+        connections: ['action-lit-1']
+      },
+      {
+        id: 'action-lit-1',
+        type: 'action',
+        title: 'Assign Legal Team',
+        description: 'Assign appropriate legal team based on case complexity',
+        config: { 
+          action: 'assign-team',
+          criteria: 'complexity-based',
+          notifications: true 
+        },
+        position: { x: 450, y: 100 },
+        connections: ['ai-lit-2']
+      },
+      {
+        id: 'ai-lit-2',
+        type: 'ai-analysis',
+        title: 'Discovery Planning',
+        description: 'AI suggests discovery strategy and timeline',
+        config: { 
+          analysisTypes: ['discovery-planning', 'evidence-mapping', 'cost-estimation'],
+          confidence: 0.85 
+        },
+        position: { x: 650, y: 100 },
+        connections: ['approval-lit-1']
+      },
+      {
+        id: 'approval-lit-1',
+        type: 'approval',
+        title: 'Strategy Approval',
+        description: 'Senior partner approves litigation strategy',
+        config: { 
+          assignee: 'senior-partner',
+          priority: 'high',
+          deadline: '2-days' 
+        },
+        position: { x: 850, y: 100 },
+        connections: ['notification-lit-1']
+      },
+      {
+        id: 'notification-lit-1',
+        type: 'notification',
+        title: 'Client Strategy Update',
+        description: 'Notify client of litigation strategy and timeline',
+        config: { 
+          template: 'litigation-strategy',
+          recipients: ['client', 'case-manager'],
+          attachments: ['strategy-document'] 
+        },
+        position: { x: 1050, y: 100 },
+        connections: []
+      }
+    ]
+  },
+  'compliance-audit': {
+    name: 'Automated Compliance Audit',
+    description: 'Comprehensive compliance checking and reporting',
+    category: 'Compliance',
+    estimatedTime: '7-14 days',
+    complexity: 'medium',
+    nodes: [
+      {
+        id: 'trigger-comp-1',
+        type: 'trigger',
+        title: 'Audit Scheduled',
+        description: 'Triggered by scheduled compliance audit',
+        config: { event: 'audit.scheduled', frequency: 'quarterly' },
+        position: { x: 50, y: 150 },
+        connections: ['ai-comp-1']
+      },
+      {
+        id: 'ai-comp-1',
+        type: 'ai-analysis',
+        title: 'Document Compliance Scan',
+        description: 'AI scans all documents for compliance issues',
+        config: { 
+          analysisTypes: ['regulatory-compliance', 'policy-adherence', 'risk-identification'],
+          scope: 'all-documents',
+          confidence: 0.92 
+        },
+        position: { x: 250, y: 150 },
+        connections: ['data-comp-1']
+      },
+      {
+        id: 'data-comp-1',
+        type: 'data-transform',
+        title: 'Compliance Report Generation',
+        description: 'Generate comprehensive compliance report',
+        config: { 
+          reportType: 'compliance-audit',
+          format: 'PDF',
+          includeRecommendations: true 
+        },
+        position: { x: 450, y: 150 },
+        connections: ['condition-comp-1']
+      },
+      {
+        id: 'condition-comp-1',
+        type: 'condition',
+        title: 'Issues Found?',
+        description: 'Check if compliance issues were identified',
+        config: { condition: 'compliance_issues > 0' },
+        position: { x: 650, y: 150 },
+        connections: ['approval-comp-1', 'notification-comp-1']
+      },
+      {
+        id: 'approval-comp-1',
+        type: 'approval',
+        title: 'Remediation Plan',
+        description: 'Compliance officer creates remediation plan',
+        config: { 
+          assignee: 'compliance-officer',
+          priority: 'high',
+          condition: 'issues-found' 
+        },
+        position: { x: 850, y: 100 },
+        connections: ['notification-comp-2']
+      },
+      {
+        id: 'notification-comp-1',
+        type: 'notification',
+        title: 'Clean Audit Notice',
+        description: 'Notify stakeholders of clean audit results',
+        config: { 
+          template: 'clean-audit',
+          recipients: ['management', 'compliance-team'],
+          condition: 'no-issues' 
+        },
+        position: { x: 850, y: 200 },
+        connections: []
+      },
+      {
+        id: 'notification-comp-2',
+        type: 'notification',
+        title: 'Issues Alert',
+        description: 'Alert management of compliance issues',
+        config: { 
+          template: 'compliance-issues',
+          recipients: ['management', 'legal-team', 'compliance-officer'],
+          priority: 'urgent' 
+        },
+        position: { x: 1050, y: 100 },
+        connections: []
+      }
+    ]
+  },
+  'contract-lifecycle': {
+    name: 'Complete Contract Lifecycle',
+    description: 'End-to-end contract management from creation to renewal',
+    category: 'Contract Management',
+    estimatedTime: '14-30 days',
+    complexity: 'high',
+    nodes: [
+      {
+        id: 'trigger-cont-1',
+        type: 'trigger',
+        title: 'Contract Request',
+        description: 'New contract creation request received',
+        config: { event: 'contract.request', source: 'client-portal' },
+        position: { x: 50, y: 200 },
+        connections: ['ai-cont-1']
+      },
+      {
+        id: 'ai-cont-1',
+        type: 'ai-analysis',
+        title: 'Contract Type Classification',
+        description: 'AI determines contract type and template',
+        config: { 
+          analysisTypes: ['contract-classification', 'template-matching', 'clause-suggestion'],
+          confidence: 0.90 
+        },
+        position: { x: 250, y: 200 },
+        connections: ['action-cont-1']
+      },
+      {
+        id: 'action-cont-1',
+        type: 'action',
+        title: 'Generate Draft',
+        description: 'Auto-generate contract draft from template',
+        config: { 
+          action: 'generate-contract',
+          useAiSuggestions: true,
+          includeStandardClauses: true 
+        },
+        position: { x: 450, y: 200 },
+        connections: ['ai-cont-2']
+      },
+      {
+        id: 'ai-cont-2',
+        type: 'ai-analysis',
+        title: 'Risk Assessment',
+        description: 'AI analyzes contract for potential risks',
+        config: { 
+          analysisTypes: ['risk-assessment', 'compliance-check', 'financial-impact'],
+          confidence: 0.87 
+        },
+        position: { x: 650, y: 200 },
+        connections: ['approval-cont-1']
+      },
+      {
+        id: 'approval-cont-1',
+        type: 'approval',
+        title: 'Legal Review',
+        description: 'Lawyer reviews and approves contract',
+        config: { 
+          assignee: 'contract-lawyer',
+          priority: 'normal',
+          deadline: '3-days' 
+        },
+        position: { x: 850, y: 200 },
+        connections: ['integration-cont-1']
+      },
+      {
+        id: 'integration-cont-1',
+        type: 'integration',
+        title: 'E-Signature',
+        description: 'Send contract for electronic signature',
+        config: { 
+          service: 'docusign',
+          signers: ['client', 'firm-representative'],
+          reminderSchedule: 'auto' 
+        },
+        position: { x: 1050, y: 200 },
+        connections: ['notification-cont-1']
+      },
+      {
+        id: 'notification-cont-1',
+        type: 'notification',
+        title: 'Contract Executed',
+        description: 'Notify all parties of contract execution',
+        config: { 
+          template: 'contract-executed',
+          recipients: ['client', 'account-manager', 'legal-team'],
+          includeContract: true 
+        },
+        position: { x: 1250, y: 200 },
+        connections: []
+      }
+    ]
+  }
+};
+
+// Enhanced Node Type Configurations
+const ENHANCED_NODE_TYPES = {
+  trigger: { 
+    color: 'bg-green-100 border-green-400 text-green-800', 
+    icon: '⚡', 
+    description: 'Workflow trigger points' 
+  },
+  condition: { 
+    color: 'bg-yellow-100 border-yellow-400 text-yellow-800', 
+    icon: '❓', 
+    description: 'Decision points and logic' 
+  },
+  action: { 
+    color: 'bg-blue-100 border-blue-400 text-blue-800', 
+    icon: '⚙️', 
+    description: 'Automated actions' 
+  },
+  'ai-analysis': { 
+    color: 'bg-purple-100 border-purple-400 text-purple-800', 
+    icon: '🤖', 
+    description: 'AI-powered analysis' 
+  },
+  approval: { 
+    color: 'bg-orange-100 border-orange-400 text-orange-800', 
+    icon: '✋', 
+    description: 'Human approval steps' 
+  },
+  notification: { 
+    color: 'bg-pink-100 border-pink-400 text-pink-800', 
+    icon: '📧', 
+    description: 'Notifications and alerts' 
+  },
+  integration: { 
+    color: 'bg-teal-100 border-teal-400 text-teal-800', 
+    icon: '🔗', 
+    description: 'External integrations' 
+  },
+  'data-transform': { 
+    color: 'bg-indigo-100 border-indigo-400 text-indigo-800', 
+    icon: '🔄', 
+    description: 'Data processing' 
+  }
+};
+
+export function WorkflowDesigner() {
+  const [workflows, setWorkflows] = useState<Record<string, WorkflowNode[]>>({});
+  const [selectedWorkflow, setSelectedWorkflow] = useState<string>('');
+  const [selectedNode, setSelectedNode] = useState<WorkflowNode | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [executionLog, setExecutionLog] = useState<string[]>([]);
+  const [searchFilter, setSearchFilter] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  // Initialize with advanced templates
+  useEffect(() => {
+    const initialWorkflows: Record<string, WorkflowNode[]> = {};
+    Object.entries(ADVANCED_WORKFLOW_TEMPLATES).forEach(([key, template]) => {
+      initialWorkflows[key] = template.nodes;
+    });
+    setWorkflows(initialWorkflows);
+    setSelectedWorkflow('litigation-management');
+  }, []);
+
+  // Create new workflow
+  const createWorkflow = useCallback((templateKey?: string) => {
+    const workflowId = `workflow-${Date.now()}`;
+    if (templateKey && ADVANCED_WORKFLOW_TEMPLATES[templateKey]) {
+      setWorkflows(prev => ({
+        ...prev,
+        [workflowId]: [...ADVANCED_WORKFLOW_TEMPLATES[templateKey].nodes]
+      }));
+    } else {
+      setWorkflows(prev => ({
+        ...prev,
+        [workflowId]: []
+      }));
+    }
+    setSelectedWorkflow(workflowId);
+  }, []);
+
+  // Add node to workflow
+  const addNode = useCallback((type: WorkflowNode['type']) => {
+    if (!selectedWorkflow) return;
+    
+    const newNode: WorkflowNode = {
+      id: `node-${Date.now()}`,
+      type,
+      title: `New ${type.replace('-', ' ')}`,
+      description: `Configure this ${type} node`,
+      config: {},
+      position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
+      connections: [],
+      status: 'idle'
+    };
+
+    setWorkflows(prev => ({
+      ...prev,
+      [selectedWorkflow]: [...(prev[selectedWorkflow] || []), newNode]
+    }));
+  }, [selectedWorkflow]);
+
+  // Update node
+  const updateNode = useCallback((nodeId: string, updates: Partial<WorkflowNode>) => {
+    if (!selectedWorkflow) return;
+    
+    setWorkflows(prev => ({
+      ...prev,
+      [selectedWorkflow]: prev[selectedWorkflow].map(node => 
+        node.id === nodeId ? { ...node, ...updates } : node
+      )
+    }));
+  }, [selectedWorkflow]);
+
+  // Delete node
+  const deleteNode = useCallback((nodeId: string) => {
+    if (!selectedWorkflow) return;
+    
+    setWorkflows(prev => ({
+      ...prev,
+      [selectedWorkflow]: prev[selectedWorkflow].filter(node => node.id !== nodeId)
+    }));
+    
+    if (selectedNode?.id === nodeId) {
+      setSelectedNode(null);
+    }
+  }, [selectedWorkflow, selectedNode]);
+
+  // Connect nodes
+  const connectNodes = useCallback((fromId: string, toId: string) => {
+    if (!selectedWorkflow) return;
+    
+    setWorkflows(prev => ({
+      ...prev,
+      [selectedWorkflow]: prev[selectedWorkflow].map(node => 
+        node.id === fromId 
+          ? { ...node, connections: [...new Set([...node.connections, toId])] }
+          : node
+      )
+    }));
+  }, [selectedWorkflow]);
+
+  // Execute workflow with real-time updates
+  const executeWorkflow = useCallback(async (workflowId: string) => {
+    const workflow = workflows[workflowId];
+    if (!workflow || workflow.length === 0) return;
+
+    setIsExecuting(true);
+    setExecutionLog([]);
+    
+    // Reset all node statuses
+    workflow.forEach(node => {
+      updateNode(node.id, { status: 'idle' });
+    });
+
+    // Simulate workflow execution
+    const templateInfo = ADVANCED_WORKFLOW_TEMPLATES[workflowId];
+    const startTime = Date.now();
+    
+    setExecutionLog(prev => [...prev, `🚀 Starting execution of "${templateInfo?.name || 'Custom Workflow'}"`]);
+    
+    // Find trigger nodes
+    const triggerNodes = workflow.filter(node => node.type === 'trigger');
+    
+    for (const triggerNode of triggerNodes) {
+      await executeNodeChain(triggerNode, workflow);
+    }
+    
+    const endTime = Date.now();
+    const executionTime = ((endTime - startTime) / 1000).toFixed(2);
+    
+    setExecutionLog(prev => [...prev, `✅ Workflow completed in ${executionTime} seconds`]);
+    setIsExecuting(false);
+  }, [workflows, updateNode]);
+
+  // Execute node chain
+  const executeNodeChain = async (node: WorkflowNode, workflow: WorkflowNode[]) => {
+    // Update node status to running
+    updateNode(node.id, { status: 'running' });
+    setExecutionLog(prev => [...prev, `⚡ Executing: ${node.title}`]);
+    
+    // Simulate processing time
+    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+    
+    // Simulate success/failure
+    const success = Math.random() > 0.1; // 90% success rate
+    
+    if (success) {
+      updateNode(node.id, { status: 'completed' });
+      setExecutionLog(prev => [...prev, `✅ Completed: ${node.title}`]);
+      
+      // Execute connected nodes
+      for (const connectionId of node.connections) {
+        const connectedNode = workflow.find(n => n.id === connectionId);
+        if (connectedNode) {
+          await executeNodeChain(connectedNode, workflow);
+        }
+      }
+    } else {
+      updateNode(node.id, { status: 'error' });
+      setExecutionLog(prev => [...prev, `❌ Failed: ${node.title}`]);
+    }
+  };
+
+  // Handle node drag
+  const handleNodeMouseDown = useCallback((node: WorkflowNode, e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    setSelectedNode(node);
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  }, []);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging || !selectedNode || !canvasRef.current) return;
+    
+    const canvasRect = canvasRef.current.getBoundingClientRect();
+    const newPosition = {
+      x: Math.max(0, e.clientX - canvasRect.left - dragOffset.x),
+      y: Math.max(0, e.clientY - canvasRect.top - dragOffset.y)
+    };
+    
+    updateNode(selectedNode.id, { position: newPosition });
+  }, [isDragging, selectedNode, dragOffset, updateNode]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // Filter templates
+  const filteredTemplates = Object.entries(ADVANCED_WORKFLOW_TEMPLATES).filter(([key, template]) => {
+    const matchesSearch = template.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
+                         template.description.toLowerCase().includes(searchFilter.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const currentWorkflow = selectedWorkflow ? workflows[selectedWorkflow] : [];
+  const currentTemplate = ADVANCED_WORKFLOW_TEMPLATES[selectedWorkflow];
+
+  return (
+    <div className="h-screen flex flex-col bg-gray-50">
+      <div className="bg-white border-b p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Workflow Designer</h1>
+            <p className="text-gray-600">Design and execute intelligent legal workflows</p>
+          </div>
+          <div className="flex items-center gap-4">
+            {selectedWorkflow && (
+              <>
+                <Button
+                  onClick={() => executeWorkflow(selectedWorkflow)}
+                  disabled={isExecuting || currentWorkflow.length === 0}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {isExecuting ? '⏳ Executing...' : '▶️ Execute Workflow'}
+                </Button>
+                <Button
+                  onClick={() => createWorkflow()}
+                  variant="outline"
+                >
+                  + New Workflow
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar - Templates & Tools */}
+        <div className="w-80 bg-white border-r flex flex-col">
+          <div className="p-4 border-b">
+            <h3 className="font-semibold mb-3">Workflow Templates</h3>
+            <Input
+              placeholder="Search templates..."
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              className="mb-3"
+            />
+            <Select
+              value={selectedCategory}
+              onChange={setSelectedCategory}
+              options={[
+                { value: 'all', label: 'All Categories' },
+                { value: 'Litigation', label: 'Litigation' },
+                { value: 'Compliance', label: 'Compliance' },
+                { value: 'Contract Management', label: 'Contract Management' }
+              ]}
+            />
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {filteredTemplates.map(([key, template]) => (
+              <Card key={key} className="p-3 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium text-sm">{template.name}</h4>
+                  <Button
+                    size="sm"
+                    onClick={() => setSelectedWorkflow(key)}
+                    variant={selectedWorkflow === key ? 'primary' : 'outline'}
+                  >
+                    {selectedWorkflow === key ? 'Active' : 'Select'}
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-600 mb-2">{template.description}</p>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="bg-gray-100 px-2 py-1 rounded">{template.category}</span>
+                  <span className={`px-2 py-1 rounded ${
+                    template.complexity === 'low' ? 'bg-green-100 text-green-700' :
+                    template.complexity === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-red-100 text-red-700'
+                  }`}>
+                    {template.complexity}
+                  </span>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          <div className="p-4 border-t">
+            <h4 className="font-medium mb-3">Add Nodes</h4>
+            <div className="grid grid-cols-2 gap-2">
+              {Object.entries(ENHANCED_NODE_TYPES).map(([type, config]) => (
+                <Button
+                  key={type}
+                  size="sm"
+                  variant="outline"
+                  onClick={() => addNode(type as WorkflowNode['type'])}
+                  className="text-xs p-2 h-auto"
+                  disabled={!selectedWorkflow}
+                  title={config.description}
+                >
+                  <div className="text-center">
+                    <div className="text-lg mb-1">{config.icon}</div>
+                    <div className="text-xs">{type}</div>
+                  </div>
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Main Canvas */}
+        <div className="flex-1 flex flex-col">
+          <div className="bg-white border-b p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold">
+                  {currentTemplate ? currentTemplate.name : 'Custom Workflow'}
+                </h3>
+                {currentTemplate && (
+                  <p className="text-sm text-gray-600">
+                    Estimated time: {currentTemplate.estimatedTime} • 
+                    Complexity: {currentTemplate.complexity} • 
+                    Nodes: {currentWorkflow.length}
+                  </p>
+                )}
+              </div>
+              {isExecuting && (
+                <div className="text-sm text-blue-600 font-medium">
+                  Executing workflow...
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div 
+            ref={canvasRef}
+            className="flex-1 relative bg-gray-50 overflow-hidden"
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+          >
+            {/* Grid Pattern */}
+            <div 
+              className="absolute inset-0 opacity-20"
+              style={{
+                backgroundImage: 'radial-gradient(circle, #000 1px, transparent 1px)',
+                backgroundSize: '20px 20px'
+              }}
+            />
+
+            {/* Workflow Nodes */}
+            {currentWorkflow.map((node) => {
+              const nodeConfig = ENHANCED_NODE_TYPES[node.type];
+              return (
+                <div
+                  key={node.id}
+                  className={`absolute border-2 rounded-lg p-3 cursor-move select-none transition-all ${nodeConfig.color} ${
+                    selectedNode?.id === node.id ? 'ring-2 ring-blue-500 scale-105' : ''
+                  } ${
+                    node.status === 'running' ? 'animate-pulse ring-2 ring-blue-400' :
+                    node.status === 'completed' ? 'ring-2 ring-green-400' :
+                    node.status === 'error' ? 'ring-2 ring-red-400' : ''
+                  }`}
+                  style={{
+                    left: node.position.x,
+                    top: node.position.y,
+                    width: '200px',
+                    zIndex: selectedNode?.id === node.id ? 10 : 1
+                  }}
+                  onMouseDown={(e) => handleNodeMouseDown(node, e)}
+                  onClick={() => setSelectedNode(node)}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">{nodeConfig.icon}</span>
+                    <span className="font-medium text-sm truncate flex-1">{node.title}</span>
+                    {node.status === 'running' && <span className="text-xs">⏳</span>}
+                    {node.status === 'completed' && <span className="text-xs">✅</span>}
+                    {node.status === 'error' && <span className="text-xs">❌</span>}
+                  </div>
+                  <p className="text-xs text-gray-700 line-clamp-2 mb-2">{node.description}</p>
+                  
+                  {/* Connection points */}
+                  <div className="absolute -right-2 top-1/2 w-4 h-4 bg-blue-500 rounded-full transform -translate-y-1/2 border-2 border-white"></div>
+                  <div className="absolute -left-2 top-1/2 w-4 h-4 bg-gray-400 rounded-full transform -translate-y-1/2 border-2 border-white"></div>
+                </div>
+              );
+            })}
+
+            {/* Connection Lines */}
+            <svg className="absolute inset-0 pointer-events-none" style={{ zIndex: 0 }}>
+              {currentWorkflow.map(node => 
+                node.connections.map(targetId => {
+                  const targetNode = currentWorkflow.find(n => n.id === targetId);
+                  if (!targetNode) return null;
+                  
+                  const startX = node.position.x + 200;
+                  const startY = node.position.y + 50;
+                  const endX = targetNode.position.x;
+                  const endY = targetNode.position.y + 50;
+                  
+                  // Create curved path
+                  const midX = (startX + endX) / 2;
+                  const pathData = `M ${startX} ${startY} Q ${midX} ${startY} ${midX} ${(startY + endY) / 2} Q ${midX} ${endY} ${endX} ${endY}`;
+                  
+                  return (
+                    <path
+                      key={`${node.id}-${targetId}`}
+                      d={pathData}
+                      stroke="#3b82f6"
+                      strokeWidth="2"
+                      fill="none"
+                      markerEnd="url(#arrowhead)"
+                      className="drop-shadow-sm"
+                    />
+                  );
+                })
+              )}
+              <defs>
+                <marker
+                  id="arrowhead"
+                  markerWidth="10"
+                  markerHeight="7"
+                  refX="0"
+                  refY="3.5"
+                  orient="auto"
+                >
+                  <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6" />
+                </marker>
+              </defs>
+            </svg>
+
+            {/* Empty state */}
+            {currentWorkflow.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <div className="text-4xl mb-4">🔧</div>
+                  <h3 className="text-lg font-medium mb-2">No workflow selected</h3>
+                  <p className="text-sm">Select a template or create a custom workflow to get started</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Sidebar - Properties & Execution Log */}
+        <div className="w-80 bg-white border-l flex flex-col">
+          {selectedNode ? (
+            <div className="p-4 border-b flex-1 overflow-y-auto">
+              <h3 className="font-semibold mb-4">Node Properties</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Title</label>
+                  <Input
+                    value={selectedNode.title}
+                    onChange={(e) => updateNode(selectedNode.id, { title: e.target.value })}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <textarea
+                    className="w-full p-2 border rounded-md text-sm"
+                    rows={3}
+                    value={selectedNode.description}
+                    onChange={(e) => updateNode(selectedNode.id, { description: e.target.value })}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Type</label>
+                  <Select
+                    value={selectedNode.type}
+                    onChange={(value) => updateNode(selectedNode.id, { type: value as WorkflowNode['type'] })}
+                    options={Object.keys(ENHANCED_NODE_TYPES).map(type => ({ 
+                      value: type, 
+                      label: `${ENHANCED_NODE_TYPES[type].icon} ${type}` 
+                    }))}
+                  />
+                </div>
+
+                {/* Advanced configurations based on node type */}
+                {selectedNode.type === 'ai-analysis' && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Analysis Configuration</label>
+                    <div className="space-y-2">
+                      {['risk-assessment', 'compliance-check', 'term-extraction', 'case-classification', 'complexity-assessment'].map(type => (
+                        <label key={type} className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedNode.config.analysisTypes?.includes(type) || false}
+                            onChange={(e) => {
+                              const types = selectedNode.config.analysisTypes || [];
+                              const newTypes = e.target.checked 
+                                ? [...types, type]
+                                : types.filter(t => t !== type);
+                              updateNode(selectedNode.id, {
+                                config: { ...selectedNode.config, analysisTypes: newTypes }
+                              });
+                            }}
+                          />
+                          <span className="text-sm">{type}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <div className="mt-3">
+                      <label className="block text-sm font-medium mb-1">Confidence Threshold</label>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        value={selectedNode.config.confidence || 0.8}
+                        onChange={(e) => updateNode(selectedNode.id, {
+                          config: { ...selectedNode.config, confidence: parseFloat(e.target.value) }
+                        })}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {selectedNode.type === 'condition' && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Condition Expression</label>
+                    <Input
+                      value={selectedNode.config.condition || ''}
+                      onChange={(e) => updateNode(selectedNode.id, {
+                        config: { ...selectedNode.config, condition: e.target.value }
+                      })}
+                      placeholder="e.g., risk_score > 0.7"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Use variables like risk_score, compliance_issues, etc.
+                    </p>
+                  </div>
+                )}
+
+                {selectedNode.type === 'approval' && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Assignee</label>
+                      <Select
+                        value={selectedNode.config.assignee || ''}
+                        onChange={(value) => updateNode(selectedNode.id, {
+                          config: { ...selectedNode.config, assignee: value }
+                        })}
+                        options={[
+                          { value: 'senior-partner', label: 'Senior Partner' },
+                          { value: 'contract-lawyer', label: 'Contract Lawyer' },
+                          { value: 'compliance-officer', label: 'Compliance Officer' },
+                          { value: 'case-manager', label: 'Case Manager' }
+                        ]}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Priority</label>
+                      <Select
+                        value={selectedNode.config.priority || 'normal'}
+                        onChange={(value) => updateNode(selectedNode.id, {
+                          config: { ...selectedNode.config, priority: value }
+                        })}
+                        options={[
+                          { value: 'low', label: 'Low' },
+                          { value: 'normal', label: 'Normal' },
+                          { value: 'high', label: 'High' },
+                          { value: 'urgent', label: 'Urgent' }
+                        ]}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedNode(null)}
+                  >
+                    Deselect
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => deleteNode(selectedNode.id)}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 border-b">
+              <h3 className="font-semibold mb-2">Workflow Properties</h3>
+              <p className="text-sm text-gray-500">Select a node to edit its properties</p>
+            </div>
+          )}
+
+          {/* Execution Log */}
+          <div className="p-4">
+            <h3 className="font-semibold mb-3">Execution Log</h3>
+            <div className="bg-gray-50 rounded-lg p-3 max-h-40 overflow-y-auto">
+              {executionLog.length > 0 ? (
+                <div className="space-y-1">
+                  {executionLog.map((log, index) => (
+                    <div key={index} className="text-xs font-mono text-gray-700">
+                      {log}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500">No execution logs yet</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

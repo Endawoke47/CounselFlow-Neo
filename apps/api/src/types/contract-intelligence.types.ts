@@ -25,7 +25,7 @@ export enum ContractType {
   SUPPLY_CHAIN = 'supply_chain',
   INTELLECTUAL_PROPERTY = 'intellectual_property',
   REAL_ESTATE = 'real_estate',
-  INTERNATIONAL_TRADE = 'international_trade'
+  INTERNATIONAL_TRADE = 'international_trade',
 }
 
 export enum ClauseType {
@@ -37,7 +37,7 @@ export enum ClauseType {
   PAYMENT_TERMS = 'payment_terms',
   TERM_DURATION = 'term_duration',
   TERMINATION = 'termination',
-  
+
   // Risk Management Clauses
   INDEMNIFICATION = 'indemnification',
   LIABILITY_LIMITATION = 'liability_limitation',
@@ -45,44 +45,44 @@ export enum ClauseType {
   REPRESENTATIONS = 'representations',
   FORCE_MAJEURE = 'force_majeure',
   INSURANCE_REQUIREMENTS = 'insurance_requirements',
-  
+
   // IP and Confidentiality
   INTELLECTUAL_PROPERTY = 'intellectual_property',
   CONFIDENTIALITY = 'confidentiality',
   NON_DISCLOSURE = 'non_disclosure',
   NON_COMPETE = 'non_compete',
-  
+
   // Dispute Resolution
   DISPUTE_RESOLUTION = 'dispute_resolution',
   ARBITRATION = 'arbitration',
   MEDIATION = 'mediation',
   GOVERNING_LAW = 'governing_law',
   JURISDICTION = 'jurisdiction',
-  
+
   // Compliance and Regulatory
   COMPLIANCE = 'compliance',
   REGULATORY = 'regulatory',
   DATA_PROTECTION = 'data_protection',
   ANTI_CORRUPTION = 'anti_corruption',
-  
+
   // Commercial Terms
   PRICING = 'pricing',
   DELIVERY = 'delivery',
   PERFORMANCE_STANDARDS = 'performance_standards',
   SERVICE_LEVELS = 'service_levels',
   MILESTONES = 'milestones',
-  
+
   // Change Management
   AMENDMENTS = 'amendments',
   CHANGE_ORDERS = 'change_orders',
   VARIATION = 'variation',
-  
+
   // Miscellaneous
   ENTIRE_AGREEMENT = 'entire_agreement',
   SEVERABILITY = 'severability',
   NOTICES = 'notices',
   ASSIGNMENT = 'assignment',
-  SURVIVAL = 'survival'
+  SURVIVAL = 'survival',
 }
 
 export enum RiskLevel {
@@ -91,7 +91,7 @@ export enum RiskLevel {
   MEDIUM = 'medium',
   HIGH = 'high',
   VERY_HIGH = 'very_high',
-  CRITICAL = 'critical'
+  CRITICAL = 'critical',
 }
 
 export enum RiskCategory {
@@ -104,7 +104,7 @@ export enum RiskCategory {
   COMMERCIAL = 'commercial',
   STRATEGIC = 'strategic',
   ENVIRONMENTAL = 'environmental',
-  SECURITY = 'security'
+  SECURITY = 'security',
 }
 
 export enum ContractAnalysisType {
@@ -115,7 +115,7 @@ export enum ContractAnalysisType {
   COMPARISON = 'comparison',
   TERM_EXTRACTION = 'term_extraction',
   NEGOTIATION_POINTS = 'negotiation_points',
-  RED_FLAG_DETECTION = 'red_flag_detection'
+  RED_FLAG_DETECTION = 'red_flag_detection',
 }
 
 export enum ComplianceStandard {
@@ -130,7 +130,7 @@ export enum ComplianceStandard {
   UK_BRIBERY_ACT = 'uk_bribery_act',
   LOCAL_LABOR_LAW = 'local_labor_law',
   LOCAL_COMMERCIAL_LAW = 'local_commercial_law',
-  INTERNATIONAL_TRADE = 'international_trade'
+  INTERNATIONAL_TRADE = 'international_trade',
 }
 
 // ===== REQUEST INTERFACES =====
@@ -486,7 +486,7 @@ export enum AnalysisDepth {
   BASIC = 'basic',
   STANDARD = 'standard',
   COMPREHENSIVE = 'comprehensive',
-  EXPERT = 'expert'
+  EXPERT = 'expert',
 }
 
 export enum TermType {
@@ -501,7 +501,7 @@ export enum TermType {
   PENALTY = 'penalty',
   DEADLINE = 'deadline',
   REFERENCE = 'reference',
-  DEFINITION = 'definition'
+  DEFINITION = 'definition',
 }
 
 export enum RecommendationType {
@@ -510,7 +510,7 @@ export enum RecommendationType {
   COMPLIANCE_FIX = 'compliance_fix',
   NEGOTIATION_STRATEGY = 'negotiation_strategy',
   BEST_PRACTICE = 'best_practice',
-  LEGAL_UPDATE = 'legal_update'
+  LEGAL_UPDATE = 'legal_update',
 }
 
 export enum Priority {
@@ -518,7 +518,7 @@ export enum Priority {
   HIGH = 'high',
   MEDIUM = 'medium',
   LOW = 'low',
-  INFORMATIONAL = 'informational'
+  INFORMATIONAL = 'informational',
 }
 
 export enum Impact {
@@ -526,7 +526,7 @@ export enum Impact {
   HIGH = 'high',
   MEDIUM = 'medium',
   LOW = 'low',
-  MINIMAL = 'minimal'
+  MINIMAL = 'minimal',
 }
 
 // ===== VALIDATION SCHEMAS =====
@@ -542,18 +542,14 @@ export const contractAnalysisRequestSchema = {
         content: { type: 'string' },
         fileUrl: { type: 'string', format: 'uri' },
         fileName: { type: 'string' },
-        mimeType: { type: 'string' }
+        mimeType: { type: 'string' },
       },
-      oneOf: [
-        { required: ['content'] },
-        { required: ['fileUrl'] },
-        { required: ['fileBuffer'] }
-      ]
+      oneOf: [{ required: ['content'] }, { required: ['fileUrl'] }, { required: ['fileBuffer'] }],
     },
     analysisTypes: {
       type: 'array',
       items: { enum: Object.values(ContractAnalysisType) },
-      minItems: 1
+      minItems: 1,
     },
     contractType: { enum: Object.values(ContractType) },
     jurisdiction: { enum: Object.values(LegalJurisdiction) },
@@ -561,10 +557,10 @@ export const contractAnalysisRequestSchema = {
     riskThreshold: { enum: Object.values(RiskLevel) },
     complianceStandards: {
       type: 'array',
-      items: { enum: Object.values(ComplianceStandard) }
+      items: { enum: Object.values(ComplianceStandard) },
     },
     analysisDepth: { enum: Object.values(AnalysisDepth) },
     includeRecommendations: { type: 'boolean' },
-    confidentialityLevel: { enum: ['public', 'confidential', 'privileged'] }
-  }
+    confidentialityLevel: { enum: ['public', 'confidential', 'privileged'] },
+  },
 };

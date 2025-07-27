@@ -20,7 +20,7 @@ import {
   TriggerType,
   ExecutionContext,
   ExecutionMetrics,
-  AnalyticsPeriod
+  AnalyticsPeriod,
 } from '../types/workflow-automation.types';
 import { LegalJurisdiction } from '../types/ai.types';
 import { LegalArea } from '../types/legal-research.types';
@@ -41,16 +41,18 @@ export class WorkflowAutomationService {
   /**
    * Create a new workflow definition
    */
-  async createWorkflow(definition: Omit<WorkflowDefinition, 'id' | 'createdAt' | 'updatedAt' | 'usageCount'>): Promise<WorkflowDefinition> {
+  async createWorkflow(
+    definition: Omit<WorkflowDefinition, 'id' | 'createdAt' | 'updatedAt' | 'usageCount'>
+  ): Promise<WorkflowDefinition> {
     try {
       const workflowId = `workflow_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
+
       const workflow: WorkflowDefinition = {
         ...definition,
         id: workflowId,
         usageCount: 0,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // Validate workflow definition
@@ -61,14 +63,19 @@ export class WorkflowAutomationService {
 
       return workflow;
     } catch (error) {
-      throw new Error(`Failed to create workflow: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to create workflow: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
   /**
    * Update an existing workflow definition
    */
-  async updateWorkflow(workflowId: string, updates: Partial<WorkflowDefinition>): Promise<WorkflowDefinition> {
+  async updateWorkflow(
+    workflowId: string,
+    updates: Partial<WorkflowDefinition>
+  ): Promise<WorkflowDefinition> {
     try {
       const existingWorkflow = this.workflows.get(workflowId);
       if (!existingWorkflow) {
@@ -79,7 +86,7 @@ export class WorkflowAutomationService {
         ...existingWorkflow,
         ...updates,
         id: workflowId, // Ensure ID doesn't change
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // Validate updated workflow
@@ -90,7 +97,9 @@ export class WorkflowAutomationService {
 
       return updatedWorkflow;
     } catch (error) {
-      throw new Error(`Failed to update workflow: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to update workflow: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -105,11 +114,11 @@ export class WorkflowAutomationService {
       }
 
       // Check if workflow has active executions
-      const activeExecutions = Array.from(this.executions.values())
-        .filter(execution => 
-          execution.workflowDefinitionId === workflowId && 
+      const activeExecutions = Array.from(this.executions.values()).filter(
+        execution =>
+          execution.workflowDefinitionId === workflowId &&
           execution.status === WorkflowStatus.ACTIVE
-        );
+      );
 
       if (activeExecutions.length > 0) {
         throw new Error('Cannot delete workflow with active executions');
@@ -118,7 +127,9 @@ export class WorkflowAutomationService {
       this.workflows.delete(workflowId);
       return true;
     } catch (error) {
-      throw new Error(`Failed to delete workflow: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to delete workflow: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -180,7 +191,9 @@ export class WorkflowAutomationService {
 
       return { workflows: workflowList, total };
     } catch (error) {
-      throw new Error(`Failed to list workflows: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to list workflows: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -204,7 +217,7 @@ export class WorkflowAutomationService {
 
       // Create execution context
       const executionId = `exec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
+
       const execution: WorkflowExecution = {
         id: executionId,
         workflowDefinitionId: request.workflowId,
@@ -225,7 +238,7 @@ export class WorkflowAutomationService {
         context: this.createExecutionContext(request),
         metrics: this.initializeMetrics(workflow.steps.length),
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // Store execution
@@ -244,26 +257,28 @@ export class WorkflowAutomationService {
         status: execution.status,
         message: 'Workflow execution started',
         estimatedDuration: this.estimateExecutionDuration(workflow),
-        nextSteps: execution.nextSteps
+        nextSteps: execution.nextSteps,
       };
     } catch (error) {
       return {
         executionId: '',
         status: WorkflowStatus.ERROR,
         message: `Failed to execute workflow: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errors: [{
-          id: `error_${Date.now()}`,
-          stepId: '',
-          stepName: 'Execution Start',
-          code: 'EXECUTION_FAILED',
-          message: error instanceof Error ? error.message : 'Unknown error',
-          type: 'EXECUTION',
-          severity: 'CRITICAL',
-          timestamp: new Date(),
-          retryable: false,
-          retryCount: 0,
-          resolutionStatus: 'PENDING'
-        }]
+        errors: [
+          {
+            id: `error_${Date.now()}`,
+            stepId: '',
+            stepName: 'Execution Start',
+            code: 'EXECUTION_FAILED',
+            message: error instanceof Error ? error.message : 'Unknown error',
+            type: 'EXECUTION',
+            severity: 'CRITICAL',
+            timestamp: new Date(),
+            retryable: false,
+            retryCount: 0,
+            resolutionStatus: 'PENDING',
+          },
+        ],
       };
     }
   }
@@ -298,7 +313,9 @@ export class WorkflowAutomationService {
 
       return true;
     } catch (error) {
-      throw new Error(`Failed to cancel execution: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to cancel execution: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -341,26 +358,28 @@ export class WorkflowAutomationService {
         executionId,
         status: execution.status,
         message: 'Workflow execution retried',
-        nextSteps: execution.nextSteps
+        nextSteps: execution.nextSteps,
       };
     } catch (error) {
       return {
         executionId,
         status: WorkflowStatus.ERROR,
         message: `Failed to retry execution: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        errors: [{
-          id: `error_${Date.now()}`,
-          stepId: '',
-          stepName: 'Execution Retry',
-          code: 'RETRY_FAILED',
-          message: error instanceof Error ? error.message : 'Unknown error',
-          type: 'EXECUTION',
-          severity: 'HIGH',
-          timestamp: new Date(),
-          retryable: false,
-          retryCount: 0,
-          resolutionStatus: 'PENDING'
-        }]
+        errors: [
+          {
+            id: `error_${Date.now()}`,
+            stepId: '',
+            stepName: 'Execution Retry',
+            code: 'RETRY_FAILED',
+            message: error instanceof Error ? error.message : 'Unknown error',
+            type: 'EXECUTION',
+            severity: 'HIGH',
+            timestamp: new Date(),
+            retryable: false,
+            retryCount: 0,
+            resolutionStatus: 'PENDING',
+          },
+        ],
       };
     }
   }
@@ -384,10 +403,14 @@ export class WorkflowAutomationService {
     }
 
     try {
-      while (execution.nextSteps && execution.nextSteps.length > 0 && execution.status === WorkflowStatus.ACTIVE) {
+      while (
+        execution.nextSteps &&
+        execution.nextSteps.length > 0 &&
+        execution.status === WorkflowStatus.ACTIVE
+      ) {
         const currentStepId = execution.nextSteps[0];
         const step = workflow.steps.find(s => s.id === currentStepId);
-        
+
         if (!step) {
           throw new Error(`Step not found: ${currentStepId}`);
         }
@@ -414,12 +437,14 @@ export class WorkflowAutomationService {
     } catch (error) {
       execution.status = WorkflowStatus.ERROR;
       execution.endTime = new Date();
-      execution.duration = execution.endTime ? execution.endTime.getTime() - execution.startTime.getTime() : 0;
-      
+      execution.duration = execution.endTime
+        ? execution.endTime.getTime() - execution.startTime.getTime()
+        : 0;
+
       if (!execution.errors) {
         execution.errors = [];
       }
-      
+
       execution.errors.push({
         id: `error_${Date.now()}`,
         stepId: execution.currentStep || '',
@@ -431,7 +456,7 @@ export class WorkflowAutomationService {
         timestamp: new Date(),
         retryable: true,
         retryCount: 0,
-        resolutionStatus: 'PENDING'
+        resolutionStatus: 'PENDING',
       });
 
       this.executions.set(executionId, execution);
@@ -484,7 +509,6 @@ export class WorkflowAutomationService {
       step.status = StepStatus.COMPLETED;
       step.endTime = new Date();
       step.actualDuration = Date.now() - startTime;
-
     } catch (error) {
       step.status = StepStatus.FAILED;
       step.endTime = new Date();
@@ -505,7 +529,7 @@ export class WorkflowAutomationService {
         timestamp: new Date(),
         retryable: true,
         retryCount: 0,
-        resolutionStatus: 'PENDING'
+        resolutionStatus: 'PENDING',
       });
 
       throw error;
@@ -516,7 +540,10 @@ export class WorkflowAutomationService {
   // STEP EXECUTION METHODS
   // ============================================================================
 
-  private async executeDocumentGeneration(execution: WorkflowExecution, step: WorkflowStep): Promise<void> {
+  private async executeDocumentGeneration(
+    execution: WorkflowExecution,
+    step: WorkflowStep
+  ): Promise<void> {
     // Simulate document generation
     const config = step.config;
     const templateId = config.templateId;
@@ -524,7 +551,7 @@ export class WorkflowAutomationService {
 
     // Generate document using variables from execution context
     const variables = { ...execution.variables };
-    
+
     // Simulate generation time based on document complexity
     await this.delay(2000 + Math.random() * 3000);
 
@@ -534,15 +561,24 @@ export class WorkflowAutomationService {
       formats: outputFormat,
       variables,
       generatedAt: new Date().toISOString(),
-      size: Math.floor(Math.random() * 1000000) + 100000 // Random size
+      size: Math.floor(Math.random() * 1000000) + 100000, // Random size
     };
   }
 
-  private async executeEmailNotification(execution: WorkflowExecution, step: WorkflowStep): Promise<void> {
+  private async executeEmailNotification(
+    execution: WorkflowExecution,
+    step: WorkflowStep
+  ): Promise<void> {
     const config = step.config;
     const recipients = config.recipients || [];
-    const subject = this.substituteVariables(config.subject || 'Workflow Notification', execution.variables);
-    const message = this.substituteVariables(config.message || 'A workflow step has been completed.', execution.variables);
+    const subject = this.substituteVariables(
+      config.subject || 'Workflow Notification',
+      execution.variables
+    );
+    const message = this.substituteVariables(
+      config.message || 'A workflow step has been completed.',
+      execution.variables
+    );
 
     // Simulate email sending
     await this.delay(500 + Math.random() * 1500);
@@ -552,28 +588,31 @@ export class WorkflowAutomationService {
       subject,
       message,
       sentAt: new Date().toISOString(),
-      status: 'SENT'
+      status: 'SENT',
     };
   }
 
-  private async executeApprovalGate(execution: WorkflowExecution, step: WorkflowStep): Promise<void> {
+  private async executeApprovalGate(
+    execution: WorkflowExecution,
+    step: WorkflowStep
+  ): Promise<void> {
     const config = step.config;
     const approvers = config.approvers || [];
     const approvalType = config.approvalType || 'SINGLE';
 
     // For demo purposes, simulate auto-approval after a delay
     const autoApproveAfter = config.autoApproveAfter || 5; // minutes
-    
+
     if (autoApproveAfter > 0) {
       // Simulate approval delay
       await this.delay(1000); // Short delay for demo
-      
+
       step.output = {
         approvers,
         approvalType,
         status: 'AUTO_APPROVED',
         approvedAt: new Date().toISOString(),
-        approvedBy: 'system'
+        approvedBy: 'system',
       };
     } else {
       // Set status to waiting for approval
@@ -582,12 +621,15 @@ export class WorkflowAutomationService {
         approvers,
         approvalType,
         status: 'PENDING_APPROVAL',
-        requestedAt: new Date().toISOString()
+        requestedAt: new Date().toISOString(),
       };
     }
   }
 
-  private async executeConditionalBranch(execution: WorkflowExecution, step: WorkflowStep): Promise<void> {
+  private async executeConditionalBranch(
+    execution: WorkflowExecution,
+    step: WorkflowStep
+  ): Promise<void> {
     // Evaluate conditions
     const conditions = step.conditions || [];
     let conditionMet = false;
@@ -604,7 +646,7 @@ export class WorkflowAutomationService {
     step.output = {
       conditionMet,
       evaluatedAt: new Date().toISOString(),
-      variables: execution.variables
+      variables: execution.variables,
     };
   }
 
@@ -625,9 +667,9 @@ export class WorkflowAutomationService {
       payload,
       response: {
         status: 200,
-        data: { success: true, timestamp: new Date().toISOString() }
+        data: { success: true, timestamp: new Date().toISOString() },
       },
-      executedAt: new Date().toISOString()
+      executedAt: new Date().toISOString(),
     };
   }
 
@@ -642,11 +684,14 @@ export class WorkflowAutomationService {
     step.output = {
       delayMinutes,
       actualDelayMs: delayMs,
-      delayedUntil: new Date(Date.now() + delayMs).toISOString()
+      delayedUntil: new Date(Date.now() + delayMs).toISOString(),
     };
   }
 
-  private async executeTaskAssignment(execution: WorkflowExecution, step: WorkflowStep): Promise<void> {
+  private async executeTaskAssignment(
+    execution: WorkflowExecution,
+    step: WorkflowStep
+  ): Promise<void> {
     const assignedTo = step.assignedTo || [];
     const assignedRoles = step.assignedRoles || [];
 
@@ -657,11 +702,14 @@ export class WorkflowAutomationService {
       assignedTo,
       assignedRoles,
       assignedAt: new Date().toISOString(),
-      status: 'ASSIGNED'
+      status: 'ASSIGNED',
     };
   }
 
-  private async executeDataValidation(execution: WorkflowExecution, step: WorkflowStep): Promise<void> {
+  private async executeDataValidation(
+    execution: WorkflowExecution,
+    step: WorkflowStep
+  ): Promise<void> {
     const variables = execution.variables;
     const validationResults = [];
 
@@ -671,7 +719,7 @@ export class WorkflowAutomationService {
         field: key,
         value,
         isValid: value !== null && value !== undefined && value !== '',
-        message: value ? 'Valid' : 'Missing or empty value'
+        message: value ? 'Valid' : 'Missing or empty value',
       });
     }
 
@@ -680,7 +728,7 @@ export class WorkflowAutomationService {
     step.output = {
       isValid,
       validationResults,
-      validatedAt: new Date().toISOString()
+      validatedAt: new Date().toISOString(),
     };
 
     if (!isValid) {
@@ -695,7 +743,7 @@ export class WorkflowAutomationService {
     step.output = {
       stepType: step.type,
       executedAt: new Date().toISOString(),
-      message: 'Custom step executed successfully'
+      message: 'Custom step executed successfully',
     };
   }
 
@@ -706,7 +754,9 @@ export class WorkflowAutomationService {
   /**
    * Get workflow analytics
    */
-  async getWorkflowAnalytics(request: WorkflowAnalyticsRequest): Promise<WorkflowAnalyticsResponse> {
+  async getWorkflowAnalytics(
+    request: WorkflowAnalyticsRequest
+  ): Promise<WorkflowAnalyticsResponse> {
     try {
       const workflowIds = request.workflowIds || Array.from(this.workflows.keys());
       const analytics: WorkflowAnalytics[] = [];
@@ -715,10 +765,15 @@ export class WorkflowAutomationService {
         const workflow = this.workflows.get(workflowId);
         if (!workflow) continue;
 
-        const executions = Array.from(this.executions.values())
-          .filter(execution => execution.workflowDefinitionId === workflowId);
+        const executions = Array.from(this.executions.values()).filter(
+          execution => execution.workflowDefinitionId === workflowId
+        );
 
-        const workflowAnalytics = await this.calculateWorkflowAnalytics(workflow, executions, request.period);
+        const workflowAnalytics = await this.calculateWorkflowAnalytics(
+          workflow,
+          executions,
+          request.period
+        );
         analytics.push(workflowAnalytics);
       }
 
@@ -727,10 +782,12 @@ export class WorkflowAutomationService {
       return {
         analytics,
         summary,
-        recommendations: this.generateRecommendations(analytics)
+        recommendations: this.generateRecommendations(analytics),
       };
     } catch (error) {
-      throw new Error(`Failed to get workflow analytics: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to get workflow analytics: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -743,8 +800,12 @@ export class WorkflowAutomationService {
     const periodStart = this.getPeriodStart(period, now);
     const recentExecutions = executions.filter(execution => execution.startTime >= periodStart);
 
-    const completedExecutions = executions.filter(execution => execution.status === WorkflowStatus.COMPLETED);
-    const failedExecutions = executions.filter(execution => execution.status === WorkflowStatus.ERROR);
+    const completedExecutions = executions.filter(
+      execution => execution.status === WorkflowStatus.COMPLETED
+    );
+    const failedExecutions = executions.filter(
+      execution => execution.status === WorkflowStatus.ERROR
+    );
 
     const durations = completedExecutions
       .filter(execution => execution.duration)
@@ -756,7 +817,8 @@ export class WorkflowAutomationService {
       totalExecutions: executions.length,
       recentExecutions: recentExecutions.length,
       averageExecutionsPerDay: recentExecutions.length / this.getDaysInPeriod(period),
-      averageDuration: durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0,
+      averageDuration:
+        durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0,
       medianDuration: durations.length > 0 ? this.calculateMedian(durations) : 0,
       fastestExecution: durations.length > 0 ? Math.min(...durations) : 0,
       slowestExecution: durations.length > 0 ? Math.max(...durations) : 0,
@@ -774,19 +836,21 @@ export class WorkflowAutomationService {
       performanceTrend: [],
       errorTrend: [],
       lastCalculated: new Date(),
-      period
+      period,
     };
   }
 
   private calculateAnalyticsSummary(analytics: WorkflowAnalytics[]) {
     const totalExecutions = analytics.reduce((sum, a) => sum + a.totalExecutions, 0);
     const totalWorkflows = analytics.length;
-    const averageSuccessRate = analytics.length > 0 
-      ? analytics.reduce((sum, a) => sum + a.successRate, 0) / analytics.length 
-      : 0;
-    const averageDuration = analytics.length > 0
-      ? analytics.reduce((sum, a) => sum + a.averageDuration, 0) / analytics.length
-      : 0;
+    const averageSuccessRate =
+      analytics.length > 0
+        ? analytics.reduce((sum, a) => sum + a.successRate, 0) / analytics.length
+        : 0;
+    const averageDuration =
+      analytics.length > 0
+        ? analytics.reduce((sum, a) => sum + a.averageDuration, 0) / analytics.length
+        : 0;
 
     return {
       totalWorkflows,
@@ -802,7 +866,7 @@ export class WorkflowAutomationService {
         .slice(0, 3)
         .map(a => a.workflowId),
       costSavings: analytics.reduce((sum, a) => sum + a.costSavings, 0),
-      timeSaved: analytics.reduce((sum, a) => sum + a.timesSaved, 0)
+      timeSaved: analytics.reduce((sum, a) => sum + a.timesSaved, 0),
     };
   }
 
@@ -815,10 +879,11 @@ export class WorkflowAutomationService {
       recommendations.push({
         type: 'ERROR_REDUCTION',
         title: 'Improve Workflow Reliability',
-        description: 'Several workflows have success rates below 80%. Consider reviewing error-prone steps and adding better error handling.',
+        description:
+          'Several workflows have success rates below 80%. Consider reviewing error-prone steps and adding better error handling.',
         impact: 'HIGH',
         effort: 'MEDIUM',
-        workflowIds: lowSuccessRateWorkflows.map(w => w.workflowId)
+        workflowIds: lowSuccessRateWorkflows.map(w => w.workflowId),
       } as const);
     }
 
@@ -828,10 +893,11 @@ export class WorkflowAutomationService {
       recommendations.push({
         type: 'PERFORMANCE',
         title: 'Optimize Slow Workflows',
-        description: 'Some workflows are taking longer than expected. Consider optimizing bottleneck steps or adding parallel processing.',
+        description:
+          'Some workflows are taking longer than expected. Consider optimizing bottleneck steps or adding parallel processing.',
         impact: 'MEDIUM',
         effort: 'HIGH',
-        workflowIds: slowWorkflows.map(w => w.workflowId)
+        workflowIds: slowWorkflows.map(w => w.workflowId),
       } as const);
     }
 
@@ -910,9 +976,7 @@ export class WorkflowAutomationService {
     }
 
     // Find steps that have current step as dependency
-    return steps
-      .filter(step => step.dependencies?.includes(currentStepId))
-      .map(step => step.id);
+    return steps.filter(step => step.dependencies?.includes(currentStepId)).map(step => step.id);
   }
 
   private createExecutionContext(request: WorkflowExecutionRequest): ExecutionContext {
@@ -929,7 +993,7 @@ export class WorkflowAutomationService {
       sessionId: request.context?.sessionId,
       ipAddress: request.context?.ipAddress,
       userAgent: request.context?.userAgent,
-      customData: request.context?.customData
+      customData: request.context?.customData,
     };
   }
 
@@ -949,7 +1013,7 @@ export class WorkflowAutomationService {
       documentsGenerated: 0,
       notificationsSent: 0,
       approvalsRequired: 0,
-      approvalsReceived: 0
+      approvalsReceived: 0,
     };
   }
 
@@ -957,9 +1021,14 @@ export class WorkflowAutomationService {
     // Simple estimation based on step count and complexity
     const baseTime = 30000; // 30 seconds base time
     const stepTime = workflow.steps.length * 5000; // 5 seconds per step
-    const complexityMultiplier = workflow.complexity === WorkflowComplexity.SIMPLE ? 1 : 
-                                workflow.complexity === WorkflowComplexity.MODERATE ? 1.5 :
-                                workflow.complexity === WorkflowComplexity.COMPLEX ? 2 : 3;
+    const complexityMultiplier =
+      workflow.complexity === WorkflowComplexity.SIMPLE
+        ? 1
+        : workflow.complexity === WorkflowComplexity.MODERATE
+          ? 1.5
+          : workflow.complexity === WorkflowComplexity.COMPLEX
+            ? 2
+            : 3;
 
     return (baseTime + stepTime) * complexityMultiplier;
   }
@@ -979,7 +1048,7 @@ export class WorkflowAutomationService {
       let evaluableExpression = expression;
       for (const [key, value] of Object.entries(variables)) {
         evaluableExpression = evaluableExpression.replace(
-          new RegExp(`\\b${key}\\b`, 'g'), 
+          new RegExp(`\\b${key}\\b`, 'g'),
           typeof value === 'string' ? `"${value}"` : String(value)
         );
       }
@@ -1035,9 +1104,7 @@ export class WorkflowAutomationService {
   private calculateMedian(numbers: number[]): number {
     const sorted = [...numbers].sort((a, b) => a - b);
     const middle = Math.floor(sorted.length / 2);
-    return sorted.length % 2 === 0 
-      ? (sorted[middle - 1] + sorted[middle]) / 2 
-      : sorted[middle];
+    return sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle];
   }
 
   private calculateCostSavings(executions: WorkflowExecution[]): number {
@@ -1074,27 +1141,30 @@ export class WorkflowAutomationService {
       {
         id: 'template_case_intake',
         name: 'Case Intake Workflow',
-        description: 'Standard case intake process with client onboarding, document collection, and initial assessment',
+        description:
+          'Standard case intake process with client onboarding, document collection, and initial assessment',
         category: 'CASE_MANAGEMENT',
         type: WorkflowType.CASE_INTAKE,
-        complexity: WorkflowComplexity.MODERATE
+        complexity: WorkflowComplexity.MODERATE,
       },
       {
         id: 'template_contract_review',
         name: 'Contract Review Workflow',
-        description: 'Automated contract review process with legal analysis, risk assessment, and approval routing',
+        description:
+          'Automated contract review process with legal analysis, risk assessment, and approval routing',
         category: 'CONTRACT_MANAGEMENT',
         type: WorkflowType.CONTRACT_NEGOTIATION,
-        complexity: WorkflowComplexity.COMPLEX
+        complexity: WorkflowComplexity.COMPLEX,
       },
       {
         id: 'template_document_approval',
         name: 'Document Approval Workflow',
-        description: 'Multi-stage document approval process with notifications and deadline tracking',
+        description:
+          'Multi-stage document approval process with notifications and deadline tracking',
         category: 'DOCUMENT_MANAGEMENT',
         type: WorkflowType.DOCUMENT_APPROVAL,
-        complexity: WorkflowComplexity.SIMPLE
-      }
+        complexity: WorkflowComplexity.SIMPLE,
+      },
     ];
 
     // Store templates (simplified for demo)

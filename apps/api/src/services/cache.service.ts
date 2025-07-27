@@ -11,7 +11,7 @@ export class CacheService {
 
   async get(key: string): Promise<any | null> {
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       return null;
     }
@@ -29,7 +29,7 @@ export class CacheService {
     const entry = {
       data,
       timestamp: Date.now(),
-      ttl: ttl || this.defaultTTL
+      ttl: ttl || this.defaultTTL,
     };
 
     this.cache.set(key, entry);
@@ -46,7 +46,7 @@ export class CacheService {
   async exists(key: string): Promise<boolean> {
     const entry = this.cache.get(key);
     if (!entry) return false;
-    
+
     // Check if expired
     if (Date.now() - entry.timestamp > entry.ttl) {
       this.cache.delete(key);
@@ -64,7 +64,7 @@ export class CacheService {
     return {
       size: this.cache.size,
       hitRate: 0.85, // Mock hit rate
-      memoryUsage: `${Math.round(this.cache.size * 0.5)} KB`
+      memoryUsage: `${Math.round(this.cache.size * 0.5)} KB`,
     };
   }
 
@@ -103,7 +103,7 @@ export class CacheService {
         keysToDelete.push(key);
       }
     }
-    
+
     for (const key of keysToDelete) {
       this.cache.delete(key);
     }
@@ -115,7 +115,7 @@ export class CacheService {
       'force majeure clause',
       'termination conditions',
       'liability limitations',
-      'intellectual property rights'
+      'intellectual property rights',
     ];
 
     const commonJurisdictions = ['NG', 'ZA', 'EG', 'KE', 'AE'];
@@ -123,14 +123,14 @@ export class CacheService {
     for (const query of commonQueries) {
       for (const jurisdiction of commonJurisdictions) {
         const cacheKey = `research:${jurisdiction}:${query}`;
-        if (!await this.exists(cacheKey)) {
+        if (!(await this.exists(cacheKey))) {
           // Pre-populate with basic legal information
           await this.setCachedLegalResearch(query, jurisdiction, {
             query,
             jurisdiction,
             summary: `Legal information about ${query} in ${jurisdiction}`,
             lastUpdated: new Date(),
-            preloaded: true
+            preloaded: true,
           });
         }
       }

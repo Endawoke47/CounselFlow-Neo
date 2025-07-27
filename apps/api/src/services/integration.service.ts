@@ -91,7 +91,7 @@ export class IntegrationService {
 
   constructor(
     private configService: ConfigService,
-    private eventEmitter: EventEmitter2,
+    private eventEmitter: EventEmitter2
   ) {
     this.initializeDefaultIntegrations();
   }
@@ -133,7 +133,10 @@ export class IntegrationService {
     }
   }
 
-  async updateIntegration(id: string, updates: Partial<IntegrationConfig>): Promise<IntegrationConfig> {
+  async updateIntegration(
+    id: string,
+    updates: Partial<IntegrationConfig>
+  ): Promise<IntegrationConfig> {
     try {
       const integration = this.integrations.get(id);
       if (!integration) {
@@ -204,22 +207,24 @@ export class IntegrationService {
     const client = axios.create(config);
 
     // Request interceptor for rate limiting
-    client.interceptors.request.use(async (config) => {
+    client.interceptors.request.use(async config => {
       await this.checkRateLimit(integration.id, integration.rateLimit);
       return config;
     });
 
     // Response interceptor for error handling
     client.interceptors.response.use(
-      (response) => response,
-      async (error) => {
+      response => response,
+      async error => {
         const retryConfig = integration.retryConfig;
         if (retryConfig && error.config && !error.config._retry) {
           error.config._retry = true;
           error.config._retryCount = (error.config._retryCount || 0) + 1;
 
           if (error.config._retryCount <= retryConfig.maxRetries) {
-            const delay = retryConfig.initialDelay * Math.pow(retryConfig.backoffMultiplier, error.config._retryCount - 1);
+            const delay =
+              retryConfig.initialDelay *
+              Math.pow(retryConfig.backoffMultiplier, error.config._retryCount - 1);
             await new Promise(resolve => setTimeout(resolve, delay));
             return client(error.config);
           }
@@ -237,7 +242,10 @@ export class IntegrationService {
   }
 
   // Rate Limiting
-  private async checkRateLimit(integrationId: string, rateLimit?: { requests: number; window: number }): Promise<void> {
+  private async checkRateLimit(
+    integrationId: string,
+    rateLimit?: { requests: number; window: number }
+  ): Promise<void> {
     if (!rateLimit) return;
 
     const now = Date.now();
@@ -260,12 +268,16 @@ export class IntegrationService {
   }
 
   // Data Synchronization
-  async syncData(integrationId: string, endpoint: string, options?: {
-    method?: 'GET' | 'POST';
-    payload?: any;
-    mapping?: Record<string, string>;
-    batchSize?: number;
-  }): Promise<SyncResult> {
+  async syncData(
+    integrationId: string,
+    endpoint: string,
+    options?: {
+      method?: 'GET' | 'POST';
+      payload?: any;
+      mapping?: Record<string, string>;
+      batchSize?: number;
+    }
+  ): Promise<SyncResult> {
     const startTime = Date.now();
     const result: SyncResult = {
       success: false,
@@ -302,7 +314,10 @@ export class IntegrationService {
       for (const record of data) {
         try {
           const mappedData = this.mapData(record, integration.mapping?.fields || {});
-          const transformedData = this.transformData(mappedData, integration.mapping?.transforms || {});
+          const transformedData = this.transformData(
+            mappedData,
+            integration.mapping?.transforms || {}
+          );
 
           // Emit event for each record to be processed by other services
           this.eventEmitter.emit('integration.data.received', {
@@ -321,7 +336,9 @@ export class IntegrationService {
       result.success = result.errors.length === 0;
       result.duration = Date.now() - startTime;
 
-      this.logger.log(`Data sync completed for ${integration.name}: ${result.recordsProcessed} records processed`);
+      this.logger.log(
+        `Data sync completed for ${integration.name}: ${result.recordsProcessed} records processed`
+      );
       this.eventEmitter.emit('integration.sync.completed', { integrationId, result });
 
       return result;
@@ -337,7 +354,7 @@ export class IntegrationService {
   // Data Mapping and Transformation
   private mapData(data: any, fieldMapping: Record<string, string>): any {
     const mapped: any = {};
-    
+
     for (const [sourceField, targetField] of Object.entries(fieldMapping)) {
       const value = this.getNestedValue(data, sourceField);
       if (value !== undefined) {
@@ -387,7 +404,7 @@ export class IntegrationService {
 
     if (typeof transform === 'object') {
       const { type, options } = transform;
-      
+
       switch (type) {
         case 'date':
           return new Date(value);
@@ -404,7 +421,10 @@ export class IntegrationService {
         case 'trim':
           return String(value).trim();
         case 'replace':
-          return String(value).replace(new RegExp(options.pattern, options.flags), options.replacement);
+          return String(value).replace(
+            new RegExp(options.pattern, options.flags),
+            options.replacement
+          );
         default:
           return value;
       }
@@ -414,7 +434,12 @@ export class IntegrationService {
   }
 
   // Webhook Management
-  async processWebhook(integrationId: string, event: string, payload: any, signature?: string): Promise<void> {
+  async processWebhook(
+    integrationId: string,
+    event: string,
+    payload: any,
+    signature?: string
+  ): Promise<void> {
     try {
       const integration = this.integrations.get(integrationId);
       if (!integration) {
@@ -459,7 +484,7 @@ export class IntegrationService {
     error?: string;
   }> {
     const startTime = Date.now();
-    
+
     try {
       const integration = this.integrations.get(integrationId);
       if (!integration) {
@@ -472,7 +497,7 @@ export class IntegrationService {
       }
 
       await client.get('/health', { timeout: 5000 });
-      
+
       const latency = Date.now() - startTime;
       return {
         status: latency < 1000 ? 'healthy' : 'degraded',
@@ -522,10 +547,10 @@ export class IntegrationService {
         fields: {
           'client.name': 'clientName',
           'matter.description': 'caseDescription',
-          'time_entries': 'timeEntries',
+          time_entries: 'timeEntries',
         },
         transforms: {
-          'created_at': { type: 'date' },
+          created_at: { type: 'date' },
           'client.name': { type: 'trim' },
         },
       },

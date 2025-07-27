@@ -36,10 +36,7 @@ describe('Authentication API Routes', () => {
         confirmPassword: 'TestPassword123!',
       };
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(201);
+      const response = await request(app).post('/api/auth/register').send(userData).expect(201);
 
       expect(response.body).toHaveProperty('success', true);
       expect(response.body).toHaveProperty('message', 'Registration successful');
@@ -58,10 +55,7 @@ describe('Authentication API Routes', () => {
         confirmPassword: 'TestPassword123!',
       };
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(400);
+      const response = await request(app).post('/api/auth/register').send(userData).expect(400);
 
       expect(response.body).toHaveProperty('success', false);
       expect(response.body).toHaveProperty('error');
@@ -76,10 +70,7 @@ describe('Authentication API Routes', () => {
         confirmPassword: 'weak',
       };
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(400);
+      const response = await request(app).post('/api/auth/register').send(userData).expect(400);
 
       expect(response.body).toHaveProperty('success', false);
       expect(response.body).toHaveProperty('error');
@@ -94,10 +85,7 @@ describe('Authentication API Routes', () => {
         confirmPassword: 'DifferentPassword456!',
       };
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(400);
+      const response = await request(app).post('/api/auth/register').send(userData).expect(400);
 
       expect(response.body).toHaveProperty('success', false);
       expect(response.body).toHaveProperty('error');
@@ -113,16 +101,10 @@ describe('Authentication API Routes', () => {
       };
 
       // First registration
-      await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(201);
+      await request(app).post('/api/auth/register').send(userData).expect(201);
 
       // Duplicate registration
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(409);
+      const response = await request(app).post('/api/auth/register').send(userData).expect(409);
 
       expect(response.body).toHaveProperty('success', false);
       expect(response.body).toHaveProperty('error', 'User already exists');
@@ -140,9 +122,7 @@ describe('Authentication API Routes', () => {
         confirmPassword: 'TestPassword123!',
       };
 
-      await request(app)
-        .post('/api/auth/register')
-        .send(userData);
+      await request(app).post('/api/auth/register').send(userData);
     });
 
     it('should login successfully with correct credentials', async () => {
@@ -152,10 +132,7 @@ describe('Authentication API Routes', () => {
         rememberMe: false,
       };
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(loginData)
-        .expect(200);
+      const response = await request(app).post('/api/auth/login').send(loginData).expect(200);
 
       expect(response.body).toHaveProperty('success', true);
       expect(response.body).toHaveProperty('message', 'Login successful');
@@ -173,10 +150,7 @@ describe('Authentication API Routes', () => {
         password: 'WrongPassword123!',
       };
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(loginData)
-        .expect(401);
+      const response = await request(app).post('/api/auth/login').send(loginData).expect(401);
 
       expect(response.body).toHaveProperty('success', false);
       expect(response.body).toHaveProperty('error', 'Invalid credentials');
@@ -188,10 +162,7 @@ describe('Authentication API Routes', () => {
         password: 'TestPassword123!',
       };
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(loginData)
-        .expect(401);
+      const response = await request(app).post('/api/auth/login').send(loginData).expect(401);
 
       expect(response.body).toHaveProperty('success', false);
       expect(response.body).toHaveProperty('error', 'Invalid credentials');
@@ -203,10 +174,7 @@ describe('Authentication API Routes', () => {
         password: 'TestPassword123!',
       };
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(loginData)
-        .expect(400);
+      const response = await request(app).post('/api/auth/login').send(loginData).expect(400);
 
       expect(response.body).toHaveProperty('success', false);
       expect(response.body).toHaveProperty('error');
@@ -220,17 +188,11 @@ describe('Authentication API Routes', () => {
 
       // Make multiple failed login attempts
       for (let i = 0; i < 5; i++) {
-        await request(app)
-          .post('/api/auth/login')
-          .send(loginData)
-          .expect(401);
+        await request(app).post('/api/auth/login').send(loginData).expect(401);
       }
 
       // Next attempt should be rate limited
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(loginData)
-        .expect(429);
+      const response = await request(app).post('/api/auth/login').send(loginData).expect(429);
 
       expect(response.body).toHaveProperty('success', false);
       expect(response.body).toHaveProperty('error');
@@ -251,16 +213,12 @@ describe('Authentication API Routes', () => {
         confirmPassword: 'TestPassword123!',
       };
 
-      await request(app)
-        .post('/api/auth/register')
-        .send(userData);
+      await request(app).post('/api/auth/register').send(userData);
 
-      const loginResponse = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: userData.email,
-          password: userData.password,
-        });
+      const loginResponse = await request(app).post('/api/auth/login').send({
+        email: userData.email,
+        password: userData.password,
+      });
 
       refreshToken = loginResponse.body.tokens.refreshToken;
     });
@@ -289,10 +247,7 @@ describe('Authentication API Routes', () => {
     });
 
     it('should reject missing refresh token', async () => {
-      const response = await request(app)
-        .post('/api/auth/refresh')
-        .send({})
-        .expect(400);
+      const response = await request(app).post('/api/auth/refresh').send({}).expect(400);
 
       expect(response.body).toHaveProperty('success', false);
       expect(response.body).toHaveProperty('error');
@@ -312,16 +267,12 @@ describe('Authentication API Routes', () => {
         confirmPassword: 'TestPassword123!',
       };
 
-      await request(app)
-        .post('/api/auth/register')
-        .send(userData);
+      await request(app).post('/api/auth/register').send(userData);
 
-      const loginResponse = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: userData.email,
-          password: userData.password,
-        });
+      const loginResponse = await request(app).post('/api/auth/login').send({
+        email: userData.email,
+        password: userData.password,
+      });
 
       accessToken = loginResponse.body.tokens.accessToken;
     });
@@ -337,9 +288,7 @@ describe('Authentication API Routes', () => {
     });
 
     it('should reject logout without token', async () => {
-      const response = await request(app)
-        .post('/api/auth/logout')
-        .expect(401);
+      const response = await request(app).post('/api/auth/logout').expect(401);
 
       expect(response.body).toHaveProperty('success', false);
       expect(response.body).toHaveProperty('error', 'No token provided');
@@ -367,9 +316,7 @@ describe('Authentication API Routes', () => {
         confirmPassword: 'TestPassword123!',
       };
 
-      await request(app)
-        .post('/api/auth/register')
-        .send(userData);
+      await request(app).post('/api/auth/register').send(userData);
     });
 
     it('should handle forgot password request', async () => {
@@ -416,16 +363,12 @@ describe('Authentication API Routes', () => {
         confirmPassword: 'TestPassword123!',
       };
 
-      await request(app)
-        .post('/api/auth/register')
-        .send(userData);
+      await request(app).post('/api/auth/register').send(userData);
 
-      const loginResponse = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: userData.email,
-          password: userData.password,
-        });
+      const loginResponse = await request(app).post('/api/auth/login').send({
+        email: userData.email,
+        password: userData.password,
+      });
 
       accessToken = loginResponse.body.tokens.accessToken;
     });
@@ -444,9 +387,7 @@ describe('Authentication API Routes', () => {
     });
 
     it('should reject request without token', async () => {
-      const response = await request(app)
-        .get('/api/auth/me')
-        .expect(401);
+      const response = await request(app).get('/api/auth/me').expect(401);
 
       expect(response.body).toHaveProperty('success', false);
       expect(response.body).toHaveProperty('error', 'No token provided');
@@ -479,9 +420,7 @@ describe('Rate Limiting Middleware', () => {
   it('should allow requests under the limit', async () => {
     // Make several requests under the limit
     for (let i = 0; i < 5; i++) {
-      const response = await request(app)
-        .post('/api/auth/test')
-        .expect(200);
+      const response = await request(app).post('/api/auth/test').expect(200);
 
       expect(response.body).toHaveProperty('success', true);
     }
@@ -491,15 +430,11 @@ describe('Rate Limiting Middleware', () => {
     // Make requests to exceed the limit (assuming 100 requests per 15 minutes)
     const promises = [];
     for (let i = 0; i < 105; i++) {
-      promises.push(
-        request(app)
-          .post('/api/auth/test')
-          .send({})
-      );
+      promises.push(request(app).post('/api/auth/test').send({}));
     }
 
     const responses = await Promise.all(promises);
-    
+
     // Check that some requests were blocked
     const blockedResponses = responses.filter(r => r.status === 429);
     expect(blockedResponses.length).toBeGreaterThan(0);

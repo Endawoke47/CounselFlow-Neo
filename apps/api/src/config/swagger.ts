@@ -11,7 +11,8 @@ const swaggerDefinition: SwaggerDefinition = {
   info: {
     title: 'CounselFlow API',
     version: '1.0.0',
-    description: 'Comprehensive API documentation for CounselFlow legal practice management platform',
+    description:
+      'Comprehensive API documentation for CounselFlow legal practice management platform',
     contact: {
       name: 'CounselFlow Support',
       email: 'support@counselflow.com',
@@ -157,7 +158,8 @@ const swaggerDefinition: SwaggerDefinition = {
           password: {
             type: 'string',
             format: 'password',
-            description: 'User password (min 8 chars, must contain uppercase, lowercase, number, special char)',
+            description:
+              'User password (min 8 chars, must contain uppercase, lowercase, number, special char)',
             example: 'SecurePassword123!',
           },
           confirmPassword: {

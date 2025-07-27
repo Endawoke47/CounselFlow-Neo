@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CounselFlow Ultimate - Legal Practice Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar-transition {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .chart-container {
+            height: 200px;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .grid-auto-fit {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Main Container -->
+    <div id="app" class="flex h-screen">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="bg-white shadow-lg sidebar-transition w-64 min-h-screen">
+            <div class="p-4 border-b">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-balance-scale text-blue-600 text-2xl"></i>
+                        <div id="logo-text" class="transition-opacity duration-300">
+                            <h1 class="text-xl font-bold text-gray-800">CounselFlow</h1>
+                            <p class="text-xs text-gray-500">Ultimate</p>
+                        </div>
+                    </div>
+                    <button id="sidebar-toggle" class="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-chevron-left text-gray-600"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <nav class="p-4">
+                <ul class="space-y-2">
+                    <li><a href="#dashboard" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-blue-50 transition-colors" data-page="dashboard">
+                        <i class="fas fa-tachometer-alt text-blue-600"></i>
+                        <span class="nav-text">Dashboard</span>
+                    </a></li>
+                    <li><a href="#cases" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-blue-50 transition-colors" data-page="cases">
+                        <i class="fas fa-gavel text-blue-600"></i>
+                        <span class="nav-text">Case Management</span>
+                    </a></li>
+                    <li><a href="#clients" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-blue-50 transition-colors" data-page="clients">
+                        <i class="fas fa-users text-blue-600"></i>
+                        <span class="nav-text">Client Management</span>
+                    </a></li>
+                    <li><a href="#contracts" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-blue-50 transition-colors" data-page="contracts">
+                        <i class="fas fa-file-contract text-blue-600"></i>
+                        <span class="nav-text">Contract Management</span>
+                    </a></li>
+                    <li><a href="#documents" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-blue-50 transition-colors" data-page="documents">
+                        <i class="fas fa-folder text-blue-600"></i>
+                        <span class="nav-text">Document Management</span>
+                    </a></li>
+                    <li><a href="#billing" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-blue-50 transition-colors" data-page="billing">
+                        <i class="fas fa-dollar-sign text-blue-600"></i>
+                        <span class="nav-text">Billing & Invoicing</span>
+                    </a></li>
+                    <li><a href="#calendar" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-blue-50 transition-colors" data-page="calendar">
+                        <i class="fas fa-calendar text-blue-600"></i>
+                        <span class="nav-text">Calendar</span>
+                    </a></li>
+                    <li><a href="#reports" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-blue-50 transition-colors" data-page="reports">
+                        <i class="fas fa-chart-bar text-blue-600"></i>
+                        <span class="nav-text">Reports & Analytics</span>
+                    </a></li>
+                    <li><a href="#ai-assistant" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-blue-50 transition-colors" data-page="ai-assistant">
+                        <i class="fas fa-robot text-blue-600"></i>
+                        <span class="nav-text">AI Legal Assistant</span>
+                    </a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-hidden">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 id="page-title" class="text-2xl font-semibold text-gray-800">Dashboard</h2>
+                        <p class="text-gray-600">Welcome to CounselFlow Ultimate</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="p-2 rounded-lg hover:bg-gray-100">
+                            <i class="fas fa-bell text-gray-600"></i>
+                        </button>
+                        <div class="flex items-center space-x-2">
+                            <img src="https://via.placeholder.com/32" alt="User" class="w-8 h-8 rounded-full">
+                            <span class="text-sm text-gray-700">John Doe</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div id="page-content" class="p-6 overflow-y-auto h-full animate-fade-in">
+                <!-- Dashboard Content -->
+                <div id="dashboard-content">
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-white p-6 rounded-lg shadow-sm border">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600">Active Cases</p>
+                                    <p class="text-2xl font-semibold text-gray-800">247</p>
+                                    <p class="text-xs text-green-600">+12% from last month</p>
+                                </div>
+                                <i class="fas fa-gavel text-3xl text-blue-600"></i>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm border">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600">Total Clients</p>
+                                    <p class="text-2xl font-semibold text-gray-800">1,842</p>
+                                    <p class="text-xs text-green-600">+8% from last month</p>
+                                </div>
+                                <i class="fas fa-users text-3xl text-green-600"></i>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm border">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600">Revenue (Monthly)</p>
+                                    <p class="text-2xl font-semibold text-gray-800">$847K</p>
+                                    <p class="text-xs text-green-600">+15% from last month</p>
+                                </div>
+                                <i class="fas fa-dollar-sign text-3xl text-yellow-600"></i>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm border">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600">Success Rate</p>
+                                    <p class="text-2xl font-semibold text-gray-800">94.2%</p>
+                                    <p class="text-xs text-green-600">+2.1% from last month</p>
+                                </div>
+                                <i class="fas fa-trophy text-3xl text-purple-600"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity & Quick Actions -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-white p-6 rounded-lg shadow-sm border">
+                            <h3 class="text-lg font-semibold mb-4">Recent Cases</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div>
+                                        <p class="font-medium">Corporate Merger - TechCorp Ltd</p>
+                                        <p class="text-sm text-gray-600">Lagos High Court • Due: 3 days</p>
+                                    </div>
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">In Progress</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div>
+                                        <p class="font-medium">Contract Dispute - Mining Rights</p>
+                                        <p class="text-sm text-gray-600">Federal High Court • Due: 1 week</p>
+                                    </div>
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">Discovery</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div>
+                                        <p class="font-medium">Employment Law - Wrongful Termination</p>
+                                        <p class="text-sm text-gray-600">Industrial Court • Due: 2 weeks</p>
+                                    </div>
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Settlement</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-lg shadow-sm border">
+                            <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button class="p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+                                    <i class="fas fa-plus text-blue-600 text-xl mb-2"></i>
+                                    <p class="text-sm font-medium">New Case</p>
+                                </button>
+                                <button class="p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
+                                    <i class="fas fa-user-plus text-green-600 text-xl mb-2"></i>
+                                    <p class="text-sm font-medium">Add Client</p>
+                                </button>
+                                <button class="p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors">
+                                    <i class="fas fa-file-contract text-purple-600 text-xl mb-2"></i>
+                                    <p class="text-sm font-medium">Draft Contract</p>
+                                </button>
+                                <button class="p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors">
+                                    <i class="fas fa-calendar-plus text-yellow-600 text-xl mb-2"></i>
+                                    <p class="text-sm font-medium">Schedule Meeting</p>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Row -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-lg shadow-sm border">
+                            <h3 class="text-lg font-semibold mb-4">Case Status Overview</h3>
+                            <div class="chart-container">
+                                <canvas id="caseChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm border">
+                            <h3 class="text-lg font-semibold mb-4">Revenue Trend</h3>
+                            <div class="chart-container">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other page contents will be loaded here -->
+                <div id="other-content" class="hidden">
+                    <div class="bg-white p-8 rounded-lg shadow-sm border text-center">
+                        <i class="fas fa-cog text-6xl text-gray-400 mb-4"></i>
+                        <h3 class="text-2xl font-semibold text-gray-800 mb-2">Module Loading</h3>
+                        <p class="text-gray-600">This module is being prepared with full functionality...</p>
+                        <div class="mt-6">
+                            <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                Return to Dashboard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Chart.js for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        // Sidebar toggle functionality
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const logoText = document.getElementById('logo-text');
+        const navTexts = document.querySelectorAll('.nav-text');
+        const chevronIcon = sidebarToggle.querySelector('i');
+        
+        let isCollapsed = false;
+
+        sidebarToggle.addEventListener('click', () => {
+            isCollapsed = !isCollapsed;
+            
+            if (isCollapsed) {
+                sidebar.classList.remove('w-64');
+                sidebar.classList.add('w-16');
+                logoText.style.opacity = '0';
+                navTexts.forEach(text => text.style.opacity = '0');
+                chevronIcon.classList.remove('fa-chevron-left');
+                chevronIcon.classList.add('fa-chevron-right');
+                
+                setTimeout(() => {
+                    logoText.style.display = 'none';
+                    navTexts.forEach(text => text.style.display = 'none');
+                }, 150);
+            } else {
+                sidebar.classList.remove('w-16');
+                sidebar.classList.add('w-64');
+                logoText.style.display = 'block';
+                navTexts.forEach(text => text.style.display = 'block');
+                chevronIcon.classList.remove('fa-chevron-right');
+                chevronIcon.classList.add('fa-chevron-left');
+                
+                setTimeout(() => {
+                    logoText.style.opacity = '1';
+                    navTexts.forEach(text => text.style.opacity = '1');
+                }, 150);
+            }
+        });
+
+        // Navigation functionality
+        const navLinks = document.querySelectorAll('.nav-link');
+        const pageTitle = document.getElementById('page-title');
+        const dashboardContent = document.getElementById('dashboard-content');
+        const otherContent = document.getElementById('other-content');
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // Remove active class from all links
+                navLinks.forEach(l => l.classList.remove('bg-blue-100', 'text-blue-700'));
+                
+                // Add active class to clicked link
+                link.classList.add('bg-blue-100', 'text-blue-700');
+                
+                const page = link.dataset.page;
+                
+                if (page === 'dashboard') {
+                    pageTitle.textContent = 'Dashboard';
+                    dashboardContent.style.display = 'block';
+                    otherContent.style.display = 'none';
+                } else {
+                    const pageNames = {
+                        'cases': 'Case Management',
+                        'clients': 'Client Management',
+                        'contracts': 'Contract Management',
+                        'documents': 'Document Management',
+                        'billing': 'Billing & Invoicing',
+                        'calendar': 'Calendar',
+                        'reports': 'Reports & Analytics',
+                        'ai-assistant': 'AI Legal Assistant'
+                    };
+                    
+                    pageTitle.textContent = pageNames[page] || 'CounselFlow Ultimate';
+                    dashboardContent.style.display = 'none';
+                    otherContent.style.display = 'block';
+                }
+            });
+        });
+
+        // Set dashboard as active by default
+        navLinks[0].classList.add('bg-blue-100', 'text-blue-700');
+
+        // Initialize charts
+        function initializeCharts() {
+            // Case Status Chart
+            const caseCtx = document.getElementById('caseChart').getContext('2d');
+            new Chart(caseCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Active', 'Pending', 'Closed', 'Settlement'],
+                    datasets: [{
+                        data: [45, 25, 20, 10],
+                        backgroundColor: ['#3B82F6', '#EF4444', '#10B981', '#F59E0B'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Revenue',
+                        data: [650, 720, 680, 850, 920, 847],
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value + 'K';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize charts when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(initializeCharts, 100);
+        });
+
+        // Add some interactive features
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add click effects to cards
+            const cards = document.querySelectorAll('.bg-white');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    card.style.transform = 'translateY(-2px)';
+                    card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.1)';
+                });
+                
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'translateY(0)';
+                    card.style.boxShadow = '';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -10,7 +10,7 @@ export enum ConfidentialityLevel {
   INTERNAL = 'INTERNAL',
   CONFIDENTIAL = 'CONFIDENTIAL',
   HIGHLY_CONFIDENTIAL = 'HIGHLY_CONFIDENTIAL',
-  TOP_SECRET = 'TOP_SECRET'
+  TOP_SECRET = 'TOP_SECRET',
 }
 
 // ================== DOCUMENT TYPES ==================
@@ -88,14 +88,14 @@ export enum DocumentType {
   POWER_OF_ATTORNEY = 'POWER_OF_ATTORNEY',
   WILL = 'WILL',
   TRUST_AGREEMENT = 'TRUST_AGREEMENT',
-  CUSTOM_DOCUMENT = 'CUSTOM_DOCUMENT'
+  CUSTOM_DOCUMENT = 'CUSTOM_DOCUMENT',
 }
 
 export enum DocumentComplexity {
   SIMPLE = 'SIMPLE',
   STANDARD = 'STANDARD',
   COMPLEX = 'COMPLEX',
-  ENTERPRISE = 'ENTERPRISE'
+  ENTERPRISE = 'ENTERPRISE',
 }
 
 export enum DocumentStatus {
@@ -106,14 +106,14 @@ export enum DocumentStatus {
   EXECUTED = 'EXECUTED',
   EXPIRED = 'EXPIRED',
   TERMINATED = 'TERMINATED',
-  ARCHIVED = 'ARCHIVED'
+  ARCHIVED = 'ARCHIVED',
 }
 
 export enum GenerationMethod {
   TEMPLATE_BASED = 'TEMPLATE_BASED',
   AI_GENERATED = 'AI_GENERATED',
   HYBRID = 'HYBRID',
-  CLAUSE_ASSEMBLY = 'CLAUSE_ASSEMBLY'
+  CLAUSE_ASSEMBLY = 'CLAUSE_ASSEMBLY',
 }
 
 export enum OutputFormat {
@@ -122,7 +122,7 @@ export enum OutputFormat {
   HTML = 'HTML',
   MARKDOWN = 'MARKDOWN',
   PLAIN_TEXT = 'PLAIN_TEXT',
-  RTF = 'RTF'
+  RTF = 'RTF',
 }
 
 // ================== TEMPLATE SYSTEM ==================
@@ -137,18 +137,18 @@ export interface DocumentTemplate {
   complexity: DocumentComplexity;
   language: SupportedLanguage;
   version: string;
-  
+
   // Template Structure
   sections: TemplateSection[];
   variables: TemplateVariable[];
   conditionalLogic: ConditionalRule[];
-  
+
   // Metadata
   author: string;
   lastModified: Date;
   usage: TemplateUsage;
   validation: TemplateValidation;
-  
+
   // Legal Information
   precedentSources: string[];
   complianceRequirements: ComplianceRequirement[];
@@ -165,7 +165,7 @@ export interface TemplateSection {
   variables: string[];
   conditions?: ConditionalExpression;
   subsections?: TemplateSection[];
-  
+
   // Formatting
   styling: SectionStyling;
   pageBreak?: boolean;
@@ -188,7 +188,7 @@ export enum SectionType {
   SIGNATURES = 'SIGNATURES',
   EXHIBITS = 'EXHIBITS',
   SCHEDULE = 'SCHEDULE',
-  CUSTOM = 'CUSTOM'
+  CUSTOM = 'CUSTOM',
 }
 
 export interface TemplateVariable {
@@ -220,7 +220,7 @@ export enum VariableType {
   LEGAL_ENTITY = 'LEGAL_ENTITY',
   TABLE = 'TABLE',
   CLAUSE = 'CLAUSE',
-  DOCUMENT_REFERENCE = 'DOCUMENT_REFERENCE'
+  DOCUMENT_REFERENCE = 'DOCUMENT_REFERENCE',
 }
 
 export interface VariableValidation {
@@ -249,17 +249,17 @@ export interface DocumentGenerationRequest {
   legalArea: LegalArea;
   language: SupportedLanguage;
   complexity: DocumentComplexity;
-  
+
   // Input Data
   variables: Record<string, any>;
   parties: PartyInformation[];
   customClauses?: ClauseSelection[];
-  
+
   // Configuration
   outputFormat: OutputFormat[];
   styling?: DocumentStyling;
   features: GenerationFeatures;
-  
+
   // Context
   existingDocuments?: DocumentReference[];
   complianceRequirements?: string[];
@@ -286,7 +286,7 @@ export enum EntityType {
   TRUST = 'TRUST',
   GOVERNMENT = 'GOVERNMENT',
   NON_PROFIT = 'NON_PROFIT',
-  FOREIGN_ENTITY = 'FOREIGN_ENTITY'
+  FOREIGN_ENTITY = 'FOREIGN_ENTITY',
 }
 
 export enum PartyRole {
@@ -305,7 +305,7 @@ export enum PartyRole {
   BUYER = 'BUYER',
   SELLER = 'SELLER',
   LICENSOR = 'LICENSOR',
-  LICENSEE = 'LICENSEE'
+  LICENSEE = 'LICENSEE',
 }
 
 export interface Address {
@@ -387,12 +387,12 @@ export enum PageSize {
   A4 = 'A4',
   LETTER = 'LETTER',
   LEGAL = 'LEGAL',
-  CUSTOM = 'CUSTOM'
+  CUSTOM = 'CUSTOM',
 }
 
 export enum PageOrientation {
   PORTRAIT = 'PORTRAIT',
-  LANDSCAPE = 'LANDSCAPE'
+  LANDSCAPE = 'LANDSCAPE',
 }
 
 export interface HeaderFooterConfig {
@@ -418,7 +418,7 @@ export enum NumberingStyle {
   ALPHABETIC = 'ALPHABETIC',
   ROMAN = 'ROMAN',
   LEGAL = 'LEGAL',
-  OUTLINE = 'OUTLINE'
+  OUTLINE = 'OUTLINE',
 }
 
 export interface StyleDefinition {
@@ -435,7 +435,7 @@ export enum StyleType {
   CLAUSE = 'CLAUSE',
   DEFINITION = 'DEFINITION',
   SIGNATURE = 'SIGNATURE',
-  EXHIBIT = 'EXHIBIT'
+  EXHIBIT = 'EXHIBIT',
 }
 
 export interface StyleProperties {
@@ -480,7 +480,7 @@ export enum ExpressionType {
   VARIABLE = 'VARIABLE',
   LITERAL = 'LITERAL',
   FUNCTION = 'FUNCTION',
-  COMPOSITE = 'COMPOSITE'
+  COMPOSITE = 'COMPOSITE',
 }
 
 export enum ComparisonOperator {
@@ -494,13 +494,13 @@ export enum ComparisonOperator {
   STARTS_WITH = 'STARTS_WITH',
   ENDS_WITH = 'ENDS_WITH',
   IN = 'IN',
-  NOT_IN = 'NOT_IN'
+  NOT_IN = 'NOT_IN',
 }
 
 export enum LogicalOperator {
   AND = 'AND',
   OR = 'OR',
-  NOT = 'NOT'
+  NOT = 'NOT',
 }
 
 export interface ConditionalAction {
@@ -517,7 +517,7 @@ export enum ActionType {
   MODIFY_CONTENT = 'MODIFY_CONTENT',
   ADD_CLAUSE = 'ADD_CLAUSE',
   REMOVE_CLAUSE = 'REMOVE_CLAUSE',
-  CHANGE_STYLE = 'CHANGE_STYLE'
+  CHANGE_STYLE = 'CHANGE_STYLE',
 }
 
 // ================== RESULTS & METADATA ==================
@@ -566,7 +566,7 @@ export enum SectionSource {
   TEMPLATE = 'TEMPLATE',
   AI_GENERATED = 'AI_GENERATED',
   USER_PROVIDED = 'USER_PROVIDED',
-  CLAUSE_LIBRARY = 'CLAUSE_LIBRARY'
+  CLAUSE_LIBRARY = 'CLAUSE_LIBRARY',
 }
 
 export interface ResolvedVariable {
@@ -583,7 +583,7 @@ export enum VariableSource {
   DEFAULT_VALUE = 'DEFAULT_VALUE',
   CALCULATED = 'CALCULATED',
   DERIVED = 'DERIVED',
-  EXTERNAL_API = 'EXTERNAL_API'
+  EXTERNAL_API = 'EXTERNAL_API',
 }
 
 export interface ValidationResult {
@@ -642,14 +642,14 @@ export enum QualityIssueType {
   POTENTIAL_AMBIGUITY = 'POTENTIAL_AMBIGUITY',
   FORMATTING_ERROR = 'FORMATTING_ERROR',
   LEGAL_RISK = 'LEGAL_RISK',
-  COMPLIANCE_ISSUE = 'COMPLIANCE_ISSUE'
+  COMPLIANCE_ISSUE = 'COMPLIANCE_ISSUE',
 }
 
 export enum IssueSeverity {
   LOW = 'LOW',
   MEDIUM = 'MEDIUM',
   HIGH = 'HIGH',
-  CRITICAL = 'CRITICAL'
+  CRITICAL = 'CRITICAL',
 }
 
 export interface ComplianceAssessment {
@@ -692,7 +692,7 @@ export enum Priority {
   LOW = 'LOW',
   MEDIUM = 'MEDIUM',
   HIGH = 'HIGH',
-  URGENT = 'URGENT'
+  URGENT = 'URGENT',
 }
 
 export interface DocumentAlternative {
@@ -711,7 +711,7 @@ export enum RiskLevel {
   LOW = 'LOW',
   MEDIUM = 'MEDIUM',
   HIGH = 'HIGH',
-  VERY_HIGH = 'VERY_HIGH'
+  VERY_HIGH = 'VERY_HIGH',
 }
 
 export interface GenerationRecommendation {
@@ -731,7 +731,7 @@ export enum RecommendationType {
   RISK_MITIGATION = 'RISK_MITIGATION',
   COMPLIANCE_ENHANCEMENT = 'COMPLIANCE_ENHANCEMENT',
   CLARITY_IMPROVEMENT = 'CLARITY_IMPROVEMENT',
-  EFFICIENCY_OPTIMIZATION = 'EFFICIENCY_OPTIMIZATION'
+  EFFICIENCY_OPTIMIZATION = 'EFFICIENCY_OPTIMIZATION',
 }
 
 export interface GenerationWarning {
@@ -750,7 +750,7 @@ export enum WarningType {
   POTENTIAL_CONFLICT = 'POTENTIAL_CONFLICT',
   UNUSUAL_TERM = 'UNUSUAL_TERM',
   OUTDATED_PROVISION = 'OUTDATED_PROVISION',
-  JURISDICTION_MISMATCH = 'JURISDICTION_MISMATCH'
+  JURISDICTION_MISMATCH = 'JURISDICTION_MISMATCH',
 }
 
 export interface GenerationMetadata {
@@ -799,7 +799,7 @@ export enum ValidationIssueType {
   LOGIC_ERROR = 'LOGIC_ERROR',
   VARIABLE_ERROR = 'VARIABLE_ERROR',
   COMPLIANCE_ERROR = 'COMPLIANCE_ERROR',
-  FORMATTING_ERROR = 'FORMATTING_ERROR'
+  FORMATTING_ERROR = 'FORMATTING_ERROR',
 }
 
 export interface RiskFactor {
@@ -826,7 +826,7 @@ export enum DocumentRelationship {
   AMENDS = 'AMENDS',
   AMENDED_BY = 'AMENDED_BY',
   REFERENCES = 'REFERENCES',
-  REFERENCED_BY = 'REFERENCED_BY'
+  REFERENCED_BY = 'REFERENCED_BY',
 }
 
 export interface WatermarkInfo {
@@ -842,7 +842,7 @@ export enum WatermarkPosition {
   TOP_RIGHT = 'TOP_RIGHT',
   BOTTOM_LEFT = 'BOTTOM_LEFT',
   BOTTOM_RIGHT = 'BOTTOM_RIGHT',
-  DIAGONAL = 'DIAGONAL'
+  DIAGONAL = 'DIAGONAL',
 }
 
 // ================== EXPORT TYPES ==================

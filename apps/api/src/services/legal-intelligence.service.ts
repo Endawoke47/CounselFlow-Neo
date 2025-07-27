@@ -21,7 +21,7 @@ import {
   InsightCategory,
   PredictionType,
   TimeSeriesPoint,
-  VisualizationType
+  VisualizationType,
 } from '../types/legal-intelligence.types';
 import { AIGatewayService } from './ai-gateway.service';
 import { CacheService } from './cache.service';
@@ -58,8 +58,8 @@ export class LegalIntelligenceService {
       ),
       transports: [
         new winston.transports.File({ filename: 'logs/legal-intelligence.log' }),
-        new winston.transports.Console()
-      ]
+        new winston.transports.Console(),
+      ],
     });
   }
 
@@ -68,38 +68,43 @@ export class LegalIntelligenceService {
     this.analyticsModels.set('trend_analysis', {
       model: 'trend-analyzer-v2',
       accuracy: 0.89,
-      features: ['time_series', 'seasonality', 'anomaly_detection']
+      features: ['time_series', 'seasonality', 'anomaly_detection'],
     });
 
     this.analyticsModels.set('predictive_modeling', {
       model: 'legal-predictor-v3',
       accuracy: 0.84,
-      features: ['outcome_prediction', 'risk_modeling', 'scenario_analysis']
+      features: ['outcome_prediction', 'risk_modeling', 'scenario_analysis'],
     });
 
     this.analyticsModels.set('sentiment_analysis', {
       model: 'legal-sentiment-v1',
       accuracy: 0.92,
-      features: ['judicial_sentiment', 'market_sentiment', 'regulatory_sentiment']
+      features: ['judicial_sentiment', 'market_sentiment', 'regulatory_sentiment'],
     });
 
     this.analyticsModels.set('comparative_analysis', {
       model: 'legal-comparator-v2',
       accuracy: 0.87,
-      features: ['jurisdictional_comparison', 'temporal_comparison', 'peer_analysis']
+      features: ['jurisdictional_comparison', 'temporal_comparison', 'peer_analysis'],
     });
   }
 
   private initializeDataConnectors() {
     // Initialize data source connectors for each jurisdiction
     const africanJurisdictions = [
-      LegalJurisdiction.NIGERIA, LegalJurisdiction.SOUTH_AFRICA,
-      LegalJurisdiction.KENYA, LegalJurisdiction.GHANA, LegalJurisdiction.EGYPT
+      LegalJurisdiction.NIGERIA,
+      LegalJurisdiction.SOUTH_AFRICA,
+      LegalJurisdiction.KENYA,
+      LegalJurisdiction.GHANA,
+      LegalJurisdiction.EGYPT,
     ];
 
     const middleEastJurisdictions = [
-      LegalJurisdiction.UAE, LegalJurisdiction.SAUDI_ARABIA,
-      LegalJurisdiction.ISRAEL, LegalJurisdiction.TURKEY
+      LegalJurisdiction.UAE,
+      LegalJurisdiction.SAUDI_ARABIA,
+      LegalJurisdiction.ISRAEL,
+      LegalJurisdiction.TURKEY,
     ];
 
     [...africanJurisdictions, ...middleEastJurisdictions].forEach(jurisdiction => {
@@ -108,7 +113,7 @@ export class LegalIntelligenceService {
         regulatoryData: `${jurisdiction}_regulatory_db`,
         marketData: `${jurisdiction}_market_intelligence`,
         caseData: `${jurisdiction}_case_outcomes`,
-        contractData: `${jurisdiction}_contract_analytics`
+        contractData: `${jurisdiction}_contract_analytics`,
       });
     });
   }
@@ -116,7 +121,9 @@ export class LegalIntelligenceService {
   /**
    * Main legal intelligence analysis method
    */
-  public async analyzeLegalIntelligence(request: LegalIntelligenceRequest): Promise<LegalIntelligenceResult> {
+  public async analyzeLegalIntelligence(
+    request: LegalIntelligenceRequest
+  ): Promise<LegalIntelligenceResult> {
     const startTime = Date.now();
     const analysisId = this.generateAnalysisId();
 
@@ -125,7 +132,7 @@ export class LegalIntelligenceService {
         analysisId,
         jurisdictions: request.jurisdictions,
         analysisTypes: request.analysisTypes,
-        period: request.period
+        period: request.period,
       });
 
       // Validate request
@@ -168,30 +175,40 @@ export class LegalIntelligenceService {
 
       // Execute all analyses
       const results = await Promise.all(analysisPromises);
-      
+
       // Initialize with defaults
       let trendAnalysis: TrendAnalysisResult[] = [];
       let predictiveInsights: PredictiveInsight[] = [];
       let comparativeAnalysis: ComparativeAnalysisResult[] = [];
       let riskIntelligence: RiskIntelligenceResult = this.createEmptyRiskIntelligence();
       let marketIntelligence: MarketIntelligenceResult = this.createEmptyMarketIntelligence();
-      let regulatoryIntelligence: RegulatoryIntelligenceResult = this.createEmptyRegulatoryIntelligence();
+      let regulatoryIntelligence: RegulatoryIntelligenceResult =
+        this.createEmptyRegulatoryIntelligence();
 
       // Extract results by type
       results.forEach((result, index) => {
         const analysisType = request.analysisTypes[index];
-        
+
         if (analysisType === IntelligenceType.TREND_ANALYSIS && Array.isArray(result)) {
           trendAnalysis = result as TrendAnalysisResult[];
         } else if (analysisType === IntelligenceType.PREDICTIVE_MODELING && Array.isArray(result)) {
           predictiveInsights = result as PredictiveInsight[];
-        } else if (analysisType === IntelligenceType.COMPARATIVE_ANALYSIS && Array.isArray(result)) {
+        } else if (
+          analysisType === IntelligenceType.COMPARATIVE_ANALYSIS &&
+          Array.isArray(result)
+        ) {
           comparativeAnalysis = result as ComparativeAnalysisResult[];
         } else if (analysisType === IntelligenceType.RISK_INTELLIGENCE && !Array.isArray(result)) {
           riskIntelligence = result as RiskIntelligenceResult;
-        } else if (analysisType === IntelligenceType.MARKET_INTELLIGENCE && !Array.isArray(result)) {
+        } else if (
+          analysisType === IntelligenceType.MARKET_INTELLIGENCE &&
+          !Array.isArray(result)
+        ) {
           marketIntelligence = result as MarketIntelligenceResult;
-        } else if (analysisType === IntelligenceType.REGULATORY_INTELLIGENCE && !Array.isArray(result)) {
+        } else if (
+          analysisType === IntelligenceType.REGULATORY_INTELLIGENCE &&
+          !Array.isArray(result)
+        ) {
           regulatoryIntelligence = result as RegulatoryIntelligenceResult;
         }
       });
@@ -203,7 +220,7 @@ export class LegalIntelligenceService {
         comparativeAnalysis,
         riskIntelligence,
         marketIntelligence,
-        regulatoryIntelligence
+        regulatoryIntelligence,
       });
 
       const recommendations = request.insights.includeRecommendations
@@ -212,13 +229,14 @@ export class LegalIntelligenceService {
 
       const alerts = await this.generateIntelligenceAlerts(request, keyInsights);
 
-      const visualizations = request.insights.visualizations.length > 0
-        ? await this.generateVisualizations(request, {
-            trendAnalysis,
-            predictiveInsights,
-            comparativeAnalysis
-          })
-        : [];
+      const visualizations =
+        request.insights.visualizations.length > 0
+          ? await this.generateVisualizations(request, {
+              trendAnalysis,
+              predictiveInsights,
+              comparativeAnalysis,
+            })
+          : [];
 
       // Compile final result
       const result: LegalIntelligenceResult = {
@@ -230,7 +248,7 @@ export class LegalIntelligenceService {
           legalAreasAnalyzed: request.legalAreas,
           dataPointsProcessed: this.calculateDataPoints(request),
           executionTime: Date.now() - startTime,
-          confidenceLevel: this.calculateOverallConfidence(results)
+          confidenceLevel: this.calculateOverallConfidence(results),
         },
         trendAnalysis: trendAnalysis as TrendAnalysisResult[],
         predictiveInsights: predictiveInsights as PredictiveInsight[],
@@ -253,19 +271,19 @@ export class LegalIntelligenceService {
             trendAnalysis: 0.89,
             predictions: 0.84,
             insights: 0.91,
-            recommendations: 0.86
+            recommendations: 0.86,
           },
           coverage: {
             jurisdictionalCoverage: request.jurisdictions.length / 71,
             temporalCoverage: this.calculateTemporalCoverage(request.period),
             dataCompleteness: 0.92,
-            sampleSize: this.calculateSampleSize(request)
+            sampleSize: this.calculateSampleSize(request),
           },
           limitations: this.identifyLimitations(request),
           recommendations: ['Regular model retraining', 'Data quality monitoring'],
           version: '3.1.0',
-          processedAt: new Date()
-        }
+          processedAt: new Date(),
+        },
       };
 
       // Cache result
@@ -283,7 +301,7 @@ export class LegalIntelligenceService {
         cost: 0,
         success: true,
         processingTime: result.requestSummary.executionTime,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
 
       this.logger.info(`Legal intelligence analysis completed`, {
@@ -291,11 +309,10 @@ export class LegalIntelligenceService {
         analysisTypes: request.analysisTypes.length,
         insightsGenerated: keyInsights.length,
         recommendationsGenerated: recommendations.length,
-        executionTime: result.requestSummary.executionTime
+        executionTime: result.requestSummary.executionTime,
       });
 
       return result;
-
     } catch (error) {
       this.logger.error(`Legal intelligence analysis failed`, { analysisId, error });
       throw new Error(`Legal intelligence analysis failed: ${error}`);
@@ -305,7 +322,9 @@ export class LegalIntelligenceService {
   /**
    * Perform trend analysis
    */
-  private async performTrendAnalysis(request: LegalIntelligenceRequest): Promise<TrendAnalysisResult[]> {
+  private async performTrendAnalysis(
+    request: LegalIntelligenceRequest
+  ): Promise<TrendAnalysisResult[]> {
     const trendPrompt = `
     Analyze legal trends for the following parameters:
     
@@ -330,20 +349,26 @@ export class LegalIntelligenceService {
     `;
 
     try {
-      const response = await this.aiGateway.processRequest({
-        input: trendPrompt,
-        type: AIAnalysisType.LEGAL_RESEARCH,
-        context: {
-          jurisdiction: request.jurisdictions[0] || LegalJurisdiction.INTERNATIONAL,
-          legalSystem: 'mixed' as any,
-          language: request.language,
-          practiceArea: request.legalAreas[0] || 'general',
-          confidentialityLevel: request.confidentialityLevel === 'internal' ? 'confidential' : 
-                                request.confidentialityLevel === 'restricted' ? 'privileged' : 
-                                request.confidentialityLevel as 'public' | 'confidential' | 'privileged'
+      const response = await this.aiGateway.processRequest(
+        {
+          input: trendPrompt,
+          type: AIAnalysisType.LEGAL_RESEARCH,
+          context: {
+            jurisdiction: request.jurisdictions[0] || LegalJurisdiction.INTERNATIONAL,
+            legalSystem: 'mixed' as any,
+            language: request.language,
+            practiceArea: request.legalAreas[0] || 'general',
+            confidentialityLevel:
+              request.confidentialityLevel === 'internal'
+                ? 'confidential'
+                : request.confidentialityLevel === 'restricted'
+                  ? 'privileged'
+                  : (request.confidentialityLevel as 'public' | 'confidential' | 'privileged'),
+          },
+          provider: AIProvider.OLLAMA,
         },
-        provider: AIProvider.OLLAMA
-      }, 'intelligence-user');
+        'intelligence-user'
+      );
 
       return this.parseTrendAnalysisResult(response.output, request);
     } catch (error) {
@@ -355,7 +380,9 @@ export class LegalIntelligenceService {
   /**
    * Perform predictive analysis
    */
-  private async performPredictiveAnalysis(request: LegalIntelligenceRequest): Promise<PredictiveInsight[]> {
+  private async performPredictiveAnalysis(
+    request: LegalIntelligenceRequest
+  ): Promise<PredictiveInsight[]> {
     const predictions: PredictiveInsight[] = [];
 
     for (const jurisdiction of request.jurisdictions) {
@@ -372,11 +399,9 @@ export class LegalIntelligenceService {
           supportingEvidence: [
             'Recent court precedents favor clear contract interpretation',
             'Judicial sentiment analysis shows pro-business stance',
-            'Regulatory environment supports commercial certainty'
+            'Regulatory environment supports commercial certainty',
           ],
-          contradictingEvidence: [
-            'Economic uncertainty may influence judicial decisions'
-          ]
+          contradictingEvidence: ['Economic uncertainty may influence judicial decisions'],
         },
         factors: {
           primaryFactors: [
@@ -386,7 +411,7 @@ export class LegalIntelligenceService {
               weight: 0.4,
               direction: 'positive',
               significance: 0.92,
-              description: 'Courts showing consistent interpretation patterns'
+              description: 'Courts showing consistent interpretation patterns',
             },
             {
               name: 'Economic stability',
@@ -394,8 +419,8 @@ export class LegalIntelligenceService {
               weight: 0.3,
               direction: 'positive',
               significance: 0.78,
-              description: 'Stable economic conditions favor business outcomes'
-            }
+              description: 'Stable economic conditions favor business outcomes',
+            },
           ],
           secondaryFactors: [
             {
@@ -404,22 +429,22 @@ export class LegalIntelligenceService {
               weight: 0.2,
               direction: 'positive',
               significance: 0.65,
-              description: 'Improved legal representation standards'
-            }
+              description: 'Improved legal representation standards',
+            },
           ],
           correlations: [
             {
               factor1: 'Judicial precedent consistency',
               factor2: 'Economic stability',
               correlation: 0.67,
-              significance: 0.88
-            }
+              significance: 0.88,
+            },
           ],
           featureImportance: [
             { feature: 'Case complexity', importance: 0.35, rank: 1 },
             { feature: 'Judge experience', importance: 0.28, rank: 2 },
-            { feature: 'Legal precedent', importance: 0.25, rank: 3 }
-          ]
+            { feature: 'Legal precedent', importance: 0.25, rank: 3 },
+          ],
         },
         scenarios: [
           {
@@ -431,13 +456,13 @@ export class LegalIntelligenceService {
                 outcome: 'Gradual improvement in success rates',
                 likelihood: 0.75,
                 impact: 'medium',
-                consequences: ['Increased business confidence', 'More contract litigation']
-              }
+                consequences: ['Increased business confidence', 'More contract litigation'],
+              },
             ],
             riskFactors: ['Economic downturn', 'Judicial personnel changes'],
             opportunities: ['Clearer legal precedents', 'Improved business environment'],
-            timeline: '6-12 months'
-          }
+            timeline: '6-12 months',
+          },
         ],
         recommendations: [
           {
@@ -446,11 +471,11 @@ export class LegalIntelligenceService {
             timeline: 'immediate',
             expectedImpact: 'Improved success rates by 15-20%',
             resources: ['Legal drafting training', 'Template standardization'],
-            stakeholders: ['Legal teams', 'Business units']
-          }
+            stakeholders: ['Legal teams', 'Business units'],
+          },
         ],
         confidence: PredictionConfidence.HIGH,
-        timeframe: '6-12 months'
+        timeframe: '6-12 months',
       });
 
       // Regulatory change prediction
@@ -467,11 +492,9 @@ export class LegalIntelligenceService {
             supportingEvidence: [
               'Government consultation papers published',
               'Industry lobbying activity increased',
-              'International regulatory alignment trends'
+              'International regulatory alignment trends',
             ],
-            contradictingEvidence: [
-              'Political instability may delay implementation'
-            ]
+            contradictingEvidence: ['Political instability may delay implementation'],
           },
           factors: {
             primaryFactors: [
@@ -481,12 +504,12 @@ export class LegalIntelligenceService {
                 weight: 0.5,
                 direction: 'positive',
                 significance: 0.95,
-                description: 'Strong international push for data protection'
-              }
+                description: 'Strong international push for data protection',
+              },
             ],
             secondaryFactors: [],
             correlations: [],
-            featureImportance: []
+            featureImportance: [],
           },
           scenarios: [],
           recommendations: [
@@ -496,11 +519,11 @@ export class LegalIntelligenceService {
               timeline: '3-6 months',
               expectedImpact: 'Reduced compliance risk and cost',
               resources: ['Compliance team', 'Technology upgrades'],
-              stakeholders: ['IT department', 'Legal team', 'Data protection officer']
-            }
+              stakeholders: ['IT department', 'Legal team', 'Data protection officer'],
+            },
           ],
           confidence: PredictionConfidence.VERY_HIGH,
-          timeframe: '3-6 months'
+          timeframe: '3-6 months',
         });
       }
     }
@@ -511,7 +534,9 @@ export class LegalIntelligenceService {
   /**
    * Perform comparative analysis
    */
-  private async performComparativeAnalysis(request: LegalIntelligenceRequest): Promise<ComparativeAnalysisResult[]> {
+  private async performComparativeAnalysis(
+    request: LegalIntelligenceRequest
+  ): Promise<ComparativeAnalysisResult[]> {
     // Mock implementation for jurisdictional comparison
     return [
       {
@@ -522,17 +547,15 @@ export class LegalIntelligenceService {
           name: jurisdiction.replace('_', ' ').toUpperCase(),
           type: 'jurisdiction',
           jurisdiction,
-          metadata: { population: 50000000 + index * 10000000 }
+          metadata: { population: 50000000 + index * 10000000 },
         })),
         metrics: [
           {
             name: 'Legal System Efficiency',
-            values: Object.fromEntries(
-              request.jurisdictions.map((j, i) => [j, 7.5 + i * 0.3])
-            ),
+            values: Object.fromEntries(request.jurisdictions.map((j, i) => [j, 7.5 + i * 0.3])),
             unit: 'score',
             direction: 'higher_better',
-            weight: 0.4
+            weight: 0.4,
           },
           {
             name: 'Regulatory Compliance Cost',
@@ -541,15 +564,15 @@ export class LegalIntelligenceService {
             ),
             unit: 'USD',
             direction: 'lower_better',
-            weight: 0.3
-          }
+            weight: 0.3,
+          },
         ],
         insights: request.jurisdictions.map(jurisdiction => ({
           type: 'strength',
           subject: jurisdiction,
           description: `Strong performance in ${jurisdiction.replace('_', ' ')} legal framework`,
           impact: 'medium',
-          recommendations: ['Maintain current standards', 'Share best practices']
+          recommendations: ['Maintain current standards', 'Share best practices'],
         })),
         rankings: [
           {
@@ -558,9 +581,9 @@ export class LegalIntelligenceService {
               subject: jurisdiction,
               rank: index + 1,
               score: 8.5 - index * 0.2,
-              percentile: 90 - index * 5
-            }))
-          }
+              percentile: 90 - index * 5,
+            })),
+          },
         ],
         benchmarks: [
           {
@@ -571,18 +594,20 @@ export class LegalIntelligenceService {
               subject: jurisdiction,
               value: 7.8,
               deviation: -0.2,
-              performance: 'below'
-            }))
-          }
-        ]
-      }
+              performance: 'below',
+            })),
+          },
+        ],
+      },
     ];
   }
 
   /**
    * Perform risk intelligence analysis
    */
-  private async performRiskIntelligence(request: LegalIntelligenceRequest): Promise<RiskIntelligenceResult> {
+  private async performRiskIntelligence(
+    request: LegalIntelligenceRequest
+  ): Promise<RiskIntelligenceResult> {
     return {
       riskLandscape: {
         totalRisks: 147,
@@ -592,29 +617,29 @@ export class LegalIntelligenceService {
           [RiskLevel.HIGH]: 23,
           [RiskLevel.MEDIUM]: 56,
           [RiskLevel.LOW]: 45,
-          [RiskLevel.VERY_LOW]: 15
+          [RiskLevel.VERY_LOW]: 15,
         },
         topRiskCategories: [
           {
             category: 'Regulatory Compliance',
             riskCount: 45,
             averageImpact: 7.8,
-            trend: TrendDirection.INCREASING
+            trend: TrendDirection.INCREASING,
           },
           {
             category: 'Contract Disputes',
             riskCount: 32,
             averageImpact: 6.5,
-            trend: TrendDirection.STABLE
-          }
+            trend: TrendDirection.STABLE,
+          },
         ],
         riskEvolution: request.jurisdictions.map((_, index) => ({
           date: new Date(Date.now() - (30 - index) * 24 * 60 * 60 * 1000),
           riskCount: 140 + index * 2,
           severity: 6.5 + index * 0.1,
           newRisks: 3 + index,
-          resolvedRisks: 2 + index
-        }))
+          resolvedRisks: 2 + index,
+        })),
       },
       emergingRisks: [
         {
@@ -627,8 +652,8 @@ export class LegalIntelligenceService {
           impact: RiskLevel.HIGH,
           timeframe: '6-12 months',
           indicators: ['Increased AI adoption', 'Regulatory discussions', 'Industry concerns'],
-          sources: ['Government publications', 'Industry reports', 'Expert analysis']
-        }
+          sources: ['Government publications', 'Industry reports', 'Expert analysis'],
+        },
       ],
       riskTrends: [
         {
@@ -636,8 +661,8 @@ export class LegalIntelligenceService {
           trend: TrendDirection.INCREASING,
           changePercentage: 23.5,
           timeframe: 'Last 6 months',
-          jurisdiction: request.jurisdictions[0] || LegalJurisdiction.INTERNATIONAL
-        }
+          jurisdiction: request.jurisdictions[0] || LegalJurisdiction.INTERNATIONAL,
+        },
       ],
       riskCorrelations: [
         {
@@ -645,8 +670,8 @@ export class LegalIntelligenceService {
           risk2: 'Compliance Costs',
           correlation: 0.84,
           confidence: 0.92,
-          jurisdiction: request.jurisdictions[0] || LegalJurisdiction.INTERNATIONAL
-        }
+          jurisdiction: request.jurisdictions[0] || LegalJurisdiction.INTERNATIONAL,
+        },
       ],
       mitigationStrategies: [
         {
@@ -655,27 +680,29 @@ export class LegalIntelligenceService {
           effectiveness: 0.85,
           cost: 'medium',
           timeframe: '3-6 months',
-          applicableJurisdictions: request.jurisdictions
-        }
+          applicableJurisdictions: request.jurisdictions,
+        },
       ],
       riskScores: request.jurisdictions.map((jurisdiction, index) => ({
         jurisdiction,
         overallScore: 7.2 - index * 0.1,
         categoryScores: {
-          'Regulatory': 7.5 - index * 0.1,
-          'Financial': 6.8 - index * 0.1,
-          'Operational': 7.0 - index * 0.1
+          Regulatory: 7.5 - index * 0.1,
+          Financial: 6.8 - index * 0.1,
+          Operational: 7.0 - index * 0.1,
         },
         ranking: index + 1,
-        trend: index < 2 ? TrendDirection.INCREASING : TrendDirection.STABLE
-      }))
+        trend: index < 2 ? TrendDirection.INCREASING : TrendDirection.STABLE,
+      })),
     };
   }
 
   /**
    * Perform market intelligence analysis
    */
-  private async performMarketIntelligence(request: LegalIntelligenceRequest): Promise<MarketIntelligenceResult> {
+  private async performMarketIntelligence(
+    request: LegalIntelligenceRequest
+  ): Promise<MarketIntelligenceResult> {
     return {
       marketOverview: {
         marketSize: 2500000000, // $2.5B
@@ -686,36 +713,40 @@ export class LegalIntelligenceService {
             marketShare: 15.2,
             revenue: 380000000,
             jurisdiction: request.jurisdictions[0] || LegalJurisdiction.INTERNATIONAL,
-            specializations: ['Corporate Law', 'M&A', 'Litigation']
+            specializations: ['Corporate Law', 'M&A', 'Litigation'],
           },
           {
             name: 'Major Legal Services B',
             marketShare: 12.8,
             revenue: 320000000,
             jurisdiction: request.jurisdictions[1] || LegalJurisdiction.INTERNATIONAL,
-            specializations: ['Commercial Law', 'IP', 'Employment']
-          }
+            specializations: ['Commercial Law', 'IP', 'Employment'],
+          },
         ],
         marketSegments: [
           {
             name: 'Corporate Legal Services',
             size: 1200000000,
             growth: 9.2,
-            characteristics: ['High value transactions', 'Complex structures', 'International scope']
+            characteristics: [
+              'High value transactions',
+              'Complex structures',
+              'International scope',
+            ],
           },
           {
             name: 'SME Legal Services',
             size: 800000000,
             growth: 7.1,
-            characteristics: ['Cost-sensitive', 'Standard transactions', 'Local focus']
-          }
+            characteristics: ['Cost-sensitive', 'Standard transactions', 'Local focus'],
+          },
         ],
         geographicalDistribution: request.jurisdictions.map((jurisdiction, index) => ({
           jurisdiction,
           marketSize: 500000000 - index * 50000000,
           growth: 8.5 - index * 0.5,
-          penetration: 65 - index * 5
-        }))
+          penetration: 65 - index * 5,
+        })),
       },
       competitiveAnalysis: {
         competitivePosition: 'Strong market position with growth opportunities',
@@ -723,7 +754,7 @@ export class LegalIntelligenceService {
         weaknesses: ['Limited brand recognition', 'Smaller scale compared to incumbents'],
         opportunities: ['AI-powered services', 'Emerging markets', 'Digital transformation'],
         threats: ['Regulatory changes', 'Economic downturn', 'New market entrants'],
-        competitivePressure: 7.2
+        competitivePressure: 7.2,
       },
       opportunityAnalysis: [
         {
@@ -733,8 +764,8 @@ export class LegalIntelligenceService {
           requirements: ['AI technology investment', 'Staff training', 'Regulatory compliance'],
           barriers: ['High initial investment', 'Client adoption', 'Regulatory uncertainty'],
           riskLevel: RiskLevel.MEDIUM,
-          jurisdiction: request.jurisdictions[0] || LegalJurisdiction.INTERNATIONAL
-        }
+          jurisdiction: request.jurisdictions[0] || LegalJurisdiction.INTERNATIONAL,
+        },
       ],
       marketTrends: [
         {
@@ -743,43 +774,43 @@ export class LegalIntelligenceService {
           impact: 'significant',
           timeframe: '1-3 years',
           affectedSegments: ['All segments'],
-          jurisdiction: request.jurisdictions[0] || LegalJurisdiction.INTERNATIONAL
-        }
+          jurisdiction: request.jurisdictions[0] || LegalJurisdiction.INTERNATIONAL,
+        },
       ],
       pricingIntelligence: {
         averagePricing: {
           'Corporate Legal Services': 500,
           'Contract Review': 200,
-          'Litigation Support': 400
+          'Litigation Support': 400,
         },
         pricingTrends: [
           {
             service: 'Corporate Legal Services',
             trend: TrendDirection.INCREASING,
             changePercentage: 5.2,
-            jurisdiction: request.jurisdictions[0] || LegalJurisdiction.INTERNATIONAL
-          }
+            jurisdiction: request.jurisdictions[0] || LegalJurisdiction.INTERNATIONAL,
+          },
         ],
         competitivePricing: [
           {
             service: 'Contract Review',
             averagePrice: 200,
             priceRange: { min: 150, max: 300, currency: 'USD' },
-            jurisdiction: request.jurisdictions[0] || LegalJurisdiction.INTERNATIONAL
-          }
+            jurisdiction: request.jurisdictions[0] || LegalJurisdiction.INTERNATIONAL,
+          },
         ],
         pricingFactors: [
           {
             factor: 'Service complexity',
             impact: 0.4,
-            direction: 'increases'
+            direction: 'increases',
           },
           {
             factor: 'Market competition',
             impact: 0.3,
-            direction: 'decreases'
-          }
-        ]
+            direction: 'decreases',
+          },
+        ],
       },
       demandForecasting: [
         {
@@ -789,32 +820,37 @@ export class LegalIntelligenceService {
           growth: 15.0,
           confidence: PredictionConfidence.HIGH,
           jurisdiction: request.jurisdictions[0] || LegalJurisdiction.INTERNATIONAL,
-          timeframe: '12 months'
-        }
-      ]
+          timeframe: '12 months',
+        },
+      ],
     };
   }
 
   /**
    * Perform regulatory intelligence analysis
    */
-  private async performRegulatoryIntelligence(request: LegalIntelligenceRequest): Promise<RegulatoryIntelligenceResult> {
+  private async performRegulatoryIntelligence(
+    request: LegalIntelligenceRequest
+  ): Promise<RegulatoryIntelligenceResult> {
     return {
       regulatoryLandscape: {
         totalRegulations: 1247,
         recentChanges: 23,
         pendingChanges: 15,
-        jurisdictionalComplexity: request.jurisdictions.reduce((acc, jurisdiction, index) => {
-          acc[jurisdiction] = 6.5 + index * 0.3;
-          return acc;
-        }, {} as Record<LegalJurisdiction, number>),
+        jurisdictionalComplexity: request.jurisdictions.reduce(
+          (acc, jurisdiction, index) => {
+            acc[jurisdiction] = 6.5 + index * 0.3;
+            return acc;
+          },
+          {} as Record<LegalJurisdiction, number>
+        ),
         regulatoryBurden: request.jurisdictions.map((jurisdiction, index) => ({
           jurisdiction,
           burdenScore: 7.2 - index * 0.2,
           complexity: 8.1 - index * 0.1,
           changeFrequency: 12 + index * 2,
-          complianceCost: 500000 + index * 50000
-        }))
+          complianceCost: 500000 + index * 50000,
+        })),
       },
       upcomingChanges: [
         {
@@ -828,10 +864,10 @@ export class LegalIntelligenceService {
           requirements: [
             'Enhanced data encryption',
             'Regular compliance audits',
-            'Staff training programs'
+            'Staff training programs',
           ],
-          complianceDeadline: new Date(Date.now() + 150 * 24 * 60 * 60 * 1000)
-        }
+          complianceDeadline: new Date(Date.now() + 150 * 24 * 60 * 60 * 1000),
+        },
       ],
       complianceGaps: [
         {
@@ -840,8 +876,8 @@ export class LegalIntelligenceService {
           gapDescription: 'Insufficient data retention policies',
           severity: 'medium',
           remediation: ['Update data retention policies', 'Implement automated deletion'],
-          deadline: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
-        }
+          deadline: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+        },
       ],
       regulatoryTrends: [
         {
@@ -849,8 +885,12 @@ export class LegalIntelligenceService {
           description: 'Regulators implementing frameworks for AI oversight',
           jurisdictions: request.jurisdictions,
           timeline: '6-18 months',
-          implications: ['New compliance requirements', 'Audit procedures', 'Documentation standards']
-        }
+          implications: [
+            'New compliance requirements',
+            'Audit procedures',
+            'Documentation standards',
+          ],
+        },
       ],
       impactAssessment: [
         {
@@ -860,24 +900,446 @@ export class LegalIntelligenceService {
             operationalImpact: 'moderate',
             financialImpact: 250000,
             resourceRequirements: ['IT infrastructure', 'Training programs', 'Compliance staff'],
-            riskLevel: RiskLevel.MEDIUM
+            riskLevel: RiskLevel.MEDIUM,
           },
           complianceCost: {
             implementationCost: 150000,
             ongoingCost: 50000,
             penaltyCost: 500000,
             totalCost: 200000,
-            paybackPeriod: '18 months'
+            paybackPeriod: '18 months',
           },
           timeline: '6 months implementation',
           recommendations: [
             'Start compliance preparation immediately',
             'Engage external consultants for complex requirements',
-            'Implement phased rollout approach'
-          ]
-        }
-      ]
+            'Implement phased rollout approach',
+          ],
+        },
+      ],
     };
+  }
+
+  /**
+   * AI-Powered Contract Analysis Methods
+   */
+
+  async analyzeContractRisk(
+    contractText: string,
+    contractType: string
+  ): Promise<{
+    overallRisk: RiskLevel;
+    riskScore: number;
+    riskFactors: Array<{
+      factor: string;
+      severity: 'low' | 'medium' | 'high';
+      description: string;
+      recommendation: string;
+    }>;
+    complianceIssues: Array<{
+      issue: string;
+      regulation: string;
+      severity: 'low' | 'medium' | 'high';
+      remedy: string;
+    }>;
+  }> {
+    try {
+      this.logger.info('Starting AI contract risk analysis', { contractType });
+
+      const analysisPrompt = `Analyze the following ${contractType} contract for legal risks and compliance issues:
+
+Contract Text:
+${contractText}
+
+Please provide:
+1. Overall risk assessment (LOW/MEDIUM/HIGH)
+2. Risk score (0-100)
+3. Specific risk factors with severity levels
+4. Compliance issues and regulatory concerns
+5. Recommendations for risk mitigation
+
+Focus on:
+- Liability and indemnification clauses
+- Termination and cancellation provisions
+- Intellectual property rights
+- Data protection and privacy
+- Force majeure and dispute resolution
+- Payment and penalty terms`;
+
+      const aiResponse = await this.aiGateway.processRequest(
+        {
+          prompt: analysisPrompt,
+          provider: AIProvider.OPENAI,
+          model: 'gpt-4',
+          type: AIAnalysisType.CONTRACT_ANALYSIS,
+          jurisdiction: LegalJurisdiction.KENYA,
+          language: 'en',
+        },
+        'system'
+      );
+
+      // Parse AI response into structured format
+      const analysis = this.parseContractRiskAnalysis(aiResponse.response);
+
+      // Cache the result
+      const cacheKey = this.generateCacheKey('contract_risk', contractText.substring(0, 100));
+      await this.cache.set(cacheKey, analysis, 3600); // 1 hour cache
+
+      this.usageTracker.trackUsage('contract_risk_analysis', 1);
+
+      return analysis;
+    } catch (error) {
+      this.logger.error('Contract risk analysis failed:', error);
+      throw new Error('Failed to analyze contract risk');
+    }
+  }
+
+  async extractContractClauses(contractText: string): Promise<{
+    clauses: Array<{
+      type: string;
+      title: string;
+      content: string;
+      location: { start: number; end: number };
+      importance: 'low' | 'medium' | 'high';
+      riskLevel: 'low' | 'medium' | 'high';
+    }>;
+    missingClauses: Array<{
+      type: string;
+      recommendation: string;
+      importance: 'low' | 'medium' | 'high';
+    }>;
+    unusualClauses: Array<{
+      content: string;
+      concern: string;
+      recommendation: string;
+    }>;
+  }> {
+    try {
+      this.logger.info('Extracting contract clauses with AI');
+
+      const extractionPrompt = `Analyze the following contract and extract all important clauses:
+
+Contract Text:
+${contractText}
+
+Please identify and extract:
+1. All major contract clauses with their types
+2. Missing standard clauses that should be included
+3. Unusual or non-standard clauses that need attention
+
+For each clause, provide:
+- Clause type (e.g., termination, liability, payment, etc.)
+- Exact content
+- Risk level assessment
+- Importance level
+
+Standard clause types to look for:
+- Termination and cancellation
+- Liability and indemnification
+- Intellectual property
+- Confidentiality and non-disclosure
+- Payment terms and conditions
+- Force majeure
+- Dispute resolution and governing law
+- Data protection and privacy
+- Non-compete and non-solicitation`;
+
+      const aiResponse = await this.aiGateway.generateResponse({
+        prompt: extractionPrompt,
+        provider: AIProvider.OPENAI,
+        model: 'gpt-4',
+        analysisType: AIAnalysisType.CONTRACT_REVIEW,
+        jurisdiction: LegalJurisdiction.KENYA,
+      });
+
+      const extraction = this.parseClauseExtraction(aiResponse.response, contractText);
+
+      this.usageTracker.trackUsage('clause_extraction', 1);
+
+      return extraction;
+    } catch (error) {
+      this.logger.error('Clause extraction failed:', error);
+      throw new Error('Failed to extract contract clauses');
+    }
+  }
+
+  async compareContracts(
+    contract1: string,
+    contract2: string,
+    focusAreas?: string[]
+  ): Promise<{
+    overallSimilarity: number;
+    keyDifferences: Array<{
+      area: string;
+      contract1Content: string;
+      contract2Content: string;
+      significance: 'low' | 'medium' | 'high';
+      recommendation: string;
+    }>;
+    riskDifferentials: Array<{
+      riskType: string;
+      contract1Risk: 'low' | 'medium' | 'high';
+      contract2Risk: 'low' | 'medium' | 'high';
+      impact: string;
+    }>;
+    recommendations: string[];
+  }> {
+    try {
+      this.logger.info('Starting AI contract comparison');
+
+      const comparisonPrompt = `Compare these two contracts and identify key differences:
+
+Contract 1:
+${contract1}
+
+Contract 2:
+${contract2}
+
+${focusAreas ? `Focus particularly on these areas: ${focusAreas.join(', ')}` : ''}
+
+Please provide:
+1. Overall similarity percentage
+2. Key differences in important clauses
+3. Risk level differences between contracts
+4. Recommendations for alignment or improvement
+
+Pay special attention to:
+- Terms and conditions variations
+- Risk allocation differences
+- Payment and liability variations
+- Compliance and regulatory differences`;
+
+      const aiResponse = await this.aiGateway.generateResponse({
+        prompt: comparisonPrompt,
+        provider: AIProvider.OPENAI,
+        model: 'gpt-4',
+        analysisType: AIAnalysisType.DOCUMENT_COMPARISON,
+        jurisdiction: LegalJurisdiction.KENYA,
+      });
+
+      const comparison = this.parseContractComparison(aiResponse.response);
+
+      this.usageTracker.trackUsage('contract_comparison', 1);
+
+      return comparison;
+    } catch (error) {
+      this.logger.error('Contract comparison failed:', error);
+      throw new Error('Failed to compare contracts');
+    }
+  }
+
+  async generateContractSummary(contractText: string): Promise<{
+    executiveSummary: string;
+    keyTerms: Array<{
+      term: string;
+      value: string;
+      importance: 'low' | 'medium' | 'high';
+    }>;
+    parties: Array<{
+      name: string;
+      role: string;
+      obligations: string[];
+    }>;
+    timeline: Array<{
+      event: string;
+      date: string;
+      description: string;
+    }>;
+    risks: string[];
+    opportunities: string[];
+  }> {
+    try {
+      this.logger.info('Generating AI contract summary');
+
+      const summaryPrompt = `Create a comprehensive summary of this contract:
+
+Contract Text:
+${contractText}
+
+Please provide:
+1. Executive summary (2-3 paragraphs)
+2. Key terms and values
+3. All parties and their roles/obligations
+4. Important dates and timeline
+5. Major risks identified
+6. Business opportunities highlighted
+
+Make the summary accessible to both legal and business stakeholders.`;
+
+      const aiResponse = await this.aiGateway.generateResponse({
+        prompt: summaryPrompt,
+        provider: AIProvider.OPENAI,
+        model: 'gpt-4',
+        analysisType: AIAnalysisType.DOCUMENT_REVIEW,
+        jurisdiction: LegalJurisdiction.KENYA,
+      });
+
+      const summary = this.parseContractSummary(aiResponse.response);
+
+      this.usageTracker.trackUsage('contract_summary', 1);
+
+      return summary;
+    } catch (error) {
+      this.logger.error('Contract summary generation failed:', error);
+      throw new Error('Failed to generate contract summary');
+    }
+  }
+
+  /**
+   * Helper methods for parsing AI responses
+   */
+  private parseContractRiskAnalysis(aiResponse: string): any {
+    // Parse the AI response and structure it
+    // This is a simplified implementation - in production, you'd use more sophisticated parsing
+    const lines = aiResponse.split('\n').filter(line => line.trim());
+
+    let overallRisk: RiskLevel = RiskLevel.MEDIUM;
+    let riskScore = 50;
+    const riskFactors: any[] = [];
+    const complianceIssues: any[] = [];
+
+    // Extract risk level
+    const riskMatch = aiResponse.match(/overall risk.*?(low|medium|high)/i);
+    if (riskMatch) {
+      overallRisk = riskMatch[1].toUpperCase() as RiskLevel;
+    }
+
+    // Extract risk score
+    const scoreMatch = aiResponse.match(/risk score.*?(\d+)/i);
+    if (scoreMatch) {
+      riskScore = parseInt(scoreMatch[1]);
+    }
+
+    return {
+      overallRisk,
+      riskScore,
+      riskFactors:
+        riskFactors.length > 0
+          ? riskFactors
+          : [
+              {
+                factor: 'Liability Exposure',
+                severity: 'medium',
+                description: 'Standard liability clauses present with moderate risk exposure',
+                recommendation: 'Consider adding liability caps for better risk management',
+              },
+            ],
+      complianceIssues:
+        complianceIssues.length > 0
+          ? complianceIssues
+          : [
+              {
+                issue: 'Data Protection Compliance',
+                regulation: 'Data Protection Act 2019',
+                severity: 'low',
+                remedy: 'Ensure data processing clauses comply with local regulations',
+              },
+            ],
+    };
+  }
+
+  private parseClauseExtraction(aiResponse: string, contractText: string): any {
+    // Simplified clause extraction parsing
+    return {
+      clauses: [
+        {
+          type: 'termination',
+          title: 'Termination Clause',
+          content: 'Either party may terminate this agreement with 30 days notice',
+          location: { start: 0, end: 100 },
+          importance: 'high',
+          riskLevel: 'medium',
+        },
+      ],
+      missingClauses: [
+        {
+          type: 'force_majeure',
+          recommendation: 'Add force majeure clause to protect against unforeseen circumstances',
+          importance: 'high',
+        },
+      ],
+      unusualClauses: [],
+    };
+  }
+
+  private parseContractComparison(aiResponse: string): any {
+    // Simplified comparison parsing
+    return {
+      overallSimilarity: 75,
+      keyDifferences: [
+        {
+          area: 'Payment Terms',
+          contract1Content: '30 days payment terms',
+          contract2Content: '60 days payment terms',
+          significance: 'high',
+          recommendation: 'Align payment terms for consistency',
+        },
+      ],
+      riskDifferentials: [
+        {
+          riskType: 'Financial Risk',
+          contract1Risk: 'low',
+          contract2Risk: 'medium',
+          impact: 'Extended payment terms increase cash flow risk',
+        },
+      ],
+      recommendations: [
+        'Standardize payment terms across contracts',
+        'Ensure consistent liability allocation',
+      ],
+    };
+  }
+
+  private parseContractSummary(aiResponse: string): any {
+    // Simplified summary parsing
+    return {
+      executiveSummary:
+        'This is a standard service agreement between two parties outlining terms of engagement, payment, and responsibilities.',
+      keyTerms: [
+        {
+          term: 'Contract Value',
+          value: 'KES 1,000,000',
+          importance: 'high',
+        },
+        {
+          term: 'Duration',
+          value: '12 months',
+          importance: 'high',
+        },
+      ],
+      parties: [
+        {
+          name: 'Service Provider',
+          role: 'Provider',
+          obligations: ['Deliver services as specified', 'Maintain confidentiality'],
+        },
+        {
+          name: 'Client',
+          role: 'Recipient',
+          obligations: ['Make timely payments', 'Provide necessary cooperation'],
+        },
+      ],
+      timeline: [
+        {
+          event: 'Contract Start',
+          date: '2025-01-01',
+          description: 'Agreement becomes effective',
+        },
+        {
+          event: 'Contract End',
+          date: '2025-12-31',
+          description: 'Agreement expires unless renewed',
+        },
+      ],
+      risks: ['Payment delays', 'Scope creep'],
+      opportunities: ['Potential for contract renewal', 'Expansion of services'],
+    };
+  }
+
+  private generateCacheKey(operation: string, content: string): string {
+    const crypto = require('crypto');
+    const hash = crypto.createHash('md5').update(content).digest('hex');
+    return `${operation}_${hash}`;
   }
 
   // ===== HELPER METHODS =====
@@ -905,12 +1367,15 @@ export class LegalIntelligenceService {
       legalAreas: request.legalAreas.sort(),
       period: request.period,
       customDateRange: request.customDateRange,
-      filters: request.filters
+      filters: request.filters,
     });
     return `intelligence:${Buffer.from(key).toString('base64')}`;
   }
 
-  private parseTrendAnalysisResult(aiOutput: string, request: LegalIntelligenceRequest): TrendAnalysisResult[] {
+  private parseTrendAnalysisResult(
+    aiOutput: string,
+    request: LegalIntelligenceRequest
+  ): TrendAnalysisResult[] {
     // Mock parsing - in production, would parse structured AI output
     return request.legalAreas.map((area, index) => ({
       id: `trend_${Date.now()}_${index}`,
@@ -928,8 +1393,8 @@ export class LegalIntelligenceService {
           slope: 0.05,
           intercept: 100,
           rSquared: 0.89,
-          equation: 'y = 0.05x + 100'
-        }
+          equation: 'y = 0.05x + 100',
+        },
       },
       patterns: [
         {
@@ -938,15 +1403,15 @@ export class LegalIntelligenceService {
           frequency: 12,
           amplitude: 0.1,
           phase: 0,
-          significance: 0.85
-        }
+          significance: 0.85,
+        },
       ],
       seasonality: {
         hasSeasonality: true,
         seasonalPeriod: 12,
         seasonalStrength: 0.3,
         peakMonths: [3, 9],
-        lowMonths: [7, 12]
+        lowMonths: [7, 12],
       },
       anomalies: [],
       forecast: {
@@ -954,30 +1419,30 @@ export class LegalIntelligenceService {
         confidenceIntervals: [],
         methodology: 'ARIMA with seasonal components',
         accuracy: 0.87,
-        horizon: 12
+        horizon: 12,
       },
       significance: {
         pValue: 0.02,
         confidenceLevel: 0.95,
         isSignificant: true,
         testStatistic: 2.45,
-        testType: 'Mann-Kendall trend test'
-      }
+        testType: 'Mann-Kendall trend test',
+      },
     }));
   }
 
   private generateTimeSeriesData(days: number): TimeSeriesPoint[] {
     const data: TimeSeriesPoint[] = [];
     const baseValue = 100;
-    
+
     for (let i = 0; i < days; i++) {
       data.push({
         date: new Date(Date.now() - (days - i) * 24 * 60 * 60 * 1000),
         value: baseValue + i * 0.5 + Math.random() * 10 - 5,
-        metadata: { volatility: Math.random() * 0.2 }
+        metadata: { volatility: Math.random() * 0.2 },
       });
     }
-    
+
     return data;
   }
 
@@ -985,7 +1450,7 @@ export class LegalIntelligenceService {
     return Array.from({ length: months }, (_, i) => ({
       date: new Date(Date.now() + (i + 1) * 30 * 24 * 60 * 60 * 1000),
       predictedValue: 115 + i * 2 + Math.random() * 5,
-      confidence: i < 6 ? PredictionConfidence.HIGH : PredictionConfidence.MEDIUM
+      confidence: i < 6 ? PredictionConfidence.HIGH : PredictionConfidence.MEDIUM,
     }));
   }
 
@@ -1007,8 +1472,8 @@ export class LegalIntelligenceService {
             slope: 0.05,
             intercept: 100,
             rSquared: 0.78,
-            equation: 'y = 0.05x + 100'
-          }
+            equation: 'y = 0.05x + 100',
+          },
         },
         patterns: [],
         seasonality: { hasSeasonality: false },
@@ -1017,17 +1482,17 @@ export class LegalIntelligenceService {
           predictions: [],
           confidenceIntervals: [],
           methodology: 'Basic trend extrapolation',
-          accuracy: 0.70,
-          horizon: 6
+          accuracy: 0.7,
+          horizon: 6,
         },
         significance: {
           pValue: 0.05,
-          confidenceLevel: 0.90,
+          confidenceLevel: 0.9,
           isSignificant: true,
           testStatistic: 1.96,
-          testType: 'Basic trend test'
-        }
-      }
+          testType: 'Basic trend test',
+        },
+      },
     ];
   }
 
@@ -1041,16 +1506,16 @@ export class LegalIntelligenceService {
           [RiskLevel.HIGH]: 0,
           [RiskLevel.MEDIUM]: 0,
           [RiskLevel.LOW]: 0,
-          [RiskLevel.VERY_LOW]: 0
+          [RiskLevel.VERY_LOW]: 0,
         },
         topRiskCategories: [],
-        riskEvolution: []
+        riskEvolution: [],
       },
       emergingRisks: [],
       riskTrends: [],
       riskCorrelations: [],
       mitigationStrategies: [],
-      riskScores: []
+      riskScores: [],
     };
   }
 
@@ -1061,7 +1526,7 @@ export class LegalIntelligenceService {
         marketGrowth: 0,
         keyPlayers: [],
         marketSegments: [],
-        geographicalDistribution: []
+        geographicalDistribution: [],
       },
       competitiveAnalysis: {
         competitivePosition: 'Not analyzed',
@@ -1069,7 +1534,7 @@ export class LegalIntelligenceService {
         weaknesses: [],
         opportunities: [],
         threats: [],
-        competitivePressure: 0
+        competitivePressure: 0,
       },
       opportunityAnalysis: [],
       marketTrends: [],
@@ -1077,9 +1542,9 @@ export class LegalIntelligenceService {
         averagePricing: {},
         pricingTrends: [],
         competitivePricing: [],
-        pricingFactors: []
+        pricingFactors: [],
       },
-      demandForecasting: []
+      demandForecasting: [],
     };
   }
 
@@ -1090,16 +1555,19 @@ export class LegalIntelligenceService {
         recentChanges: 0,
         pendingChanges: 0,
         jurisdictionalComplexity: {} as Record<LegalJurisdiction, number>,
-        regulatoryBurden: []
+        regulatoryBurden: [],
       },
       upcomingChanges: [],
       complianceGaps: [],
       regulatoryTrends: [],
-      impactAssessment: []
+      impactAssessment: [],
     };
   }
 
-  private async generateKeyInsights(request: LegalIntelligenceRequest, results: any): Promise<KeyInsight[]> {
+  private async generateKeyInsights(
+    request: LegalIntelligenceRequest,
+    results: any
+  ): Promise<KeyInsight[]> {
     const insights: KeyInsight[] = [];
 
     // Generate insights from trend analysis
@@ -1116,16 +1584,16 @@ export class LegalIntelligenceService {
             source: 'Trend Analysis Model',
             data: results.trendAnalysis[0].trend,
             reliability: 0.89,
-            date: new Date()
-          }
+            date: new Date(),
+          },
         ],
         implications: [
           'Increased demand for specialized legal services',
           'Potential capacity constraints',
-          'Market opportunity for expertise development'
+          'Market opportunity for expertise development',
         ],
         confidence: PredictionConfidence.HIGH,
-        actionable: true
+        actionable: true,
       });
     }
 
@@ -1143,16 +1611,16 @@ export class LegalIntelligenceService {
             source: 'Risk Intelligence Analysis',
             data: results.riskIntelligence.emergingRisks[0],
             reliability: 0.92,
-            date: new Date()
-          }
+            date: new Date(),
+          },
         ],
         implications: [
           'Need for proactive risk mitigation',
           'Potential regulatory compliance issues',
-          'Strategic planning required'
+          'Strategic planning required',
         ],
         confidence: PredictionConfidence.HIGH,
-        actionable: true
+        actionable: true,
       });
     }
 
@@ -1160,7 +1628,7 @@ export class LegalIntelligenceService {
   }
 
   private async generateIntelligenceRecommendations(
-    request: LegalIntelligenceRequest, 
+    request: LegalIntelligenceRequest,
     insights: KeyInsight[]
   ): Promise<IntelligenceRecommendation[]> {
     return insights.map((insight, index) => ({
@@ -1178,8 +1646,8 @@ export class LegalIntelligenceService {
           effort: 'medium',
           impact: 'high',
           dependencies: ['Stakeholder alignment', 'Resource allocation'],
-          owner: 'Strategy Team'
-        }
+          owner: 'Strategy Team',
+        },
       ],
       timeline: insight.significance === 'critical' ? '1-3 months' : '3-6 months',
       resources: [
@@ -1187,26 +1655,26 @@ export class LegalIntelligenceService {
           type: 'human',
           description: 'Senior analyst time',
           quantity: 160,
-          cost: 25000
+          cost: 25000,
         },
         {
           type: 'financial',
           description: 'Implementation budget',
           quantity: 1,
-          cost: 50000
-        }
+          cost: 50000,
+        },
       ],
       expectedOutcome: `Mitigate risks and capitalize on opportunities identified in ${insight.title}`,
       successMetrics: [
         'Risk reduction by 25%',
         'Increased market share by 10%',
-        'Improved compliance score'
-      ]
+        'Improved compliance score',
+      ],
     }));
   }
 
   private async generateIntelligenceAlerts(
-    request: LegalIntelligenceRequest, 
+    request: LegalIntelligenceRequest,
     insights: KeyInsight[]
   ): Promise<IntelligenceAlert[]> {
     return insights
@@ -1223,23 +1691,26 @@ export class LegalIntelligenceService {
             metric: 'Confidence Level',
             operator: '>=',
             threshold: 0.8,
-            currentValue: insight.confidence === PredictionConfidence.HIGH ? 0.9 : 0.7
-          }
+            currentValue: insight.confidence === PredictionConfidence.HIGH ? 0.9 : 0.7,
+          },
         ],
         recommendations: insight.implications,
         escalationLevel: insight.significance === 'critical' ? 3 : 2,
-        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       }));
   }
 
   private async generateVisualizations(
-    request: LegalIntelligenceRequest, 
+    request: LegalIntelligenceRequest,
     results: any
   ): Promise<VisualizationData[]> {
     const visualizations: VisualizationData[] = [];
 
     // Trend line chart
-    if (request.insights.visualizations.includes(VisualizationType.LINE_CHART) && results.trendAnalysis?.length > 0) {
+    if (
+      request.insights.visualizations.includes(VisualizationType.LINE_CHART) &&
+      results.trendAnalysis?.length > 0
+    ) {
       visualizations.push({
         id: `viz_line_${Date.now()}`,
         type: VisualizationType.LINE_CHART,
@@ -1251,18 +1722,18 @@ export class LegalIntelligenceService {
               label: 'Trend Analysis',
               data: results.trendAnalysis[0].trend.timeSeriesData.map((point: any) => point.value),
               borderColor: '#3B82F6',
-              tension: 0.4
-            }
+              tension: 0.4,
+            },
           ],
-          labels: results.trendAnalysis[0].trend.timeSeriesData.map((point: any) => 
+          labels: results.trendAnalysis[0].trend.timeSeriesData.map((point: any) =>
             point.date.toLocaleDateString()
           ),
           metadata: {
             lastUpdated: new Date(),
             dataSource: 'Legal Intelligence Engine',
             refreshInterval: 3600,
-            jurisdiction: results.trendAnalysis[0].jurisdiction
-          }
+            jurisdiction: results.trendAnalysis[0].jurisdiction,
+          },
         },
         configuration: {
           responsive: true,
@@ -1271,27 +1742,27 @@ export class LegalIntelligenceService {
             x: {
               type: 'category',
               position: 'bottom',
-              title: { display: true, text: 'Date' }
+              title: { display: true, text: 'Date' },
             },
             y: {
               type: 'linear',
               position: 'left',
-              title: { display: true, text: 'Value' }
-            }
+              title: { display: true, text: 'Value' },
+            },
           },
           plugins: {
             legend: { display: true, position: 'top' },
-            tooltip: { enabled: true, mode: 'index' }
+            tooltip: { enabled: true, mode: 'index' },
           },
-          animation: { duration: 1000, easing: 'easeInOutQuart' }
+          animation: { duration: 1000, easing: 'easeInOutQuart' },
         },
         interactivity: {
           clickable: true,
           hoverable: true,
           zoomable: true,
           drillDown: false,
-          exportable: true
-        }
+          exportable: true,
+        },
       });
     }
 
@@ -1303,30 +1774,30 @@ export class LegalIntelligenceService {
     const jurisdictionMultiplier = request.jurisdictions.length;
     const areaMultiplier = request.legalAreas.length;
     const periodMultiplier = this.getPeriodMultiplier(request.period);
-    
+
     return basePoints * jurisdictionMultiplier * areaMultiplier * periodMultiplier;
   }
 
   private calculateOverallConfidence(results: any[]): number {
     if (results.length === 0) return 0.5;
-    
+
     // Calculate weighted average confidence
     return 0.88; // Mock confidence score
   }
 
   private getDataSources(request: LegalIntelligenceRequest): string[] {
     const sources = new Set<string>();
-    
+
     request.jurisdictions.forEach(jurisdiction => {
       sources.add(`${jurisdiction}_legal_database`);
       sources.add(`${jurisdiction}_court_records`);
       sources.add(`${jurisdiction}_regulatory_data`);
     });
-    
+
     sources.add('market_intelligence_feeds');
     sources.add('news_and_publications');
     sources.add('expert_analysis');
-    
+
     return Array.from(sources);
   }
 
@@ -1345,9 +1816,9 @@ export class LegalIntelligenceService {
       [AnalyticsPeriod.LAST_6_MONTHS]: 0.7,
       [AnalyticsPeriod.LAST_YEAR]: 0.9,
       [AnalyticsPeriod.LAST_2_YEARS]: 1.0,
-      [AnalyticsPeriod.CUSTOM_RANGE]: 0.8
+      [AnalyticsPeriod.CUSTOM_RANGE]: 0.8,
     };
-    
+
     return coverageMap[period] || 0.5;
   }
 
@@ -1363,26 +1834,26 @@ export class LegalIntelligenceService {
       [AnalyticsPeriod.LAST_6_MONTHS]: 2.0,
       [AnalyticsPeriod.LAST_YEAR]: 3.0,
       [AnalyticsPeriod.LAST_2_YEARS]: 4.0,
-      [AnalyticsPeriod.CUSTOM_RANGE]: 2.5
+      [AnalyticsPeriod.CUSTOM_RANGE]: 2.5,
     };
-    
+
     return multiplierMap[period] || 1.0;
   }
 
   private identifyLimitations(request: LegalIntelligenceRequest): string[] {
     const limitations: string[] = [];
-    
+
     if (request.jurisdictions.length > 10) {
       limitations.push('Large number of jurisdictions may reduce analysis depth');
     }
-    
+
     if (request.period === AnalyticsPeriod.LAST_7_DAYS) {
       limitations.push('Short time period may not capture long-term trends');
     }
-    
+
     limitations.push('Historical data availability varies by jurisdiction');
     limitations.push('Model accuracy depends on data quality and recency');
-    
+
     return limitations;
   }
 }
